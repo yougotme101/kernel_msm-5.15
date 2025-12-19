@@ -376,7 +376,7 @@ jobs:
           
           echo "✅ Installed SukiSU-Ultra with SUSFS"
 
-- name: "🔧 Setup rKSU"
+      - name: "🔧 Setup rKSU"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'rksu'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -464,7 +464,7 @@ jobs:
           
           echo "✅ Installed KowSU"
 
-      - name: "🔧 Setup MamboSU"
+      - name: "🔧 Setup MamboSU
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'mambosu'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
