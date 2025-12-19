@@ -512,7 +512,7 @@ jobs:
           
           echo "🎉 Wild KSU with SUSFS kernel patches fully integrated!"
           
-          - name: "🔧 Setup KowSU"
+      - name: "🔧 Setup KowSU"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'kowsu'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
