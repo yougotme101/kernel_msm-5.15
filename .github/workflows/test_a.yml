@@ -468,6 +468,7 @@ jobs:
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'mambosu'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
+          rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install MamboSU
           curl -LSs "https://raw.githubusercontent.com/RapliVx/KernelSU/main/kernel/setup.sh" | bash -s master
