@@ -426,16 +426,7 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install MamboSU
-          curl -LSs "https://raw.githubusercontent.com/RapliVx/KernelSU/blob/master/kernel/setup.sh" | bash -s
-
-          # Apply SUSFS patch
-          PATCH_URL="https://api.github.com/repos/topnotchfreaks/kernel_patches/releases/latest"
-          SUSFS_PATCH=$(curl -s "$PATCH_URL" | grep "browser_download_url.*0001-Implement-SUSFS.*Android-13.*Kernel-5.15.*patch" | cut -d '"' -f 4 | head -n 1)
-          
-          if [ -n "$SUSFS_PATCH" ]; then
-            curl -L -o susfs.patch "$SUSFS_PATCH"
-            patch -p1 < susfs.patch || echo "Warning: SUSFS patch failed"
-          fi
+          curl -LSs "https://raw.githubusercontent.com/RapliVx/KernelSU/main/kernel/setup.sh" | bash -s master
           
           # Add KSU configs
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
