@@ -426,7 +426,7 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install MamboSU
-          curl -LSs "https://raw.githubusercontent.com/RapliVx/KernelSU/main/kernel/setup.sh" | bash -s master
+          curl -LSs "https://raw.githubusercontent.com/RapliVx/KernelSU/kernel/setup.sh" | bash -s master
 
           # Apply SUSFS patch
           PATCH_URL="https://api.github.com/repos/topnotchfreaks/kernel_patches/releases/latest"
