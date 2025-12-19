@@ -382,7 +382,7 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install KowSU
-          curl -LSs "https://raw.githubusercontent.com/KOWX712/KernelSU/main/kernel/setup.sh" | bash -s master
+          curl -LSs "https://raw.githubusercontent.com/KOWX712/KernelSU/main/kernel/setup.sh" | bash -s
 
           # Apply SUSFS patch
           PATCH_URL="https://api.github.com/repos/topnotchfreaks/kernel_patches/releases/latest"
@@ -419,14 +419,14 @@ jobs:
           
           echo "✅ Installed KowSU"
 
-      - name: "🔧 Setup Mambo"
+      - name: "🔧 Setup MamboSU"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'mambosu'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install MamboSU
-          curl -LSs "https://raw.githubusercontent.com/RapliVx/KernelSU/kernel/setup.sh" | bash -s master
+          curl -LSs "https://raw.githubusercontent.com/RapliVx/KernelSU/blob/master/kernel/setup.sh" | bash -s master
 
           # Apply SUSFS patch
           PATCH_URL="https://api.github.com/repos/topnotchfreaks/kernel_patches/releases/latest"
