@@ -559,7 +559,7 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install MamboSU
-          curl -LSs "https://raw.githubusercontent.com/yougotme101/KernelSU/master/kernel/setup.sh" | bash -s master
+          curl -LSs "https://raw.githubusercontent.com/RapliVx/KernelSU/refs/heads/master/kernel/setup.sh" | bash -s master
           
           # Add KSU configs
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
@@ -582,7 +582,7 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install MamboSU with SUSFS
-          curl -LSs "https://raw.githubusercontent.com/yougotme101/KernelSU/susfs-rksu-master/kernel/setup.sh" | bash -s susfs-rksu-master
+          curl -LSs "https://raw.githubusercontent.com/RapliVx/KernelSU/refs/heads/susfs-rksu-master/kernel/setup.sh" | bash -s susfs-rksu-master
 
           # Apply SUSFS Patches
           PATCH_URL="https://api.github.com/repos/topnotchfreaks/kernel_patches/releases/latest"
@@ -605,7 +605,7 @@ jobs:
           CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y
           CONFIG_KSU_SUSFS_SUS_KSTAT=y
           CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n
-          CONFIG_KSU_SUSFS_TRY_UMOUNT=n
+          CONFIG_KSU_SUSFS_TRY_UMOUNT=y
           CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y
           CONFIG_KSU_SUSFS_SPOOF_UNAME=y
           CONFIG_KSU_SUSFS_ENABLE_LOG=y
