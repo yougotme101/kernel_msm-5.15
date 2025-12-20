@@ -3,13 +3,17 @@
 
 This workflow is configured for specific devices. **You must modify the settings for your device** or it may not work properly.
 
+## Extra Optimization (Only for test-a workflow)
+- Added TCP Congestion : BBR, Cubic, Westwood
+- Added KSU Fork : Kowsu, MamboSU, MamboSU-SUSFS
+
 ## 🔧 Quick Start
 
 1. **Fork this repository**
 2. Go to **Actions** tab → **"Build kernels"** workflow
 3. Click **"Run workflow"** and configure:
 
-### Workflow Settings
+### Workflow Settings (Use test-a to get more options)
 
 | Setting | Description | Default |
 |---------|-------------|---------|
