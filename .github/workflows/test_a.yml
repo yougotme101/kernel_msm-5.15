@@ -68,6 +68,12 @@ on:
           - "250"
           - "300"
           - "1000"
+      extra_patches:
+        description: "Kernel Sign Patch"
+        required: false
+        type: string
+        default: "https://github.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch"
+              
 
 jobs:
   Build-Kernel:
