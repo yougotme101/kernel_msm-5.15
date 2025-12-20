@@ -24,12 +24,12 @@ on:
         type: string
         default: "gki"
       localVersion:
-        description: "Custom localversion name (e.g., -mybuild)"
+        description: "Custom Localversion"
         required: false
         type: string
-        default: ""
+        default: "-TopNotchFreaks"
       buildKSU:
-        description: "Build KSU variant?"
+        description: "Kernel Variant"
         required: true
         type: choice
         default: "both"
@@ -38,7 +38,7 @@ on:
           - "ksu"
           - "both"
       ksuVariant:
-        description: "KSU implementation (if KSU enabled)"
+        description: "KSU implementation"
         required: true
         type: choice
         default: "sukisu-ultra"
