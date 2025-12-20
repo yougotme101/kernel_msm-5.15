@@ -580,7 +580,7 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install MamboSU with SUSFS
-          curl -LSs "https://raw.githubusercontent.com/yougotme101/KernelSU/main/kernel/setup.sh" | bash -s susfs-rksu-master
+          curl -LSs "https://raw.githubusercontent.com/yougotme101/KernelSU/susfs-rksu-master/kernel/setup.sh" | bash -s susfs-rksu-master
 
           # Apply SUSFS Patches
           PATCH_URL="https://api.github.com/repos/topnotchfreaks/kernel_patches/releases/latest"
