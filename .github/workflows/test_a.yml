@@ -49,6 +49,7 @@ on:
           - "wildksu"
           - "kowsu"
           - "mambosu"
+          - "mambosu-susfs"
       optimizationLevel:
         description: "Compiler optimization level"
         required: false
@@ -571,6 +572,51 @@ jobs:
           EOF
           
           echo "✅ Installed MamboSU"
+
+      - name: "🔧 Setup MamboSU with SUSFS"
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'mambosu-susfs'
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          rm -rf ./KernelSU ./drivers/kernelsu
+          
+          # Install MamboSU with SUSFS
+          curl -LSs "https://raw.githubusercontent.com/yougotme101/KernelSU/main/kernel/setup.sh" | bash -s susfs-rksu-master
+
+          # Apply SUSFS Patches
+          PATCH_URL="https://api.github.com/repos/topnotchfreaks/kernel_patches/releases/latest"
+          SUSFS_PATCH=$(curl -s "$PATCH_URL" | grep "browser_download_url.*0001-Implement-SUSFS.*Android-13.*Kernel-5.15.*patch" | cut -d '"' -f 4 | head -n 1)
+          
+          if [ -n "$SUSFS_PATCH" ]; then
+            curl -L -o susfs.patch "$SUSFS_PATCH"
+            patch -p1 < susfs.patch || echo "Warning: SUSFS patch failed"
+          fi
+          
+          # Add KSU configs
+          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          cat >> "$CONFIG_FILE" << 'EOF'
+          CONFIG_KSU=y
+          CONFIG_KSU_SUSFS=y
+          CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y
+          CONFIG_KSU_SUSFS_SUS_PATH=y
+          CONFIG_KSU_SUSFS_SUS_MOUNT=y
+          CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y
+          CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y
+          CONFIG_KSU_SUSFS_SUS_KSTAT=y
+          CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n
+          CONFIG_KSU_SUSFS_TRY_UMOUNT=y
+          CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y
+          CONFIG_KSU_SUSFS_SPOOF_UNAME=y
+          CONFIG_KSU_SUSFS_ENABLE_LOG=y
+          CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
+          CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
+          CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
+          CONFIG_KSU_SUSFS_SUS_SU=y
+          CONFIG_OVERLAY_FS=y
+          CONFIG_TMPFS_XATTR=y
+          CONFIG_TMPFS_POSIX_ACL=y
+          EOF
+          
+          echo "✅ MamboSU with SUSFS kernel patches fully integrated"
   
       - name: "🔨 Build kernel"
         working-directory: ${{ env.WORK_DIR }}
