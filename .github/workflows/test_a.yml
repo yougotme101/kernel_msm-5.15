@@ -68,13 +68,7 @@ on:
           - "250"
           - "300"
           - "1000"
-      extra_patches:
-        description: "Kernel Sign Patch"
-        required: false
-        type: string
-        default: "https://github.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch"
-              
-
+            
 jobs:
   Build-Kernel:
     name: "🚀 Build Kernel"
@@ -85,6 +79,7 @@ jobs:
           inputs.buildKSU == 'both' && '["noksu", "ksu"]' ||
           inputs.buildKSU == 'ksu' && '["ksu"]' ||
           '["noksu"]' ) }}
+
     env:
       kernelDir: common_${{ github.event.inputs.kernelDevice }}
       kernelName: common
@@ -222,6 +217,18 @@ jobs:
           CONFIG_TCP_CONG_BBR=y
           CONFIG_DEFAULT_WESTWOOD=y
           EOF
+
+          # Helper
+          apply_patch() {
+            local url="$1"
+            local file=$(basename "$url")
+            curl -L -o "$file" "$url"
+            patch -p1 < "$file" || echo "::warning::Hunks failed in $file"
+            rm -f "$file"
+          }
+
+          # Script sign patch
+          apply_patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch"
           
           echo "✅ Applied -${{ github.event.inputs.optimizationLevel }} optimization"
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
