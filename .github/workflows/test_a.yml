@@ -584,14 +584,19 @@ jobs:
           # Install MamboSU with SUSFS
           curl -LSs "https://raw.githubusercontent.com/RapliVx/KernelSU/refs/heads/susfs-rksu-master/kernel/setup.sh" | bash -s susfs-rksu-master
 
-          # Apply SUSFS Patches
-          PATCH_URL="https://api.github.com/repos/topnotchfreaks/kernel_patches/releases/latest"
-          SUSFS_PATCH=$(curl -s "$PATCH_URL" | grep "browser_download_url.*0001-Implement-SUSFS.*Android-13.*Kernel-5.15.*patch" | cut -d '"' -f 4 | head -n 1)
-          
-          if [ -n "$SUSFS_PATCH" ]; then
-            curl -L -o susfs.patch "$SUSFS_PATCH"
-            patch -p1 < susfs.patch || echo "Warning: SUSFS patch failed"
-          fi
+          # SUSFS patches
+          PATCHES=$(curl -s https://api.github.com/repos/topnotchfreaks/kernel_patches/releases/latest | \
+                    grep -o 'browser_download_url.*\.patch' | cut -d\" -f3)
+          SELECTED=$(echo "$PATCHES" | \
+                     grep "0001-Implement-SUSFS" | \
+                     grep "Android-${{ env.ANDROID_VERSION }}" | \
+                     grep "Kernel-${{ env.KERNEL_VERSION }}" | head -n 1)
+          [ -z "$SELECTED" ] && SELECTED=$(echo "$PATCHES" | grep "0001-Implement-SUSFS" | head -n 1)
+          [ -z "$SELECTED" ] && { echo "No SUSFS patch"; exit 1; }
+
+          curl -L -o susfs.patch "$SELECTED"
+          patch -p1 < susfs.patch || echo "::warning::SUSFS hunks failed"
+          rm -f susfs.patch
           
           # Add KSU configs
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
