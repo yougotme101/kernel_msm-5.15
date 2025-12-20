@@ -5,7 +5,7 @@ This workflow is configured for specific devices. **You must modify the settings
 
 ## Extra Optimization (Only for test-a workflow)
 - Added TCP Congestion : BBR, Cubic, Westwood
-- Added KSU Fork : Kowsu, MamboSU, MamboSU-SUSFS
+- Added KSU Fork : KowSU, MamboSU, MamboSU-SUSFS
 
 ## 🔧 Quick Start
 
