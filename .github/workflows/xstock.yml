@@ -204,9 +204,15 @@ jobs:
           LTO=thin \
           BUILD_CONFIG=${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}/build.config.gki.aarch64 \
           build/build.sh -j$(nproc --all)
-
-      - name: "📁 Copy kernel image"
+          
+      - name: "📁 Copy Vanilla kernel image"
         if: matrix.kernel.enable_ksu == false
+        working-directory: ${{ env.WORK_DIR }}/out/dist
+        run: |
+          cp Image "${{ env.OUTPUT_NAME }}"
+
+      - name: "📁 Copy KSU kernel image"
+        if: matrix.kernel.enable_ksu == true
         working-directory: ${{ env.WORK_DIR }}/out/dist
         run: |
           cp Image "${{ env.OUTPUT_NAME }}"
