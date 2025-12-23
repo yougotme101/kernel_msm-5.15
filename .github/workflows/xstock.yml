@@ -242,7 +242,7 @@ jobs:
           cat > AnyKernel3/banner << 'EOF'
           ╔═════════════════════════════════════════════════════╗
           ║                                                     ║
-          ║                     XStock Kernel                  ║
+          ║                     XStock Kernel                   ║
           ║                   by @yougotme101                   ║
           ║                                                     ║
           ║              Powered by Github Actions              ║
