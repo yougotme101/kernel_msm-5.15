@@ -5,7 +5,8 @@ This workflow is configured for specific devices. **You must modify the settings
 
 ## Extra Optimization (Only for test-a workflow)
 - Added TCP Congestion : BBR, Cubic, Westwood
-- Added KSU Fork : KowSU, MamboSU, MamboSU-SUSFS
+- Added KSU Fork : KowSU, MamboSU, MamboSU-SUSFS(unstable, don't crying about it)
+- Added XStock, update weekly (basically YASK, but i changed the the default manager to KowSU and remove the SUSFS, KPM Feature)
 
 ## 🔧 Quick Start
 
