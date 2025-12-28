@@ -170,6 +170,9 @@ jobs:
           CONFIG_KPROBES=y
           CONFIG_HAVE_KPROBES=y
           CONFIG_KPROBE_EVENTS=y
+
+          # BBG config 
+          DEFAULT_SECURITY_SMACK=y
           
           # Add metamodule and OverlayFS support for KSU variant
           CONFIG_OVERLAY_FS=y
