@@ -151,6 +151,10 @@ jobs:
           echo "CONFIG_BBG=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' common/security/Kconfig
 
+          CONFIG_FILE="./common/security/Kconfig/${{ env.DEFCONFIG_NAME }}"
+
+          DEFAULT_SECURITY_SMACK=y
+
       - name: "😋 Setup KernelSU"
         if: matrix.kernel.enable_ksu == true
         working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
@@ -172,8 +176,8 @@ jobs:
           CONFIG_KPROBE_EVENTS=y
 
           # BBG config 
-          DEFAULT_SECURITY_SMACK=y
-          CONFIG_LSM=landlock,lockdown,yama,loadpin,safesetid,integrity,smack,selinux,tomoyo,apparmor,bpf,baseband_guard
+          # DEFAULT_SECURITY_SMACK=y
+          # CONFIG_LSM=landlock,lockdown,yama,loadpin,safesetid,integrity,smack,selinux,tomoyo,apparmor,bpf,baseband_guard
           
           # Add metamodule and OverlayFS support for KSU variant
           CONFIG_OVERLAY_FS=y
