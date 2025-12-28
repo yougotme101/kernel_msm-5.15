@@ -69,14 +69,6 @@ on:
           - "250"
           - "300"
           - "1000"
-      bbg:
-        description: "Baseband-Guard(BBG) support"
-        required: true
-        type: choice
-        default: "on"
-        options:
-          - "on"
-          - "off"
             
 jobs:
   Build-Kernel:
@@ -225,7 +217,6 @@ jobs:
           CONFIG_TCP_CONG_HTCP=n
           CONFIG_TCP_CONG_BBR=y
           CONFIG_DEFAULT_WESTWOOD=y
-          DEFAULT_SECURITY_SMACK=y
           EOF
 
           # Helper
@@ -250,7 +241,7 @@ jobs:
           echo "Adding BBG..."
           wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
           echo "CONFIG_BBG=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
-          sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' common/security/Kconfig
+          sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' security/Kconfig
           
 
       - name: "🔧 Setup KernelSU"
