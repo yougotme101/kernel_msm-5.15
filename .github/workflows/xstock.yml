@@ -173,6 +173,7 @@ jobs:
 
           # BBG config 
           DEFAULT_SECURITY_SMACK=y
+          CONFIG_LSM=landlock,lockdown,yama,loadpin,safesetid,integrity,smack,selinux,tomoyo,apparmor,bpf,baseband_guard
           
           # Add metamodule and OverlayFS support for KSU variant
           CONFIG_OVERLAY_FS=y
