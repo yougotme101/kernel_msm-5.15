@@ -249,8 +249,10 @@ jobs:
           echo "Adding BBG..."
           wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
           echo "CONFIG_BBG=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
-          echo "DEFAULT_SECURITY_SMACK=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' common/security/Kconfig
+          
+          # default defconfig
+          DEFAULT_SECURITY_SMACK=y
 
       - name: "🔧 Setup KernelSU"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'kernelsu'
