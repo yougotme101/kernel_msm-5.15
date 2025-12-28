@@ -244,7 +244,7 @@ jobs:
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
 
       - name: "🔧 Add BBG Support (KSU variant only)"
-        if: matrix.variant == 'bbg' 'ksu' && github.event.inputs.bbg == 'on'
+        if: matrix.variant == 'bbg' && matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           echo "Adding BBG..."
