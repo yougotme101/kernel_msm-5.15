@@ -69,6 +69,14 @@ on:
           - "250"
           - "300"
           - "1000"
+      bbg:
+        description: "Baseband-guard Support"
+        required: true
+        type: choice
+        default: "on"
+        options:
+          - "on"
+          - "off"
             
 jobs:
   Build-Kernel:
@@ -235,7 +243,7 @@ jobs:
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
 
       - name: "🔧 Add BBG Support (KSU variant only)"
-        if: matrix.variant == 'bbg' && matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
+        if: matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           echo "Adding BBG..."
