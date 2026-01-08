@@ -252,10 +252,6 @@ jobs:
 
           # Script sign patch
           apply_patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch"
-
-          # LOS Disguise patch
-          apply_patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-fs-lineageos-disguise.patch"
-          
           
           echo "✅ Applied -${{ github.event.inputs.optimizationLevel }} optimization"
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
@@ -641,7 +637,7 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install YukiSU
-          curl -LSs "https://raw.githubusercontent.com/Anatdx/YukiSU/main/kernel/setup.sh" | bash -s hymofs
+          curl -LSs "https://raw.githubusercontent.com/Anatdx/YukiSU/main/kernel/setup.sh" | bash -s main
           
           # Apply syscall hooks
           curl -L -o hooks.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/scope_min_manual_hooks_v1.6.patch"
@@ -650,7 +646,7 @@ jobs:
           # Add KSU configs
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_KSU=y
+          CONFIG_KSU=m
           CONFIG_KPM=y
           CONFIG_KSU_MANUAL_HOOK=y
           CONFIG_KSU_MANUAL_HOOK_AUTO_SETUID_HOOK=y
@@ -671,11 +667,20 @@ jobs:
           BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 \
           build/build.sh -j$(nproc --all)
 
-      - name: "🩹 Apply KPM patch (SukiSU-Ultra only)"
+      - name: "🩹 Apply KPM patch (SukiSU)"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'sukisu-ultra'
         working-directory: ${{ env.WORK_DIR }}/out/dist
         run: |
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch
+          chmod +x patch
+          ./patch
+          mv oImage Image
+
+      - name: "🩹 Apply KPM patch (YukiSU)"
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'yukisu'
+        working-directory: ${{ env.WORK_DIR }}/out/dist
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/Anatdx/YukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch
           chmod +x patch
           ./patch
           mv oImage Image
