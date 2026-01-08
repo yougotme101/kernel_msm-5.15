@@ -65,12 +65,13 @@ on:
         type: choice
         default: "250"
         options:
+          - "default"
           - "100"
           - "250"
           - "300"
           - "1000"
       bbg:
-        description: "Baseband-guard Support"
+        description: "Baseband-guard Support (if KSU Enabled)"
         required: true
         type: choice
         default: "on"
@@ -176,32 +177,44 @@ jobs:
               ;;
           esac
           
-          # Remove existing tick rate configs
-          sed -i '/^CONFIG_NO_HZ=/d' "$CONFIG_FILE"
-          sed -i '/^CONFIG_HZ=/d' "$CONFIG_FILE"
-          sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
-          sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
-          sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
-          sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
-          
           # Apply selected tick rate
           case "${{ github.event.inputs.tickRate }}" in
+          default)
+              echo Nothing to change. Keep Default.
+              ;;
             100)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
               echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
               echo "CONFIG_HZ=100" >> "$CONFIG_FILE"
               echo "CONFIG_HZ_100=y" >> "$CONFIG_FILE"
+
               ;;
             250)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
               echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
               echo "CONFIG_HZ=250" >> "$CONFIG_FILE"
               echo "CONFIG_HZ_250=y" >> "$CONFIG_FILE"
               ;;
             300)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
               echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
               echo "CONFIG_HZ=300" >> "$CONFIG_FILE"
               echo "CONFIG_HZ_300=y" >> "$CONFIG_FILE"
               ;;
             1000)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
               echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
               echo "CONFIG_HZ=1000" >> "$CONFIG_FILE"
               echo "CONFIG_HZ_1000=y" >> "$CONFIG_FILE"
