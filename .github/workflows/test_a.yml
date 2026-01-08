@@ -251,6 +251,10 @@ jobs:
 
           # Script sign patch
           apply_patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch"
+
+          # LOS Disguise patch
+          apply_patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-fs-lineageos-disguise.patch"
+          
           
           echo "✅ Applied -${{ github.event.inputs.optimizationLevel }} optimization"
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
