@@ -71,6 +71,14 @@ on:
           - "250"
           - "300"
           - "1000"
+      ltoType:
+        description: "LTO type (Full LTO takes longer to build)"
+        required: false
+        type: choice
+        default: "thin"
+        options:
+          - "thin"
+          - "full"
       bbg:
         description: "Baseband-guard Support (if KSU Enabled)"
         required: true
@@ -630,38 +638,10 @@ jobs:
           
           echo "✅ MamboSU with SUSFS kernel patches fully integrated"
 
-      - name: "🔧 Setup YukiSU"
-        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'yukisu'
-        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
-        run: |
-          rm -rf ./KernelSU ./drivers/kernelsu
-          
-          # Install YukiSU
-          curl -LSs "https://raw.githubusercontent.com/Anatdx/YukiSU/main/kernel/setup.sh" | bash -s main
-          
-          # Apply syscall hooks
-          curl -L -o hooks.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/scope_min_manual_hooks_v1.6.patch"
-          patch -p1 < hooks.patch || echo "Warning: Syscall hooks failed"
-          
-          # Add KSU configs
-          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
-          cat >> "$CONFIG_FILE" << 'EOF'
-          config_KSU=y
-          config_KPM=y
-          config_KSU_MANUAL_HOOK=y
-          config_KSU_MANUAL_HOOK_AUTO_SETUID_HOOK=y
-          config_KPROBES=n
-          config_OVERLAY_FS=y
-          config_TMPFS_XATTR=y
-          config_TMPFS_POSIX_ACL=y
-          EOF
-          
-          echo "✅ Installed YukiSU Successfully"
-  
       - name: "🔨 Build kernel"
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          LTO=thin \
+          LTO=${{ github.event.inputs.ltoType }} \
           BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 \
           build/build.sh -j$(nproc --all)
 
@@ -674,15 +654,6 @@ jobs:
           ./patch
           mv oImage Image
 
-      - name: "🩹 Apply KPM patch (YukiSU)"
-        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'yukisu'
-        working-directory: ${{ env.WORK_DIR }}/out/dist
-        run: |
-          curl -LSs "https://raw.githubusercontent.com/Anatdx/YukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch
-          chmod +x patch
-          ./patch
-          mv oImage Image
-
       - name: "📦 Prepare artifact"
         working-directory: ${{ env.WORK_DIR }}
         run: |
@@ -691,9 +662,8 @@ jobs:
             VARIANT_NAME="${{ matrix.variant }}"
           fi
           cp out/dist/Image Image.$VARIANT_NAME
-          echo "ARTIFACT_NAME=kernel-${VARIANT_NAME}-${{ github.event.inputs.optimizationLevel }}-${{ github.event.inputs.tickRate }}hz" >> $GITHUB_ENV
-          echo "IMAGE_NAME=Image.$VARIANT_NAME" >> $GITHUB_ENV
-
+          echo "ARTIFACT_NAME=kernel-${VARIANT_NAME}-${{ github.event.inputs.optimizationLevel }}-${{ github.event.inputs.ltoType }}-${{ github.event.inputs.tickRate }}hz" >> $GITHUB_ENV
+          
       - name: "📤 Upload kernel"
         uses: actions/upload-artifact@v4
         with:
@@ -750,6 +720,7 @@ jobs:
             
             CAPTION="✅ Kernel Build Complete
           Branch: ${{ github.event.inputs.kernelBranch }}
+          LTO Type: ${{ github.event.inputs.ltoType }}
           Optimization: -${{ github.event.inputs.optimizationLevel }}
           Tick Rate: ${{ github.event.inputs.tickRate }}Hz
           Variants: ${{ github.event.inputs.buildKSU }}${KSU_TEXT}
