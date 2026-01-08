@@ -646,16 +646,14 @@ jobs:
           # Add KSU configs
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_KSU=m
-          CONFIG_KPM=y
-          CONFIG_KSU_MANUAL_HOOK=y
-          CONFIG_KSU_MANUAL_HOOK_AUTO_SETUID_HOOK=y
-          CONFIG_KPROBES=n
-          CONFIG_HAVE_KPROBES=n
-          CONFIG_KPROBE_EVENTS=n
-          CONFIG_OVERLAY_FS=y
-          CONFIG_TMPFS_XATTR=y
-          CONFIG_TMPFS_POSIX_ACL=y
+          config_KSU=y
+          config_KPM=y
+          config_KSU_MANUAL_HOOK=y
+          config_KSU_MANUAL_HOOK_AUTO_SETUID_HOOK=y
+          config_KPROBES=n
+          config_OVERLAY_FS=y
+          config_TMPFS_XATTR=y
+          config_TMPFS_POSIX_ACL=y
           EOF
           
           echo "✅ Installed YukiSU Successfully"
