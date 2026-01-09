@@ -68,10 +68,10 @@ on:
           - "default"
           - "100"
           - "250"
+          - "300"
           - "500"
           - "600"
           - "750"
-          - "300"
           - "1000"
       bbg:
         description: "Baseband-guard Support (if KSU Enabled)"
