@@ -56,9 +56,9 @@ on:
         type: choice
         default: "O2"
         options:
-          - "O2"
-          - "O3"
-          - "Os"
+          - "O2";
+          - "O3";
+          - "Os";
       tickRate:
         description: "Kernel tick rate (Hz)"
         required: false
@@ -78,7 +78,12 @@ on:
         options:
           - "on"
           - "off"
-            
+      swapSizeGB:
+        description: "Optional swap size in GB to create on the runner (set 0 to disable)"
+        required: false
+        type: string
+        default: "18"
+
 jobs:
   Build-Kernel:
     name: "🚀 Build Kernel"
@@ -86,9 +91,9 @@ jobs:
     strategy:
       matrix:
         variant: ${{ fromJSON(
-          inputs.buildKSU == 'both' && '["noksu", "ksu"]' ||
-          inputs.buildKSU == 'ksu' && '["ksu"]' ||
-          '["noksu"]' ) }}
+          inputs.buildKSU == '[&#34;noksu&#34;, &#34;ksu&#34;]' && inputs.buildKSU == 'both' && '[\"noksu\", \"ksu\"]' ||
+          inputs.buildKSU == 'ksu' && '[\"ksu\"]' ||
+          '[\"noksu\"]' ) }}
 
     env:
       kernelDir: common_${{ github.event.inputs.kernelDevice }}
@@ -103,6 +108,45 @@ jobs:
           echo "BUILD_TIME=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
           sudo apt-get update -qq
           sudo apt-get install -y repo rsync aria2
+
+      - name: "🧰 Setup swapfile (optional)"
+        # swap creation happens early so build processes can use it
+        run: |
+          SWAP_GB="${{ github.event.inputs.swapSizeGB }}"
+          # Normalize empty input to 0
+          if [ -z "$SWAP_GB" ]; then
+            SWAP_GB=0
+          fi
+
+          if [ "$SWAP_GB" != "0" ]; then
+            echo "Requested swap: ${SWAP_GB}G"
+            # If /swapfile exists, try to remove it first to avoid conflicts
+            if [ -f /swapfile ]; then
+              echo "Existing /swapfile found, disabling and removing..."
+              sudo swapoff /swapfile || true
+              sudo rm -f /swapfile
+            fi
+
+            # Try to create swap with fallocate for speed; fallback to dd
+            if command -v fallocate >/dev/null 2>&1; then
+              echo "Creating swapfile with fallocate..."
+              sudo fallocate -l ${SWAP_GB}G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=$((SWAP_GB * 1024))
+            else
+              echo "fallocate not available, creating swapfile with dd..."
+              sudo dd if=/dev/zero of=/swapfile bs=1M count=$((SWAP_GB * 1024))
+            fi
+
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile
+            sudo swapon /swapfile
+            # Reduce swappiness so system prefers RAM but can use swap when needed
+            sudo sysctl -w vm.swappiness=10 || true
+
+            echo "SWAP_CREATED=true" >> $GITHUB_ENV
+            echo "/swapfile created and activated (size: ${SWAP_GB}G)"
+          else
+            echo "No swap requested (swapSizeGB=${SWAP_GB})"
+          fi
 
       - name: "🌟 Clone kernel source"
         working-directory: ./${{ env.kernelDir }}
@@ -151,7 +195,7 @@ jobs:
       - name: "⚙️ Configure kernel optimization and tick rate"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
-          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}";
           
           # Remove existing optimization configs
           sed -i '/CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE/d' "$CONFIG_FILE"
@@ -242,7 +286,7 @@ jobs:
 
           # Helper
           apply_patch() {
-            local url="$1"
+            local url="$1";
             local file=$(basename "$url")
             curl -L -o "$file" "$url"
             patch -p1 < "$file" || echo "::warning::Hunks failed in $file"
@@ -255,11 +299,11 @@ jobs:
           echo "✅ Applied -${{ github.event.inputs.optimizationLevel }} optimization"
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
 
-      - name: "🔧 Add BBG Support (KSU variant only)"
+      - name: "🔧 Add BBG Support (KSU variant only)";
         if: matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
-          echo "Adding BBG..."
+          echo "Adding BBG...";
           wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
           echo "CONFIG_BBG=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' security/Kconfig
@@ -279,7 +323,7 @@ jobs:
 
           SUSFS_KERNEL_PATCH="susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch"
 
-          echo "🔧 Applying SUSFS kernel patch if possible..."
+          echo "🔧 Applying SUSFS kernel patch if possible...";
           if patch -p1 < "$SUSFS_KERNEL_PATCH"; then
             echo "✅ SUSFS patch successfully applied"
           else
@@ -323,13 +367,13 @@ jobs:
             else
               echo "⚠️ KSU SUSFS patch failed — applying manual fallback"
               cd ..
-              sed -i '/#include <linux\/pid.h>/a #include <linux/susfs.h>' KernelSU/kernel/ksu.c
-              sed -i '/ksu_core_init()/a \\tsusfs_init();' KernelSU/kernel/ksu.c
+              sed -i '/#include /a #include ' KernelSU/kernel/ksu.c
+              sed -i '/ksu_core_init()/a \tsusfs_init();' KernelSU/kernel/ksu.c
             fi
           else
             echo "⚠️ KSU patch missing — manually injecting changes"
-            sed -i '/#include <linux\/pid.h>/a #include <linux/susfs.h>' KernelSU/kernel/ksu.c
-            sed -i '/ksu_core_init()/a \\tsusfs_init();' KernelSU/kernel/ksu.c
+            sed -i '/#include /a #include ' KernelSU/kernel/ksu.c
+            sed -i '/ksu_core_init()/a \tsusfs_init();' KernelSU/kernel/ksu.c
           fi
 
           echo "🔍 Verifying SUSFS files..."
@@ -632,7 +676,7 @@ jobs:
       - name: "🔨 Build kernel"
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          LTO=thin \
+          LTO=full \
           BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 \
           build/build.sh -j$(nproc --all)
 
@@ -648,13 +692,28 @@ jobs:
       - name: "📦 Prepare artifact"
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          VARIANT_NAME="${{ matrix.variant }}"
+          VARIANT_NAME="${{ matrix.variant }}";
           if [ "${{ matrix.variant }}" == "ksu" ]; then
-            VARIANT_NAME="${{ matrix.variant }}"
+            VARIANT_NAME="${{ matrix.variant }}";
           fi
           cp out/dist/Image Image.$VARIANT_NAME
           echo "ARTIFACT_NAME=kernel-${VARIANT_NAME}-${{ github.event.inputs.optimizationLevel }}-${{ github.event.inputs.tickRate }}hz" >> $GITHUB_ENV
           echo "IMAGE_NAME=Image.$VARIANT_NAME" >> $GITHUB_ENV
+
+      - name: "♻️ Remove swapfile (cleanup)"
+        if: always()
+        run: |
+          # Only remove if we previously created a swapfile
+          if [ -f /swapfile ]; then
+            echo "Disabling and removing /swapfile..."
+            sudo swapoff /swapfile || true
+            sudo rm -f /swapfile || true
+            # Try to reset swappiness to default
+            sudo sysctl -w vm.swappiness=60 || true
+            echo "Swapfile removed."
+          else
+            echo "No /swapfile found - nothing to cleanup."
+          fi
 
       - name: "📤 Upload kernel"
         uses: actions/upload-artifact@v4
@@ -704,10 +763,10 @@ jobs:
         if: always()
         run: |
           if [[ -f "${{ env.ZIP_PATH }}" ]]; then
-            KSU_TEXT=""
+            KSU_TEXT="";
             if [ "${{ github.event.inputs.buildKSU }}" != "noksu" ]; then
               KSU_TEXT="
-          KSU Variant: ${{ github.event.inputs.ksuVariant }}"
+          KSU Variant: ${{ github.event.inputs.ksuVariant }}";
             fi
             
             CAPTION="✅ Kernel Build Complete
@@ -720,10 +779,10 @@ jobs:
             curl -s -F document=@"${{ env.ZIP_PATH }}" \
                  -F caption="$CAPTION" \
                  -F chat_id=${{ secrets.TELEGRAM_USER_ID }} \
-                 "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
+                 "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument";
           else
             curl -s -X POST \
                  -d chat_id=${{ secrets.TELEGRAM_USER_ID }} \
                  -d text="❌ Kernel build failed - Optimization: -${{ github.event.inputs.optimizationLevel }}, Tick: ${{ github.event.inputs.tickRate }}Hz" \
-                 "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"
+                 "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage";
           fi
