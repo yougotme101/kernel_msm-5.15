@@ -225,7 +225,18 @@ jobs:
       - name: "⚙️ Configure kernel optimization and tick rate"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
+          # Clean the source tree first
+          make LLVM=1 mrproper
+          
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}";
+
+          # add LLVM defconf
+          make LLVM=1 defconfig
+          
+          # Force Full LTO in the .config file
+          ./scripts/config --disable LTO_NONE
+          ./scripts/config --disable LTO_CLANG_THIN
+          ./scripts/config --enable LTO_CLANG_FULL
 
           # Helper
           apply_patch() {
@@ -362,12 +373,6 @@ jobs:
           
           # Basic optimizations
           echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
-
-          make LLVM=1 defconfig
-          # Force Full LTO in the .config file
-          ./scripts/config --disable LTO_NONE
-          ./scripts/config --disable LTO_CLANG_THIN
-          ./scripts/config --enable LTO_CLANG_FULL
           
           # Extra TCP configs
           cat >> "$CONFIG_FILE" << 'EOF'
