@@ -387,11 +387,11 @@ jobs:
           # Script sign patch
           apply_patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch"
           
-          echo "✅ Applied -${{ github.event.inputs.optimizationLevel }} optimization"
+          echo "✅ Applied -${{ github.event.inputs.optimizationLevel }} Optimization"
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
 
       - name: "🛠️ Apply -O3 Optimization Patch"
-        if: github.event.inputs.tickRate == '03'
+        if: github.event.inputs.optimizationLevel == '03'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           # Apply the patch file from your root directory to the kernel source
@@ -399,6 +399,8 @@ jobs:
           
           # Verify the change in the Makefile
           grep "KBUILD_CFLAGS += -O3" Makefile || (echo "Patch failed!" && exit 1)
+          
+          echo "✅ Successfully Apply-${{ github.event.inputs.optimizationLevel }} Optimization Patch"
           
       - name: "🔧 Add BBG Support (KSU variant only)"
         if: matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
