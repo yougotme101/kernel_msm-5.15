@@ -173,11 +173,7 @@ jobs:
           else
             echo "No swap requested (swapSizeGB=${SWAP_GB})"
           fi
-      - name: "Install Build Dependencies"
-        run: |
-          sudo apt update
-          sudo apt install -y bc bison build-essential flex libssl-dev libelf-dev clang lld llvm
-
+      
       - name: "🌟 Clone kernel source"
         working-directory: ./${{ env.kernelDir }}
         run: |
