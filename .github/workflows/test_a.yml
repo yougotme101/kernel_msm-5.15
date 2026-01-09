@@ -225,14 +225,8 @@ jobs:
       - name: "⚙️ Configure kernel optimization and tick rate"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
-          # Clean the source tree first
-          make LLVM=1 mrproper
-          
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}";
 
-          # add LLVM defconf
-          make LLVM=1 defconfig
-          
           # Force Full LTO in the .config file
           ./scripts/config --disable LTO_NONE
           ./scripts/config --disable LTO_CLANG_THIN
@@ -391,7 +385,7 @@ jobs:
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
 
       - name: "🛠️ Apply -O3 Optimization Patch"
-        if: github.event.inputs.optimizationLevel == '03'
+        if: matrix.variant == 'both' && github.event.inputs.optimizationLevel == 'O3'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           # Apply the patch file from your root directory to the kernel source
@@ -399,6 +393,11 @@ jobs:
           
           # Verify the change in the Makefile
           grep "KBUILD_CFLAGS += -O3" Makefile || (echo "Patch failed!" && exit 1)
+         
+          ./scripts/config --file "${OUT_DIR}/.config" 
+          --enable CC_OPTIMIZE_FOR_PERFORMANCE
+          ./scripts/config --file "${OUT_DIR}/.config" 
+          --disable CC_OPTIMIZE_FOR_SIZE
           
           echo "✅ Successfully Apply-${{ github.event.inputs.optimizationLevel }} Optimization Patch"
           
