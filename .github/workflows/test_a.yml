@@ -769,8 +769,9 @@ jobs:
         run: |
           LTO=full \
           BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 \
-          build/build.sh -j$(nproc --all) LLVM=1
-
+          build/build.sh -j$(nproc --all) \ O=${{ env.WORK_DIR }}/${{ env.OUT_DIR }} \
+            DIST_DIR=${{ env.WORK_DIR }}/dist 
+            
       - name: "🩹 Apply KPM patch (SukiSU-Ultra only)"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'sukisu-ultra'
         working-directory: ${{ env.WORK_DIR }}/out/dist
