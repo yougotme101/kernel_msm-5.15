@@ -222,12 +222,7 @@ jobs:
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}";
-
-          # Force Full LTO in the .config file
-          ./scripts/config --disable LTO_NONE
-          ./scripts/config --disable LTO_CLANG_THIN
-          ./scripts/config --enable LTO_CLANG_FULL
-
+          
           # Helper
           apply_patch() {
             local url="$1";
@@ -763,8 +758,7 @@ jobs:
         run: |
           LTO=full \
           BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 \
-          build/build.sh -j$(nproc --all) \ O=${{ env.WORK_DIR }}/${{ env.OUT_DIR }} \
-            DIST_DIR=${{ env.WORK_DIR }}/dist 
+          build/build.sh -j$(nproc --all)
             
       - name: "🩹 Apply KPM patch (SukiSU-Ultra only)"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'sukisu-ultra'
