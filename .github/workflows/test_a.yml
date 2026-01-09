@@ -273,7 +273,7 @@ jobs:
               echo "CONFIG_CC_OPTIMIZE_FOR_SIZE=y" >> "$CONFIG_FILE"
               ;;
           esac
-          
+         
           # Apply selected tick rate
           case "${{ github.event.inputs.tickRate }}" in
           default)
@@ -390,6 +390,16 @@ jobs:
           echo "✅ Applied -${{ github.event.inputs.optimizationLevel }} optimization"
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
 
+      - name: "🛠️ Apply -O3 Optimization Patch"
+        if: github.event.inputs.tickRate == '03'
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          # Apply the patch file from your root directory to the kernel source
+          patch -p1 "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/add_-03.patch"
+          
+          # Verify the change in the Makefile
+          grep "KBUILD_CFLAGS += -O3" Makefile || (echo "Patch failed!" && exit 1)
+          
       - name: "🔧 Add BBG Support (KSU variant only)"
         if: matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
