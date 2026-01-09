@@ -70,14 +70,6 @@ on:
           - "250"
           - "300"
           - "1000"
-      ltoType:
-        description: "LTO type (Full LTO takes longer to build)"
-        required: false
-        type: choice
-        default: "thin"
-        options:
-          - "thin"
-          - "full"
       bbg:
         description: "Baseband-guard Support (if KSU Enabled)"
         required: true
@@ -640,11 +632,11 @@ jobs:
       - name: "🔨 Build kernel"
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          LTO=${{ github.event.inputs.ltoType }} \
+          LTO=thin \
           BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 \
           build/build.sh -j$(nproc --all)
 
-      - name: "🩹 Apply KPM patch (SukiSU)"
+      - name: "🩹 Apply KPM patch (SukiSU-Ultra only)"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'sukisu-ultra'
         working-directory: ${{ env.WORK_DIR }}/out/dist
         run: |
@@ -661,8 +653,9 @@ jobs:
             VARIANT_NAME="${{ matrix.variant }}"
           fi
           cp out/dist/Image Image.$VARIANT_NAME
-          echo "ARTIFACT_NAME=kernel-${VARIANT_NAME}-${{ github.event.inputs.optimizationLevel }}-${{ github.event.inputs.ltoType }}-${{ github.event.inputs.tickRate }}hz" >> $GITHUB_ENV
-          
+          echo "ARTIFACT_NAME=kernel-${VARIANT_NAME}-${{ github.event.inputs.optimizationLevel }}-${{ github.event.inputs.tickRate }}hz" >> $GITHUB_ENV
+          echo "IMAGE_NAME=Image.$VARIANT_NAME" >> $GITHUB_ENV
+
       - name: "📤 Upload kernel"
         uses: actions/upload-artifact@v4
         with:
@@ -719,7 +712,6 @@ jobs:
             
             CAPTION="✅ Kernel Build Complete
           Branch: ${{ github.event.inputs.kernelBranch }}
-          LTO Type: ${{ github.event.inputs.ltoType }}
           Optimization: -${{ github.event.inputs.optimizationLevel }}
           Tick Rate: ${{ github.event.inputs.tickRate }}Hz
           Variants: ${{ github.event.inputs.buildKSU }}${KSU_TEXT}
