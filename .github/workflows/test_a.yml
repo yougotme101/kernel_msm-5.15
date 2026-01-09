@@ -56,9 +56,9 @@ on:
         type: choice
         default: "O2"
         options:
-          - "O2";
-          - "O3";
-          - "Os";
+          - "O2"
+          - "O3"
+          - "Os"
       tickRate:
         description: "Kernel tick rate (Hz)"
         required: false
