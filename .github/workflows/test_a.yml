@@ -82,7 +82,7 @@ on:
         description: "Optional swap size in GB to create on the runner (set 0 to disable)"
         required: false
         type: string
-        default: "18"
+        default: "8"
 
 jobs:
   Build-Kernel:
@@ -299,7 +299,7 @@ jobs:
           echo "✅ Applied -${{ github.event.inputs.optimizationLevel }} optimization"
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
 
-      - name: "🔧 Add BBG Support (KSU variant only)";
+      - name: "🔧 Add BBG Support (KSU variant only)"
         if: matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
