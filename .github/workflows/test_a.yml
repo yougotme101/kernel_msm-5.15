@@ -260,6 +260,10 @@ jobs:
               echo "# CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set" >> "$CONFIG_FILE"
               echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y" >> "$CONFIG_FILE"
               echo "# CONFIG_CC_OPTIMIZE_FOR_SIZE is not set" >> "$CONFIG_FILE"
+              
+              patch -p1 "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/add_-03.patch"
+          
+              grep "KBUILD_CFLAGS += -O3" Makefile || (echo "Patch failed!" && exit 1)
               ;;
             Os)
               echo "# CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set" >> "$CONFIG_FILE"
@@ -383,23 +387,6 @@ jobs:
           
           echo "✅ Applied -${{ github.event.inputs.optimizationLevel }} Optimization"
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
-
-      - name: "🛠️ Apply -O3 Optimization Patch"
-        if: matrix.variant == 'both' && github.event.inputs.optimizationLevel == 'O3'
-        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
-        run: |
-          # Apply the patch file from your root directory to the kernel source
-          patch -p1 "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/add_-03.patch"
-          
-          # Verify the change in the Makefile
-          grep "KBUILD_CFLAGS += -O3" Makefile || (echo "Patch failed!" && exit 1)
-         
-          ./scripts/config --file "${OUT_DIR}/.config" 
-          --enable CC_OPTIMIZE_FOR_PERFORMANCE
-          ./scripts/config --file "${OUT_DIR}/.config" 
-          --disable CC_OPTIMIZE_FOR_SIZE
-          
-          echo "✅ Successfully Apply-${{ github.event.inputs.optimizationLevel }} Optimization Patch"
           
       - name: "🔧 Add BBG Support (KSU variant only)"
         if: matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
