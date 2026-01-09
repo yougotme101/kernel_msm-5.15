@@ -4,8 +4,11 @@
 This workflow is configured for specific devices. **You must modify the settings for your device** or it may not work properly.
 
 ## Extra Optimization (Only for test-a workflow)
-- Added Extra TCP Congestion : BBR, Cubic, Westwood
-- Added KSU Fork : KowSU, MamboSU, MamboSU-SUSFS(unstable, don't crying about it)
+- Added Extra TCP Congestion: BBR, Cubic, Westwood
+- Added KSU Fork: KowSU, MamboSU, MamboSU-SUSFS(unstable, don't crying about it)
+- Added Custom Tickrate Options: 500hz, 600hz, 750hz
+- FullLTO build
+- Add Swapfile options and Cleanup Disk tools to free up space
 - Added XStock, update weekly (basically YASK, but i changed the the default manager to KowSU and remove the SUSFS, KPM Feature)
 
 ## 🔧 Quick Start
