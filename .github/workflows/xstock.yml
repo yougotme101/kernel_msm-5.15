@@ -11,10 +11,10 @@ on:
   workflow_dispatch:
     inputs:
       swapSizeGB:
-      description: "Optional swap size in GB to create on the runner (set 0 to disable)"
-      required: false
-      type: string
-      default: "8"
+        description: "Optional swap size in GB to create on the runner (set 0 to disable)"
+        required: false
+        type: string
+        default: "8"
 
 jobs:
   build-kernels:
