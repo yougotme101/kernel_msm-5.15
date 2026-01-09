@@ -9,6 +9,12 @@ on:
   schedule:
     - cron: '0 0 * * 0'
   workflow_dispatch:
+               inputs:
+                  swapSizeGB:
+                  description: "Optional swap size in GB to create on the runner (set 0 to disable)"
+                  required: false
+                  type: string
+                  default: "8"
 
 jobs:
   build-kernels:
@@ -80,6 +86,68 @@ jobs:
           echo "BUILD_TIME=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
           sudo apt-get update -qq
           sudo apt-get install -y repo rsync aria2
+
+      - name: 🔍 Check Space (Before Cleanup)
+        run: |
+          echo "Disk space before cleanup:"
+          df -h /
+
+      - name: 🧹 Aggressive Cleanup
+        run: |
+          # Remove heavy pre-installed tools
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          
+          # Prune Docker to remove hidden images and build cache
+          sudo docker image prune --all --force
+          sudo docker builder prune -a -f
+
+      - name: 🔍 Check Space (After Cleanup)
+        run: |
+          echo "Disk space after cleanup:"
+          df -h /
+
+      - name: "🧰 Setup swapfile (optional)"
+        # swap creation happens early so build processes can use it
+        run: |
+          SWAP_GB="${{ github.event.inputs.swapSizeGB }}"
+          # Normalize empty input to 0
+          if [ -z "$SWAP_GB" ]; then
+            SWAP_GB=0
+          fi
+
+          if [ "$SWAP_GB" != "0" ]; then
+            echo "Requested swap: ${SWAP_GB}G"
+            # If /swapfile exists, try to remove it first to avoid conflicts
+            if [ -f /swapfile ]; then
+              echo "Existing /swapfile found, disabling and removing..."
+              sudo swapoff /swapfile || true
+              sudo rm -f /swapfile
+            fi
+
+            # Try to create swap with fallocate for speed; fallback to dd
+            if command -v fallocate >/dev/null 2>&1; then
+              echo "Creating swapfile with fallocate..."
+              sudo fallocate -l ${SWAP_GB}G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=$((SWAP_GB * 1024))
+            else
+              echo "fallocate not available, creating swapfile with dd..."
+              sudo dd if=/dev/zero of=/swapfile bs=1M count=$((SWAP_GB * 1024))
+            fi
+
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile
+            sudo swapon /swapfile
+            # Reduce swappiness so system prefers RAM but can use swap when needed
+            sudo sysctl -w vm.swappiness=10 || true
+
+            echo "SWAP_CREATED=true" >> $GITHUB_ENV
+            echo "/swapfile created and activated (size: ${SWAP_GB}G)"
+          else
+            echo "No swap requested (swapSizeGB=${SWAP_GB})"
+          fi
 
       - name: "🌟 Clone kernel source"
         working-directory: ./${{ env.KERNEL_LOC_DIR }}
@@ -212,7 +280,7 @@ jobs:
       - name: "🔨 Build kernel"
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          LTO=thin \
+          LTO=full \
           BUILD_CONFIG=${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}/build.config.gki.aarch64 \
           build/build.sh -j$(nproc --all)
           
@@ -234,6 +302,27 @@ jobs:
           name: ${{ matrix.kernel.name }}-kernel
           path: ${{ env.WORK_DIR }}/out/dist/${{ env.OUTPUT_NAME }}
           retention-days: 1
+
+      - name: 🔍 Check Space (Post-Build)
+        if: always() # Run even if build fails to debug space issues
+        run: |
+          echo "Final disk space status:"
+          df -h /
+      
+      - name: "♻️ Remove swapfile (cleanup)"
+        if: always()
+        run: |
+          # Only remove if we previously created a swapfile
+          if [ -f /swapfile ]; then
+            echo "Disabling and removing /swapfile..."
+            sudo swapoff /swapfile || true
+            sudo rm -f /swapfile || true
+            # Try to reset swappiness to default
+            sudo sysctl -w vm.swappiness=60 || true
+            echo "Swapfile removed."
+          else
+            echo "No /swapfile found - nothing to cleanup."
+          fi
 
   package-kernels:
     name: "📦 Package Kernels"
@@ -267,11 +356,13 @@ jobs:
           ╠═════════════════════════════════════════════════════╣
           ║                                                     ║
           ║     Features:                                       ║
-          ║     • Thin LTO + -O2 Optimization                   ║
+          ║     • Full LTO + -O2 Optimization                   ║
           ║     • Extra TCP Congestion                          ║
           ║     • AOSP clang-r547379                            ║
-          ║     • Vanilla & KowSU are available                 ║
-          ║     • Mountify Support                              ║
+          ║     • Baseband-guard Support                        ║
+          ║     • Vanilla & WildSU are available                ║
+          ║     • SUSFS v2.0.0                                  ║
+          ║     • Metamodule (MagicMount or Mountify) Support   ║
           ║                                                     ║
           ║     Please ensure:                                  ║
           ║     • Your device is compatible                     ║
