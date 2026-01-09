@@ -7,6 +7,7 @@ This workflow is configured for specific devices. **You must modify the settings
 - Added Extra TCP Congestion: BBR, Cubic, Westwood
 - Added KSU Fork: KowSU, MamboSU, MamboSU-SUSFS(unstable, don't crying about it)
 - Added Custom Tickrate Options: 500hz, 600hz, 750hz
+- Added to build with BBG
 - FullLTO build
 - Add Swapfile options and Cleanup Disk tools to free up space
 - Added XStock, update weekly (basically YASK, but i changed the the default manager to KowSU and remove the SUSFS, KPM Feature)
@@ -14,7 +15,7 @@ This workflow is configured for specific devices. **You must modify the settings
 ## 🔧 Quick Start
 
 1. **Fork this repository**
-2. Go to **Actions** tab → **"Build kernels"** workflow
+2. Go to **Actions** tab → **"Build kernels test-a"** workflow
 3. Click **"Run workflow"** and configure:
 
 ### Workflow Settings (Use test-a to get more options)
@@ -26,8 +27,12 @@ This workflow is configured for specific devices. **You must modify the settings
 | **Device** | Device name for defconfig | `gki` |
 | **Custom localversion** | Add custom version suffix | (empty) |
 | **Build KSU variant** | Include KernelSU version | `true` |
-| **LTO mode** | Optimization level | `thin` |
-
+| **KSU variant** | KernelSU Manager | `KowSU` |
+| **Kernel Optmization** | Optimization Level | `02` |
+| **LTO mode** | Optimization level | `full` |
+| **Tickrate** | Custom Tickrate Options | `250` |
+| **BBG** | Add BBG Support | `on` |
+| **Swap for runners** | To prevent workflows from failed cause running out of space | `8GB` |
 4. **Wait for build** (20-40 minutes)
 5. **Download** the flashable ZIP from artifacts
 
