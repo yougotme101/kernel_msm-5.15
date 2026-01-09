@@ -173,6 +173,10 @@ jobs:
           else
             echo "No swap requested (swapSizeGB=${SWAP_GB})"
           fi
+      - name: "Install Build Dependencies"
+        run: |
+          sudo apt update
+          sudo apt install -y bc bison build-essential flex libssl-dev libelf-dev clang lld llvm
 
       - name: "🌟 Clone kernel source"
         working-directory: ./${{ env.kernelDir }}
@@ -358,6 +362,12 @@ jobs:
           
           # Basic optimizations
           echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
+
+          make LLVM=1 defconfig
+          # Force Full LTO in the .config file
+          ./scripts/config --disable LTO_NONE
+          ./scripts/config --disable LTO_CLANG_THIN
+          ./scripts/config --enable LTO_CLANG_FULL
           
           # Extra TCP configs
           cat >> "$CONFIG_FILE" << 'EOF'
@@ -754,7 +764,7 @@ jobs:
         run: |
           LTO=full \
           BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 \
-          build/build.sh -j$(nproc --all)
+          build/build.sh -j$(nproc --all) LLVM=1
 
       - name: "🩹 Apply KPM patch (SukiSU-Ultra only)"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'sukisu-ultra'
