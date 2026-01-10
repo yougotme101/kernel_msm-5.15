@@ -10,7 +10,7 @@ This workflow is configured for specific devices. **You must modify the settings
 - Added to build with BBG
 - FullLTO build
 - Add Swapfile options and Cleanup Disk tools to free up space
-- Added XStock, update weekly (basically YASK, but i changed the the default manager to KowSU and remove the SUSFS, KPM Feature)
+- Added XStock, update weekly (basically YASK, but i changed the the default manager to WildKSU, bring back BBG Support, and remove KPM Feature)
 
 ## 🔧 Quick Start
 
