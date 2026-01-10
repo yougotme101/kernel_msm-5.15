@@ -394,23 +394,23 @@ jobs:
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}";
           
           # 1. Enable Energy Aware Scheduling & Power Efficient Workqueues
-          sed -i '/# CONFIG_WQ_POWER_EFFICIENT_DEFAULT is not set/CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y/' "$CONFIG_FILE"
+          sed -i 's/# CONFIG_WQ_POWER_EFFICIENT_DEFAULT is not set/CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y/' "$CONFIG_FILE"
           
           # 2. Set Schedutil as the default governor for better EAS efficiency
-          sed -i '/CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE=y/# CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE is not set/' "$CONFIG_FILE"
+          sed -i 's/CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE=y/# CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE is not set/' "$CONFIG_FILE"
           echo "CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL=y" >> "$CONFIG_FILE"
           
           # 3. Disable heavy kernel logging/debugging to reduce CPU overhead
           # These features constantly write to memory/logs, keeping the CPU awake.
-          sed -i '/CONFIG_DEBUG_KERNEL=y/CONFIG_DEBUG_KERNEL=n/' "$CONFIG_FILE"
-          sed -i '/CONFIG_RUNTIME_TESTING_MENU=y/CONFIG_RUNTIME_TESTING_MENU=n/' "$CONFIG_FILE"
-          sed -i '/CONFIG_FTRACE=y/CONFIG_FTRACE=n/' "$CONFIG_FILE"
-          sed -i '/CONFIG_STACK_TRACER=y/CONFIG_STACK_TRACER=n/' "$CONFIG_FILE"
-          sed -i '/CONFIG_KGDB=y/CONFIG_KGDB=n/' "$CONFIG_FILE"
+          sed -i 's/CONFIG_DEBUG_KERNEL=y/CONFIG_DEBUG_KERNEL=n/' "$CONFIG_FILE"
+          sed -i 's/CONFIG_RUNTIME_TESTING_MENU=y/CONFIG_RUNTIME_TESTING_MENU=n/' "$CONFIG_FILE"
+          sed -i 's/CONFIG_FTRACE=y/CONFIG_FTRACE=n/' "$CONFIG_FILE"
+          sed -i 's/CONFIG_STACK_TRACER=y/CONFIG_STACK_TRACER=n/' "$CONFIG_FILE"
+          sed -i 's/CONFIG_KGDB=y/CONFIG_KGDB=n/' "$CONFIG_FILE"
           
           # 4. Reduce input boost duration (saves juice on every touch)
           # Note: Path may vary depending on your kernel's implementation
-          sed -i '/CONFIG_INPUT_BOOST_FREQ=.*/CONFIG_INPUT_BOOST_FREQ=0/' "$CONFIG_FILE"
+          sed -i 's/CONFIG_INPUT_BOOST_FREQ=.*/CONFIG_INPUT_BOOST_FREQ=0/' "$CONFIG_FILE"
           
           # 5. Optimize I/O for battery (less waking of the storage controller)
           echo "CONFIG_IOSCHED_ZEN=y" >> "$CONFIG_FILE"
@@ -423,9 +423,9 @@ jobs:
 
           # 7. Optimize Virtual Memory (VFS Cache)
           # Tells the kernel to hold onto file caches longer to reduce disk I/O.
-          sed -i '/CONFIG_DEFAULT_VFS_CACHE_PRESSURE=.*/CONFIG_DEFAULT_VFS_CACHE_PRESSURE=60/' "$CONFIG_FILE"
+          sed -i 's/CONFIG_DEFAULT_VFS_CACHE_PRESSURE=.*/CONFIG_DEFAULT_VFS_CACHE_PRESSURE=60/' "$CONFIG_FILE"
 
-           echo "✅ Successfully Apply Battery Optimization"
+          echo "✅ Successfully Apply Battery Optimization"
           
       - name: "🔧 Add BBG Support (KSU variant only)"
         if: matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
