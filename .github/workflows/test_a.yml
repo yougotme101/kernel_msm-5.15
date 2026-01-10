@@ -393,44 +393,19 @@ jobs:
         run: |
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}";
           
-          # 1. Enable Energy Aware Scheduling & Power Efficient Workqueues
-          sed -i 's/# CONFIG_WQ_POWER_EFFICIENT_DEFAULT is not set/CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y/' "$CONFIG_FILE"
+          # Apply the structural logic patch
+          patch -p1 "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/batteryOpt.patch"
           
-          # 2. Set Schedutil as the default governor for better EAS efficiency
-          sed -i 's/CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE=y/# CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE is not set/' "$CONFIG_FILE"
-          echo "CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL=y" >> "$CONFIG_FILE"
+          # Enable the master switch in your specific device config
+          echo "CONFIG_BATTERY_SAVER_OPTIMIZATIONS=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
+          echo "CONFIG_DISABLE_DEBUG_FOR_BATTERY=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
           
-          # 3. Disable heavy kernel logging/debugging to reduce CPU overhead
-          # These features constantly write to memory/logs, keeping the CPU awake.
-          sed -i 's/CONFIG_DEBUG_KERNEL=y/CONFIG_DEBUG_KERNEL=n/' "$CONFIG_FILE"
-          sed -i 's/CONFIG_RUNTIME_TESTING_MENU=y/CONFIG_RUNTIME_TESTING_MENU=n/' "$CONFIG_FILE"
-          sed -i 's/CONFIG_FTRACE=y/CONFIG_FTRACE=n/' "$CONFIG_FILE"
-          sed -i 's/CONFIG_STACK_TRACER=y/CONFIG_STACK_TRACER=n/' "$CONFIG_FILE"
-          sed -i 's/CONFIG_KGDB=y/CONFIG_KGDB=n/' "$CONFIG_FILE"
-          sed -i 's/CONFIG_PRINTK=y/CONFIG_PRINTK=n/' "$CONFIG_FILE"
-          
-          # 4. Reduce input boost duration (saves juice on every touch)
-          # Note: Path may vary depending on your kernel's implementation
-          sed -i 's/CONFIG_INPUT_BOOST_FREQ=.*/CONFIG_INPUT_BOOST_FREQ=0/' "$CONFIG_FILE"
-          
-          # 5. Optimize I/O for battery (less waking of the storage controller)
-          echo "CONFIG_IOSCHED_ZEN=y" >> "$CONFIG_FILE"
-          echo "CONFIG_DEFAULT_ZEN=y" >> "$CONFIG_FILE"
-          
-          # 6. Aggressive Wakelock Blocking
-          # Helps prevent "Android System" or "WiFi" from waking the phone when the screen is off.
-          echo "CONFIG_ANDROID_PARANOID_NETWORK=y" >> "$CONFIG_FILE"
-          echo "CONFIG_BLOCK_WLAN_RX_WAKELOCK=y" >> "$CONFIG_FILE"
+          # Add the I/O and VM tweaks directly
+          echo "CONFIG_IOSCHED_ZEN=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
+          echo "CONFIG_DEFAULT_ZEN=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
+          echo "CONFIG_DEFAULT_VFS_CACHE_PRESSURE=100" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
 
-          # 7. Optimize Virtual Memory (VFS Cache)
-          # Tells the kernel to hold onto file caches longer to reduce disk I/O.
-          sed -i 's/CONFIG_DEFAULT_VFS_CACHE_PRESSURE=.*/CONFIG_DEFAULT_VFS_CACHE_PRESSURE=60/' "$CONFIG_FILE"
-
-          # 8. Enable Power Collapse
-          # This ensures that when the CPU is idle, it enters the lowest possible power state (C-states).
-          sed -i 's/# CONFIG_ARM_CPUIDLE is not set/CONFIG_ARM_CPUIDLE=y/' "$CONFIG_FILE"
-
-          echo "✅ Successfully Apply Battery Optimization"
+          echo "✅ Successfully Integrate Battery Mods into Kconfig System"
           
       - name: "🔧 Add BBG Support (KSU variant only)"
         if: matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
