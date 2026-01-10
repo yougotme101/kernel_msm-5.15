@@ -407,6 +407,7 @@ jobs:
           sed -i 's/CONFIG_FTRACE=y/CONFIG_FTRACE=n/' "$CONFIG_FILE"
           sed -i 's/CONFIG_STACK_TRACER=y/CONFIG_STACK_TRACER=n/' "$CONFIG_FILE"
           sed -i 's/CONFIG_KGDB=y/CONFIG_KGDB=n/' "$CONFIG_FILE"
+          sed -i 's/CONFIG_PRINTK=y/CONFIG_PRINTK=n/' "$CONFIG_FILE"
           
           # 4. Reduce input boost duration (saves juice on every touch)
           # Note: Path may vary depending on your kernel's implementation
@@ -424,6 +425,10 @@ jobs:
           # 7. Optimize Virtual Memory (VFS Cache)
           # Tells the kernel to hold onto file caches longer to reduce disk I/O.
           sed -i 's/CONFIG_DEFAULT_VFS_CACHE_PRESSURE=.*/CONFIG_DEFAULT_VFS_CACHE_PRESSURE=60/' "$CONFIG_FILE"
+
+          # 8. Enable Power Collapse
+          # This ensures that when the CPU is idle, it enters the lowest possible power state (C-states).
+          sed -i 's/# CONFIG_ARM_CPUIDLE is not set/CONFIG_ARM_CPUIDLE=y/' "$CONFIG_FILE"
 
           echo "✅ Successfully Apply Battery Optimization"
           
