@@ -387,7 +387,7 @@ jobs:
           echo "✅ Applied -${{ github.event.inputs.optimizationLevel }} Optimization"
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
           
-            - name: "🚀 Apply KProfiles Support"
+      - name: "🚀 Apply KProfiles Support"
         if: github.event.inputs.kprofiles == 'enable'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
