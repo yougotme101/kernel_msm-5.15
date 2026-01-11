@@ -73,7 +73,7 @@ on:
           - "600"
           - "750"
           - "1000"
-            kprofiles:
+      kprofiles:
         description: "Add KProfiles support"
         required: false
         type: choice
