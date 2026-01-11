@@ -73,8 +73,8 @@ on:
           - "600"
           - "750"
           - "1000"
-      batteryOpt:
-        description: "Add Battery Optimization (optional, maybe slowing down your potato phones)"
+            kprofiles:
+        description: "Add KProfiles support"
         required: false
         type: choice
         default: "disable"
@@ -387,26 +387,39 @@ jobs:
           echo "✅ Applied -${{ github.event.inputs.optimizationLevel }} Optimization"
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
           
-      - name: "🔋Apply Battery Optimizations (Optional, if enabled)"
-        if: github.event.inputs.batteryOpt == 'enable'
+      - name: "🚀 Apply KProfiles Support"
+        if: github.event.inputs.kprofiles == 'enable'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
-          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}";
+          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           
-          # Apply the structural logic patch
-          patch -p1 "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/batteryOpt.patch"
+          echo "📦 Cloning KProfiles source..."
+          git clone https://github.com/beakthoven/Kprofiles kprofiles
           
-          # Enable the master switch in your specific device config
-          echo "CONFIG_BATTERY_SAVER_OPTIMIZATIONS=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
-          echo "CONFIG_DISABLE_DEBUG_FOR_BATTERY=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
+          echo "🔧 Patching Build System..."
+          # Register KProfiles directory in the top-level Makefile
+          echo "obj-y += kprofiles/" >> Makefile
           
-          # Add the I/O and VM tweaks directly
-          echo "CONFIG_IOSCHED_ZEN=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
-          echo "CONFIG_DEFAULT_ZEN=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
-          echo "CONFIG_DEFAULT_VFS_CACHE_PRESSURE=100" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
+          # 1. Hook into Scheduler (Required for profile switching logic)
+          if [ -f "include/linux/sched.h" ]; then
+            sed -i '/#include <linux\/sched.h>/a #include "../kprofiles/kprofiles.h"' include/linux/sched.h
+            echo "✔ Injected header into sched.h"
+          fi
 
-          echo "✅ Successfully Integrate Battery Mods into Kconfig System"
+          # 2. Hook into Main Init (Starts KProfiles on boot)
+          if [ -f "init/main.c" ]; then
+            # Find the architecture setup line and insert kp_init right after
+            sed -i '/setup_arch(&command_line);/a \    kp_init();' init/main.c
+            echo "✔ Initialized kp_init in main.c"
+          fi
+
+          echo "⚙️ Enabling KProfiles in Defconfig..."
+          # Ensure the config exists in the defconfig file
+          sed -i '/CONFIG_KPROFILES/d' "$CONFIG_FILE" # Remove if already exists to avoid duplicates
+          echo "CONFIG_KPROFILES=y" >> "$CONFIG_FILE"
           
+          echo "✅ KProfiles integration complete."
+
       - name: "🔧 Add BBG Support (KSU variant only)"
         if: matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
