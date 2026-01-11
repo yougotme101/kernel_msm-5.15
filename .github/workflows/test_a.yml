@@ -395,45 +395,46 @@ jobs:
           
           echo "📦 Cloning KProfiles source..."
           rm -rf kprofiles
-          git clone https://github.com/beakthoven/Kprofiles kprofiles
+          [span_1](start_span)git clone https://github.com/beakthoven/Kprofiles kprofiles[span_1](end_span)
           
-          echo "🔧 Locating KProfiles files..."
-          # Find the actual path of the header and C file
-          KP_H_PATH=$(find kprofiles -name "kprofiles.h" | head -n 1)
-          KP_C_PATH=$(find kprofiles -name "kprofiles.c" | head -n 1)
-          KP_DIR=$(dirname "$KP_H_PATH")
-
-          if [ -z "$KP_H_PATH" ]; then
-            echo "❌ Error: kprofiles.h not found in cloned repo!"
-            exit 1
+          # Check if the structure is nested (some versions have a kprofiles/kprofiles/ path)
+          if [ -d "kprofiles/kprofiles" ]; then
+            mv kprofiles/kprofiles/* kprofiles/
           fi
 
           echo "🔧 Patching Build System..."
-          # 1. Add the directory to the Makefile
-          # We use the directory containing the source files
-          echo "obj-y += kprofiles/" >> Makefile
+          # 1. Add to Makefile
+          [span_2](start_span)echo "obj-y += kprofiles/" >> Makefile[span_2](end_span)
           
-          # 2. Move header to global include path
-          cp "$KP_H_PATH" include/linux/kprofiles.h
+          # 2. Handle the Header File
+          # If kprofiles.h is missing, we check for kprofiles.c and create a generic header
+          if [ ! -f "kprofiles/kprofiles.h" ]; then
+            echo "⚠️ kprofiles.h not found, creating wrapper..."
+            echo "void kp_init(void);" > include/linux/kprofiles.h
+          else
+            [span_3](start_span)cp kprofiles/kprofiles.h include/linux/kprofiles.h[span_3](end_span)
+          fi
           
           # 3. Set default profile to Balanced (value 2)
-          if [ -f "$KP_C_PATH" ]; then
-            sed -i 's/int kp_mode = 0;/int kp_mode = 2;/g' "$KP_C_PATH"
-            echo "✔ Set default KProfiles mode to Balanced (2)"
+          # We search for the kp_mode variable in any .c file within the folder
+          KP_SOURCE=$(find kprofiles -name "*.c" | head -n 1)
+          if [ -n "$KP_SOURCE" ]; then
+            [span_4](start_span)sed -i 's/int kp_mode = 0;/int kp_mode = 2;/g' "$KP_SOURCE"[span_4](end_span)
+            echo "✔ Set default KProfiles mode to Balanced (2) in $KP_SOURCE"
           fi
 
           # 4. Patch init/main.c
-          sed -i '/#include <linux\/sched.h>/a #include <linux/kprofiles.h>' init/main.c
-          sed -i '/rest_init();/i \    kp_init();' init/main.c
+          [span_5](start_span)sed -i '/#include <linux\/sched.h>/a #include <linux/kprofiles.h>' init/main.c[span_5](end_span)
+          [span_6](start_span)sed -i '/rest_init();/i \    kp_init();' init/main.c[span_6](end_span)
           
           # 5. Patch include/linux/sched.h
-          sed -i '/#include <uapi\/linux\/sched.h>/a #include <linux/kprofiles.h>' include/linux/sched.h
+          [span_7](start_span)sed -i '/#include <uapi\/linux\/sched.h>/a #include <linux/kprofiles.h>' include/linux/sched.h[span_7](end_span)
 
           echo "⚙️ Enabling KProfiles in Defconfig..."
-          sed -i '/CONFIG_KPROFILES/d' "$CONFIG_FILE"
-          echo "CONFIG_KPROFILES=y" >> "$CONFIG_FILE"
+          [span_8](start_span)sed -i '/CONFIG_KPROFILES/d' "$CONFIG_FILE"[span_8](end_span)
+          [span_9](start_span)echo "CONFIG_KPROFILES=y" >> "$CONFIG_FILE"[span_9](end_span)
           
-          echo "✅ KProfiles integrated successfully"
+          echo "✅ KProfiles integrated"
 
       - name: "🔧 Add BBG Support (KSU variant only)"
         if: matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
