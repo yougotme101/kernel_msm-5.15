@@ -387,30 +387,27 @@ jobs:
           echo "✅ Applied -${{ github.event.inputs.optimizationLevel }} Optimization"
           echo "✅ Applied ${{ github.event.inputs.tickRate }}Hz tick rate"
           
-      - name: "🚀 Apply KProfiles Support"
+            - name: "🚀 Apply KProfiles Support"
         if: github.event.inputs.kprofiles == 'enable'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           
           echo "📦 Cloning KProfiles source..."
-          # Force clone into the kernel source root
           git clone https://github.com/beakthoven/Kprofiles kprofiles
           
           echo "🔧 Patching Build System..."
-          # 1. Ensure the directory is added to the Makefile
+          # 1. Add to Makefile
           echo "obj-y += kprofiles/" >> Makefile
           
-          # 2. Patch init/main.c with absolute placement
-          # We place the include at the very top (line 1) to ensure it's defined
-          sed -i '1i #include "kprofiles/kprofiles.h"' init/main.c
+          # 2. Patch headers using the $(srctree) variable
+          # This ensures the compiler finds the file regardless of the sub-directory
+          sed -i '1i #include <../kprofiles/kprofiles.h>' include/linux/sched.h
           
-          # We place the init call inside the start_kernel function
-          # Using 'rest_init' is often safer for 5.15+ kernels than 'setup_arch'
+          # 3. Patch init/main.c
+          # We use a more generic include path that works with Kbuild
+          sed -i '1i #include <../kprofiles/kprofiles.h>' init/main.c
           sed -i '/rest_init();/i \    kp_init();' init/main.c
-
-          # 3. Patch include/linux/sched.h
-          sed -i '1i #include "kprofiles/kprofiles.h"' include/linux/sched.h
 
           echo "⚙️ Enabling KProfiles in Defconfig..."
           sed -i '/CONFIG_KPROFILES/d' "$CONFIG_FILE"
