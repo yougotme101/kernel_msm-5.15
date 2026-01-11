@@ -12,7 +12,7 @@ on:
     inputs:
       swapSizeGB:
         description: "Optional swap size in GB to create on the runner (set 0 to disable)"
-        required: false
+        required: true
         type: string
         default: "8"
 
