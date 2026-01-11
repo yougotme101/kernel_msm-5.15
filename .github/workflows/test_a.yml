@@ -397,25 +397,25 @@ jobs:
           git clone https://github.com/beakthoven/Kprofiles kprofiles
           
           echo "🔧 Patching Build System..."
-          # Add to Makefile and force global include path (fixes 'No such file' errors)
+          # 1. Add to Makefile
           echo "obj-y += kprofiles/" >> Makefile
-          echo "ccflags-y += -I\$(srctree)/kprofiles" >> Makefile
           
-          # 1. Set default profile to Balanced (value 2)
+          # 2. Move header to global include path to fix 'No such file' errors
+          # This is the most reliable way for 5.15 GKI kernels
+          cp kprofiles/kprofiles.h include/linux/kprofiles.h
+          
+          # 3. Set default profile to Balanced (value 2)
           if [ -f "kprofiles/kprofiles.c" ]; then
             sed -i 's/int kp_mode = 0;/int kp_mode = 2;/g' kprofiles/kprofiles.c
             echo "✔ Set default KProfiles mode to Balanced (2)"
           fi
 
-          # 2. Patch init/main.c
-          # We use a very high-level include to ensure kp_init is defined
-          sed -i '1i #include "kprofiles.h"' init/main.c
-          
-          # Insert initialization call (Safe for 5.15)
+          # 4. Patch init/main.c (Using the now global <linux/kprofiles.h>)
+          sed -i '/#include <linux\/sched.h>/a #include <linux/kprofiles.h>' init/main.c
           sed -i '/rest_init();/i \    kp_init();' init/main.c
           
-          # 3. Patch include/linux/sched.h
-          sed -i '1i #include "kprofiles.h"' include/linux/sched.h
+          # 5. Patch include/linux/sched.h
+          sed -i '/#include <uapi\/linux\/sched.h>/a #include <linux/kprofiles.h>' include/linux/sched.h
 
           echo "⚙️ Enabling KProfiles in Defconfig..."
           sed -i '/CONFIG_KPROFILES/d' "$CONFIG_FILE"
