@@ -394,23 +394,35 @@ jobs:
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           
           echo "📦 Cloning KProfiles source..."
+          rm -rf kprofiles
           git clone https://github.com/beakthoven/Kprofiles kprofiles
           
+          echo "🔧 Locating KProfiles files..."
+          # Find the actual path of the header and C file
+          KP_H_PATH=$(find kprofiles -name "kprofiles.h" | head -n 1)
+          KP_C_PATH=$(find kprofiles -name "kprofiles.c" | head -n 1)
+          KP_DIR=$(dirname "$KP_H_PATH")
+
+          if [ -z "$KP_H_PATH" ]; then
+            echo "❌ Error: kprofiles.h not found in cloned repo!"
+            exit 1
+          fi
+
           echo "🔧 Patching Build System..."
-          # 1. Add to Makefile
+          # 1. Add the directory to the Makefile
+          # We use the directory containing the source files
           echo "obj-y += kprofiles/" >> Makefile
           
-          # 2. Move header to global include path to fix 'No such file' errors
-          # This is the most reliable way for 5.15 GKI kernels
-          cp kprofiles/kprofiles.h include/linux/kprofiles.h
+          # 2. Move header to global include path
+          cp "$KP_H_PATH" include/linux/kprofiles.h
           
           # 3. Set default profile to Balanced (value 2)
-          if [ -f "kprofiles/kprofiles.c" ]; then
-            sed -i 's/int kp_mode = 0;/int kp_mode = 2;/g' kprofiles/kprofiles.c
+          if [ -f "$KP_C_PATH" ]; then
+            sed -i 's/int kp_mode = 0;/int kp_mode = 2;/g' "$KP_C_PATH"
             echo "✔ Set default KProfiles mode to Balanced (2)"
           fi
 
-          # 4. Patch init/main.c (Using the now global <linux/kprofiles.h>)
+          # 4. Patch init/main.c
           sed -i '/#include <linux\/sched.h>/a #include <linux/kprofiles.h>' init/main.c
           sed -i '/rest_init();/i \    kp_init();' init/main.c
           
@@ -421,7 +433,7 @@ jobs:
           sed -i '/CONFIG_KPROFILES/d' "$CONFIG_FILE"
           echo "CONFIG_KPROFILES=y" >> "$CONFIG_FILE"
           
-          echo "✅ KProfiles integrated with Balanced profile"
+          echo "✅ KProfiles integrated successfully"
 
       - name: "🔧 Add BBG Support (KSU variant only)"
         if: matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
