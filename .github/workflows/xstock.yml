@@ -14,7 +14,7 @@ on:
         description: "Optional swap size in GB to create on the runner (set 0 to disable)"
         required: true
         type: string
-        default: "8"
+        default: "10"
 
 jobs:
   build-kernels:
@@ -110,43 +110,29 @@ jobs:
           echo "Disk space after cleanup:"
           df -h /
 
-      - name: "🧰 Setup swapfile (optional)"
-        # swap creation happens early so build processes can use it
+      - name: "🧰 Setup swapfile (Automatic 10GB)"
         run: |
-          SWAP_GB="${{ github.event.inputs.swapSizeGB }}"
-          # Normalize empty input to 0
-          if [ -z "$SWAP_GB" ]; then
-            SWAP_GB=0
-          fi
-
+          # Fallback to 10 if input is not provided (e.g., on schedule)
+          SWAP_GB="${{ github.event.inputs.swapSizeGB || '10' }}"
+          
           if [ "$SWAP_GB" != "0" ]; then
-            echo "Requested swap: ${SWAP_GB}G"
-            # If /swapfile exists, try to remove it first to avoid conflicts
-            if [ -f /swapfile ]; then
-              echo "Existing /swapfile found, disabling and removing..."
-              sudo swapoff /swapfile || true
-              sudo rm -f /swapfile
-            fi
-
-            # Try to create swap with fallocate for speed; fallback to dd
-            if command -v fallocate >/dev/null 2>&1; then
-              echo "Creating swapfile with fallocate..."
-              sudo fallocate -l ${SWAP_GB}G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=$((SWAP_GB * 1024))
-            else
-              echo "fallocate not available, creating swapfile with dd..."
+            echo "Creating ${SWAP_GB}GB swapfile..."
+            
+            # Use fallocate for speed, fallback to dd if the FS doesn't support it
+            sudo fallocate -l ${SWAP_GB}G /swapfile || \
               sudo dd if=/dev/zero of=/swapfile bs=1M count=$((SWAP_GB * 1024))
-            fi
-
+            
             sudo chmod 600 /swapfile
             sudo mkswap /swapfile
             sudo swapon /swapfile
-            # Reduce swappiness so system prefers RAM but can use swap when needed
-            sudo sysctl -w vm.swappiness=10 || true
-
-            echo "SWAP_CREATED=true" >> $GITHUB_ENV
-            echo "/swapfile created and activated (size: ${SWAP_GB}G)"
+            
+            # Tune swappiness (standard for kernel builds is 10-60)
+            sudo sysctl -w vm.swappiness=10
+            
+            echo "✅ Swap of ${SWAP_GB}GB is active."
+            free -h
           else
-            echo "No swap requested (swapSizeGB=${SWAP_GB})"
+            echo "⚠️ Swap creation skipped (requested 0GB)."
           fi
 
       - name: "🌟 Clone kernel source"
