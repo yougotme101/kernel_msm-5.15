@@ -397,28 +397,23 @@ jobs:
           git clone https://github.com/beakthoven/Kprofiles kprofiles
           
           echo "🔧 Patching Build System..."
-          # Register KProfiles directory in the top-level Makefile
+          # 1. Properly add to Makefile so it's compiled
           echo "obj-y += kprofiles/" >> Makefile
           
-          # 1. Hook into Scheduler (Required for profile switching logic)
-          if [ -f "include/linux/sched.h" ]; then
-            sed -i '/#include <linux\/sched.h>/a #include "../kprofiles/kprofiles.h"' include/linux/sched.h
-            echo "✔ Injected header into sched.h"
-          fi
+          # 2. Patch include/linux/sched.h with an absolute path check
+          # We use the full path relative to the kernel root to avoid 'file not found'
+          sed -i '1i #include "kprofiles/kprofiles.h"' include/linux/sched.h
 
-          # 2. Hook into Main Init (Starts KProfiles on boot)
-          if [ -f "init/main.c" ]; then
-            # Find the architecture setup line and insert kp_init right after
-            sed -i '/setup_arch(&command_line);/a \    kp_init();' init/main.c
-            echo "✔ Initialized kp_init in main.c"
-          fi
+          # 3. Patch init/main.c
+          # We place the include at the very top and the init call inside start_kernel
+          sed -i '1i #include "kprofiles/kprofiles.h"' init/main.c
+          sed -i '/setup_arch(&command_line);/a \    kp_init();' init/main.c
 
           echo "⚙️ Enabling KProfiles in Defconfig..."
-          # Ensure the config exists in the defconfig file
-          sed -i '/CONFIG_KPROFILES/d' "$CONFIG_FILE" # Remove if already exists to avoid duplicates
+          sed -i '/CONFIG_KPROFILES/d' "$CONFIG_FILE"
           echo "CONFIG_KPROFILES=y" >> "$CONFIG_FILE"
           
-          echo "✅ KProfiles integration complete."
+          echo "✅ KProfiles integrated successfully"
 
       - name: "🔧 Add BBG Support (KSU variant only)"
         if: matrix.variant == 'ksu' && github.event.inputs.bbg == 'on'
