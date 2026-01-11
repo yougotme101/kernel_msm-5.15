@@ -397,19 +397,21 @@ jobs:
           git clone https://github.com/beakthoven/Kprofiles kprofiles
           
           echo "🔧 Patching Build System..."
-          # Add to Makefile and force the global include path
+          # Add to Makefile and force global include path (fixes 'No such file' errors)
           echo "obj-y += kprofiles/" >> Makefile
           echo "ccflags-y += -I\$(srctree)/kprofiles" >> Makefile
           
           # 1. Set default profile to Balanced (value 2)
-          # We patch kprofiles.c to change the initial state
           if [ -f "kprofiles/kprofiles.c" ]; then
             sed -i 's/int kp_mode = 0;/int kp_mode = 2;/g' kprofiles/kprofiles.c
             echo "✔ Set default KProfiles mode to Balanced (2)"
           fi
 
           # 2. Patch init/main.c
+          # We use a very high-level include to ensure kp_init is defined
           sed -i '1i #include "kprofiles.h"' init/main.c
+          
+          # Insert initialization call (Safe for 5.15)
           sed -i '/rest_init();/i \    kp_init();' init/main.c
           
           # 3. Patch include/linux/sched.h
