@@ -1,4 +1,4 @@
-name: "Build kernels Test-a"
+name: "Build kernels Test-z"
 
 env:
   OUT_DIR: "out"
@@ -12,7 +12,7 @@ on:
         description: "Kernel source URL"
         required: true
         type: string
-        default: "https://github.com/topnotchfreaks/kernel_msm-5.15"
+        default: "https://github.com/zainuye/kernel_msm-5.15"
       kernelBranch:
         description: "Kernel branch"
         required: false
