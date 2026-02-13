@@ -7,14 +7,7 @@ env:
 
 on:
   schedule:
-    - cron: '0 0 * * 0'
-  workflow_dispatch:
-    inputs:
-      swapSizeGB:
-        description: "Optional swap size in GB to create on the runner (set 0 to disable)"
-        required: true
-        type: string
-        default: "8"
+    - cron: '0 0 * * 1'
 
 jobs:
   build-kernels:
@@ -111,33 +104,15 @@ jobs:
           df -h /
 
       - name: "🧰 Setup swapfile (Automatic 10GB)"
-        # swap creation happens early so build processes can use it
+      - name: 📐 Setup SWAP 8GB
+        uses: pierotofy/set-swap-space@master
+        with:
+            swap-size-gb: 8
+            
+      - name: 📐 Tune Swap
         run: |
-          SWAP_GB="${{ github.event.inputs.swapSizeGB }}"
-          if [ -z "$SWAP_GB" ]; then SWAP_GB=0; fi
-
-          if [ "$SWAP_GB" != "0" ]; then
-          echo "Requested swap: ${SWAP_GB}G"
-
-          sudo swapoff -a || true
-
-          sleep 2
-          
-          SWAP_PATH="/mnt/swapfile_custom"
-
-          echo "Creating swapfile at $SWAP_PATH..."
-          sudo fallocate -l ${SWAP_GB}G $SWAP_PATH || sudo dd if=/dev/zero of=$SWAP_PATH bs=1M count=$((SWAP_GB * 1024))
-
-          sudo chmod 600 $SWAP_PATH
-          sudo mkswap $SWAP_PATH
-          sudo swapon $SWAP_PATH
-          sudo sysctl -w vm.swappiness=80 || true
-
-          echo "SWAP_CREATED=true" >> $GITHUB_ENV
-          echo "$SWAP_PATH created and activated (size: ${SWAP_GB}G)"
-          else
-          echo "No swap requested."
-          fi
+            echo "vm.swappiness=80" | sudo tee -a /etc/sysctl.conf
+            sudo sysctl -p
 
       - name: "🌟 Clone kernel source"
         working-directory: ./${{ env.KERNEL_LOC_DIR }}
@@ -362,21 +337,6 @@ jobs:
         run: |
           echo "Final disk space status:"
           df -h /
-      
-      - name: "♻️ Remove swapfile (cleanup)"
-        if: always()
-        run: |
-          # Only remove if we previously created a swapfile
-          if [ -f /swapfile ]; then
-            echo "Disabling and removing /swapfile..."
-            sudo swapoff /swapfile || true
-            sudo rm -f /swapfile || true
-            # Try to reset swappiness to default
-            sudo sysctl -w vm.swappiness=60 || true
-            echo "Swapfile removed."
-          else
-            echo "No /swapfile found - nothing to cleanup."
-          fi
 
   package-kernels:
     name: "📦 Package Kernels"
