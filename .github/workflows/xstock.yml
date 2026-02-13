@@ -102,8 +102,7 @@ jobs:
         run: |
           echo "Disk space after cleanup:"
           df -h /
-
-      - name: "🧰 Setup swapfile (Automatic 10GB)"
+          
       - name: 📐 Setup SWAP 8GB
         uses: pierotofy/set-swap-space@master
         with:
