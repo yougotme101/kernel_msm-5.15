@@ -227,7 +227,7 @@ jobs:
       - name: "🔨 Build kernel"
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          LTO=full \
+          LTO=thin \
           BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 \
           build/build.sh -j$(nproc --all)
 
