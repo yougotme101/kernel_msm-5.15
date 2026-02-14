@@ -37,6 +37,14 @@ on:
           - "noksu"
           - "ksu"
           - "both"
+      ksuVariant:
+        description: "KSU implementation (if KSU enabled)"
+        required: true
+        type: choice
+        default: "kowsu"
+        options:
+         - "wildksu"
+         - "kowsu"
       tickRate:
         description: "Kernel tick rate (Hz)"
         required: false
@@ -47,6 +55,9 @@ on:
           - "100Hz"
           - "250Hz"
           - "300Hz"
+          - "500Hz"
+          - "600Hz"
+          - "750Hz"
           - "1000Hz"
       optimizationLevel:
         description: "Compiler optimization level"
@@ -263,6 +274,18 @@ jobs:
         run: |
          # Define the config file path
          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+
+         # Helper
+          apply_patch() {
+            local url="$1";
+            local file=$(basename "$url")
+            curl -L -o "$file" "$url"
+            patch -p1 < "$file" || echo "::warning::Hunks failed in $file"
+            rm -f "$file"
+          }
+
+          # custom tickrate options patch
+          apply_patch "https://raw.githubusercontent.com/yougotme101/extra_stuff/main/custom-tickrate-options.patch"
     
          # Remove any existing LTO FULL configuration
          sed -i '/^CONFIG_LTO_CLANG_FULL/d' "$CONFIG_FILE"
@@ -349,6 +372,42 @@ jobs:
               echo "CONFIG_HZ=300" >> "$CONFIG_FILE"
               echo "CONFIG_HZ_300=y" >> "$CONFIG_FILE"
               ;;
+            500)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_500=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_600=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_750=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
+              echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ=500" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ_500=y" >> "$CONFIG_FILE"
+              ;;
+            600)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_500=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_600=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_750=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
+              echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ=600" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ_600=y" >> "$CONFIG_FILE"
+              ;;
+            750)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_500=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_600=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_750=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
+              echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ=750" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ_750=y" >> "$CONFIG_FILE"
+              ;;
             1000Hz)
               sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
               sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
@@ -361,11 +420,11 @@ jobs:
           esac
 
           # Sign Builds
-          curl -L -o sign.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-sign-builds.patch" 
+          curl -L -o sign.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch" 
           patch -p1 < sign.patch || echo "Warning: Strings patch failed"
           
       - name: "🔧 Setup Wild KSU with SUSFS"
-        if: matrix.variant == 'ksu'
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'kowsu'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           rm -rf ./KernelSU ./drivers/kernelsu
@@ -452,6 +511,29 @@ jobs:
           EOF
           
           echo "🎉 Wild KSU with SUSFS kernel patches fully integrated!"
+
+      - name: "🔧 Setup KowSU"
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'kowsu'
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          rm -rf ./KernelSU ./drivers/kernelsu
+          
+          # Install KowSU
+          curl -LSs "https://raw.githubusercontent.com/KOWX712/KernelSU/main/kernel/setup.sh" | bash -s master
+          
+          # Add KSU configs
+          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          cat >> "$CONFIG_FILE" << 'EOF'
+          CONFIG_KSU=y
+          CONFIG_KPROBES=y
+          CONFIG_HAVE_KPROBES=y
+          CONFIG_KPROBE_EVENTS=y
+          CONFIG_OVERLAY_FS=y
+          CONFIG_TMPFS_XATTR=y
+          CONFIG_TMPFS_POSIX_ACL=y
+          EOF
+          
+          echo "✅ Installed KowSU"
 
       - name: "🔨 Build kernel"
         if: github.event.inputs.buildToolchains == 'android-tools'
