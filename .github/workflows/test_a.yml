@@ -2,7 +2,7 @@ name: "Build kernels Test-a"
 
 env:
   OUT_DIR: "out"
-  KERNEL_VERSION: "6.12"
+  KERNEL_VERSION: "5.15"
   ANDROID_VERSION: "13"
 
 on:
