@@ -76,7 +76,7 @@ on:
         description: "Baseband-guard Support (if KSU Enabled)"
         required: true
         type: choice
-        default: "on"
+        default: "off"
         options:
           - "on"
           - "off"
