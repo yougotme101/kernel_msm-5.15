@@ -424,7 +424,7 @@ jobs:
           patch -p1 < sign.patch || echo "Warning: Strings patch failed"
           
       - name: "🔧 Setup Wild KSU with SUSFS"
-        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'kowsu'
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'wildksu'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           rm -rf ./KernelSU ./drivers/kernelsu
