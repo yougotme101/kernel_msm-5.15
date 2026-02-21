@@ -62,10 +62,10 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y repo rsync aria2
 
-      - name: 📐 Setup SWAP 8GB
+      - name: 📐 Setup SWAP 10GB
         uses: pierotofy/set-swap-space@master
         with:
-            swap-size-gb: 8
+            swap-size-gb: 10
             
       - name: 📐 Tune Swap
         run: |

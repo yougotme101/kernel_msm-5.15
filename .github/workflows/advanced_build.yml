@@ -225,7 +225,7 @@ jobs:
           echo "⚙️ Using Clang version:"
           clang --version || echo "❌ Clang not found in PATH!"
       
-      - name: 📐 Setup SWAP 8GB
+      - name: 📐 Setup SWAP 10GB
         if: github.event.inputs.buildToolchains == 'android-tools'
         uses: pierotofy/set-swap-space@master
         with:
@@ -559,9 +559,6 @@ jobs:
         env:
           args: ${{ steps.generate-args.outputs.args }}
         run: |
-          export KBUILD_BUILD_USER="belowzeroiq"
-          export KBUILD_BUILD_HOST="GitHub"
-        
           make ${args} \
             LLVM=1 \
             LTO=thin \
@@ -570,7 +567,7 @@ jobs:
             NM=llvm-nm \
             OBJCOPY=llvm-objcopy \
             STRIP=llvm-strip \
-            -j8
+            -j$(nproc --all)
           
       - name: 📦 Prepare artifact
         working-directory: ${{ env.WORK_DIR }}
@@ -649,7 +646,7 @@ jobs:
          • Optimization: \`-${{ github.event.inputs.optimizationLevel }}\`
          • Tick Rate: \`${{ github.event.inputs.tickRate }}\`
          • Build Type: \`${{ github.event.inputs.buildKSU }}\`${KSU_TEXT}
-         • SUSFS: \`Enabled (GKI Android13-5.15)\`
+         • SUSFS: \`Enabled (GKI A13-5.15)\`
          • Local Version: \`${{ github.event.inputs.localVersion }}\`
          • Build Tools: \`${{ github.event.inputs.buildToolchains }}\`
     
@@ -675,7 +672,7 @@ jobs:
          • Optimization: \`-${{ github.event.inputs.optimizationLevel }}\`
          • Tick Rate: \`${{ github.event.inputs.tickRate }}\`
          • Build Type: \`${{ github.event.inputs.buildKSU }}\`${KSU_TEXT}
-         • SUSFS: \`Enabled (GKI Android13-5.15)\`
+         • SUSFS: \`Enabled (GKI A13-5.15)\`
          • Local Version: \`${{ github.event.inputs.localVersion }}\`
          • Build Tools: \`${{ github.event.inputs.buildToolchains }}\`
       
