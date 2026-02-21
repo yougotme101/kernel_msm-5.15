@@ -428,7 +428,7 @@ jobs:
           MESSAGE="${MESSAGE}🔗 <a href='${RELEASE_URL}'>Download Now</a>"
           
           curl -s -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ env.TELEGRAM_CHAT_ID }}" \
+            -d chat_id="${{ env.TELEGRAM_USER_ID }}" \
             -d text="${MESSAGE}" \
             -d parse_mode="HTML" \
             -d disable_web_page_preview=true
@@ -442,5 +442,5 @@ jobs:
           MESSAGE="${MESSAGE}🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View Logs</a>"
           
           curl -s -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ env.TELEGRAM_CHAT_ID }}" \
+            -d chat_id="${{ env.TELEGRAM_USER_ID }}" \
             -d text="${MESSAGE}" \
