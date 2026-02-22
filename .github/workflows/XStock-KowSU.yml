@@ -196,7 +196,8 @@ jobs:
         if: matrix.kernel.enable_ksu == true
         working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         run: |
-          rm -rf ./KernelSU ./drivers/kernelsu
+          # KernelSU
+          rm -rf KernelSU drivers/kernelsu
           
           # Install KowSU
           curl -LSs "https://raw.githubusercontent.com/KOWX712/KernelSU/main/kernel/setup.sh" | bash -s master
@@ -246,7 +247,7 @@ jobs:
           CONFIG_TCP_CONG_WESTWOOD=y
           CONFIG_TCP_CONG_HTCP=n
           CONFIG_TCP_CONG_BBR=y
-          CONFIG_DEFAULT_WESTWOOD=y
+          CONFIG_DEFAULT_BBR=y
 
           # Add metamodule support and OverlayFS support for Vanilla variant
           CONFIG_OVERLAY_FS=y
@@ -363,8 +364,8 @@ jobs:
           MESSAGE="${MESSAGE}📊 <b>Size:</b> ${{ env.ZIP_SIZE }}%0A"
           MESSAGE="${MESSAGE}📅 <b>Build Date:</b> ${{ env.BUILD_TIME }}%0A%0A"
           MESSAGE="${MESSAGE}📥 <b>Included Variants:</b>%0A"
-          MESSAGE="${MESSAGE}• GKI + Kow-KSU + SUSFS%0A"
-          MESSAGE="${MESSAGE}• CLO + Kow-KSU + SUSFS%0A"
+          MESSAGE="${MESSAGE}• GKI + KowSU"
+          MESSAGE="${MESSAGE}• CLO + KowSU"
           MESSAGE="${MESSAGE}• GKI (Vanilla)%0A"
           MESSAGE="${MESSAGE}• CLO (Vanilla)%0A%0A"
           MESSAGE="${MESSAGE}🔗 <a href='${RELEASE_URL}'>Download Now</a>"
