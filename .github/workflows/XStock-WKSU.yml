@@ -423,8 +423,8 @@ jobs:
           MESSAGE="${MESSAGE}📥 <b>Included Variants:</b>%0A"
           MESSAGE="${MESSAGE}• GKI + Wild-KSU + SUSFS%0A"
           MESSAGE="${MESSAGE}• CLO + Wild-KSU + SUSFS%0A"
-          MESSAGE="${MESSAGE}• GKI (No KSU)%0A"
-          MESSAGE="${MESSAGE}• CLO (No KSU)%0A%0A"
+          MESSAGE="${MESSAGE}• GKI (Vanilla)%0A"
+          MESSAGE="${MESSAGE}• CLO (Vanilla)%0A%0A"
           MESSAGE="${MESSAGE}🔗 <a href='${RELEASE_URL}'>Download Now</a>"
           
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
@@ -442,5 +442,5 @@ jobs:
           MESSAGE="${MESSAGE}🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View Logs</a>"
           
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_USER_ID }}/sendMessage" \
-            -d chat_id="${{ env.TELEGRAM_USER_ID }}" \
+            -d chat_id="${{ secrets.TELEGRAM_USER_ID }}" \
             -d text="${MESSAGE}" \
