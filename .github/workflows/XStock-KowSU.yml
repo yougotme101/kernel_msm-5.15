@@ -384,5 +384,5 @@ jobs:
           MESSAGE="${MESSAGE}🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View Logs</a>"
           
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_USER_ID }}/sendMessage" \
-            -d chat_id="${{ env.TELEGRAM_USER_ID }}" \
+            -d chat_id="${{ secrets.TELEGRAM_USER_ID }}" \
             -d text="${MESSAGE}" \
