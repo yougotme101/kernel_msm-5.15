@@ -1,4 +1,4 @@
-name: "Build XStock"
+name: "Build XStock-WKSU"
 
 env:
   OUT_DIR: "out"
