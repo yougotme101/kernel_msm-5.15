@@ -409,7 +409,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           files: ${{ env.ZIP_NAME }}
-          tag_name: "XStock"
+          tag_name: "XStock-WKSU"
 
       - name: "🎉 Send success notification with download link"
         if: success()
@@ -427,8 +427,8 @@ jobs:
           MESSAGE="${MESSAGE}• CLO (No KSU)%0A%0A"
           MESSAGE="${MESSAGE}🔗 <a href='${RELEASE_URL}'>Download Now</a>"
           
-          curl -s -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ env.TELEGRAM_USER_ID }}" \
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_USER_ID }}" \
             -d text="${MESSAGE}" \
             -d parse_mode="HTML" \
             -d disable_web_page_preview=true
@@ -441,6 +441,6 @@ jobs:
           MESSAGE="${MESSAGE}📅 <b>Time:</b> $(date +'%Y-%m-%d %H:%M:%S')%0A"
           MESSAGE="${MESSAGE}🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View Logs</a>"
           
-          curl -s -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_USER_ID }}/sendMessage" \
             -d chat_id="${{ env.TELEGRAM_USER_ID }}" \
             -d text="${MESSAGE}" \
