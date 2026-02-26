@@ -148,44 +148,40 @@ jobs:
       - name: "📥 Initialize repo"
         working-directory: ${{ env.WORK_DIR}}
         run: |
-         repo init -u https://android.googlesource.com/kernel/manifest -b common-android13-5.15-lts --depth=1
-         repo sync --optimized-fetch --prune --no-clone-bundle --no-tags -j$(nproc --all)
-    
-         rm -rf .repo
-         rm -rf common
+          repo init -u https://android.googlesource.com/kernel/manifest -b common-android13-5.15-lts --depth=1
+          repo sync --optimized-fetch --prune --no-clone-bundle --no-tags -j$(nproc --all)
+          
+          rm -rf .repo
+          rm -rf common
 
-         # Download updated Clang r584948 from Android Git repository
-         aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r584948.tar.gz "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/mirror-goog-main-llvm-toolchain-source/clang-r584948.tar.gz"
-    
-         mkdir -p prebuilts/clang/host/linux-x86/clang-r584948
-         tar -xzf prebuilts/clang/host/linux-x86/clang-r584948.tar.gz -C prebuilts/clang/host/linux-x86/clang-r584948
-         rm -rf prebuilts/clang/host/linux-x86/clang-r584948.tar.gz
+          aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r547379.tar.gz "https://github.com/topnotchfreaks/clang/releases/download/v1.0.0/clang-r547379.tar.gz"
+          mkdir -p prebuilts/clang/host/linux-x86/clang-r547379
+          tar -xzf prebuilts/clang/host/linux-x86/clang-r547379.tar.gz -C prebuilts/clang/host/linux-x86/clang-r547379
+          rm -rf prebuilts/clang/host/linux-x86/clang-r547379.tar.gz
 
-         # Clean up old Clang versions
-         rm -rf prebuilts/clang/host/linux-x86/clang-3289846
-         rm -rf prebuilts/clang/host/linux-x86/clang-r450784e
-         rm -rf prebuilts/clang/host/linux-x86/clang-stable
-         rm -rf prebuilts/clang/host/linux-x86/clang-r547379
-    
-         sed -i \
-          -e 's/^BRANCH=.*/BRANCH=android13-5.15/' \
-          -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r584948/' \
-         ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.constants
-    
-         sed -i '/^DEFCONFIG=gki_defconfig/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
-         sed -i '$a\DEFCONFIG=${{ env.DEFCONFIG_NAME }}' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
-         sed -i '/^POST_DEFCONFIG_CMDS="check_defconfig"/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
+          rm -rf prebuilts/clang/host/linux-x86/clang-3289846
+          rm -rf prebuilts/clang/host/linux-x86/clang-r450784e
+          rm -rf prebuilts/clang/host/linux-x86/clang-stable
+          
+          sed -i \
+           -e 's/^BRANCH=.*/BRANCH=android13-5.15/' \
+           -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r547379/' \
+           ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.constants
+          
+          sed -i '/^DEFCONFIG=gki_defconfig/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
+          sed -i '$a\DEFCONFIG=${{ env.DEFCONFIG_NAME }}' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
+          sed -i '/^POST_DEFCONFIG_CMDS="check_defconfig"/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
 
-         sed -i \
-          -e '/^KMI_SYMBOL_LIST_STRICT_MODE=/d' \
-          -e '/^TRIM_NONLISTED_KMI=/d' \
-          -e '/^KMI_ENFORCED=/d' \
-          -e '$a\KMI_SYMBOL_LIST_STRICT_MODE=0' \
-          -e '$a\TRIM_NONLISTED_KMI=0' \
-          -e '$a\KMI_ENFORCED=0' \
-          -e '/^MODULES_ORDER=/d' \
-          -e '/^MODULES_LIST=/d' \
-         ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64aarch64
+          sed -i \
+           -e '/^KMI_SYMBOL_LIST_STRICT_MODE=/d' \
+           -e '/^TRIM_NONLISTED_KMI=/d' \
+           -e '/^KMI_ENFORCED=/d' \
+           -e '$a\KMI_SYMBOL_LIST_STRICT_MODE=0' \
+           -e '$a\TRIM_NONLISTED_KMI=0' \
+           -e '$a\KMI_ENFORCED=0' \
+           -e '/^MODULES_ORDER=/d' \
+           -e '/^MODULES_LIST=/d' \
+           ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64
 
       - name: "⚙️ Configure kernel optimization and tick rate"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
