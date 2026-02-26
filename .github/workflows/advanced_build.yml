@@ -228,21 +228,13 @@ jobs:
       
           echo "⚙️ Using Clang version:"
           clang --version || echo "❌ Clang not found in PATH!"
-      
-      - name: 📐 Setup SWAP 10GB
-        if: github.event.inputs.buildToolchains == 'android-tools'
-        uses: pierotofy/set-swap-space@master
-        with:
-            swap-size-gb: 10
 
       - name: 📐 Setup SWAP 20GB
-        if: github.event.inputs.buildToolchains == 'custom-tools'
         uses: pierotofy/set-swap-space@master
         with:
             swap-size-gb: 20
             
       - name: 📐 Tune Swap
-        if: github.event.inputs.buildToolchains == 'custom-tools'
         run: |
             echo "vm.swappiness=80" | sudo tee -a /etc/sysctl.conf
             sudo sysctl -p
@@ -265,12 +257,10 @@ jobs:
             echo "args=$args" >> $GITHUB_OUTPUT
             
       - name: "📝 Append custom Makefile line"
-        if: github.event.inputs.buildToolchains == 'custom-tools'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
-          # temporary clang compiler fixup
           echo 'KBUILD_CFLAGS += -Wno-default-const-init-unsafe' >> Makefile
-          echo 'CFLAGS += -Wno-uninitialized-const-pointer' >> Makefile
+          echo 'KBUILD_CFLAGS += -Wno-uninitialized-const-pointer' >> Makefile
           echo "Custom Makefile line added successfully"
       
       - name: "⚙️ Configure kernel"
