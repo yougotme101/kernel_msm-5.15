@@ -216,10 +216,6 @@ jobs:
               echo "# CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set" >> "$CONFIG_FILE"
               echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y" >> "$CONFIG_FILE"
               echo "# CONFIG_CC_OPTIMIZE_FOR_SIZE is not set" >> "$CONFIG_FILE"
-              
-              apply_patch "https://raw.githubusercontent.com/yougotme101/extra_stuff/main/add-O3-optimization.patch"
-          
-              grep "KBUILD_CFLAGS += -O3" Makefile || (echo "Patch failed!" && exit 1)
               ;;
             Os)
               echo "# CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set" >> "$CONFIG_FILE"
