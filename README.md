@@ -77,6 +77,7 @@ Get build results sent to Telegram:
 - **@ssocozy** – Contributor  
 - **@NVG-064** – Contributor
 - **@ShirkNeko** – SUSFS integration
+- **@thewildjames** – Wild-KSU
 
 ---
 

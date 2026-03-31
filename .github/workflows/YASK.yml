@@ -1,4 +1,4 @@
-name: "Build YASK Wild"
+name: "Build YASK"
 
 env:
   OUT_DIR: "out"
@@ -9,7 +9,16 @@ on:
   schedule:
     - cron: '0 0 * * 0'
   workflow_dispatch:
-
+    inputs:
+     Telegram-Notifications:
+        description: "Send notification to teleram"
+        required: true
+        type: choice
+        default: yes
+        options:
+          - "yes"
+          - "no"
+        
 jobs:
   build-kernels:
     name: "🐎 Build YASK ${{ matrix.kernel.name }} kernel"
@@ -28,6 +37,7 @@ jobs:
             output_name: "Image.gki.ksu"
             enable_ksu: true
             extra_patches:
+              - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-gki-fixup.patch"
               - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-sign-builds.patch"
               - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-Don-t-append-and-dirty-to-localversion.patch"
               - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch"
@@ -41,6 +51,7 @@ jobs:
             output_name: "Image.clo.ksu"
             enable_ksu: true
             extra_patches:
+              - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-gki-fixup.patch"
               - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-sign-builds.patch"
               - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-Don-t-append-and-dirty-to-localversion.patch"
               - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch"
@@ -54,6 +65,7 @@ jobs:
             output_name: "Image.gki.noksu"
             enable_ksu: false
             extra_patches:
+              - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-gki-fixup.patch"
               - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-sign-builds.patch"
               - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-Don-t-append-and-dirty-to-localversion.patch"
               - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch"
@@ -67,6 +79,7 @@ jobs:
             output_name: "Image.clo.noksu"
             enable_ksu: false
             extra_patches:
+              - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-gki-fixup.patch"
               - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-sign-builds.patch"
               - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-Don-t-append-and-dirty-to-localversion.patch"
               - "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch"
@@ -140,8 +153,8 @@ jobs:
         working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         run: |
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
-          echo "CONFIG_LOCALVERSION=\"${{ env.LOCAL_VERSION }}\"" >> "$CONFIG_FILE"
-          echo "CONFIG_LOCALVERSION_AUTO=y" >> "$CONFIG_FILE"
+          echo "CONFIG_LOCALVERSION=\"${{ env.LOCAL_VERSION }}-${{ env.BUILD_TIME }}\"" >> "$CONFIG_FILE"
+          echo "CONFIG_LOCALVERSION_AUTO=n" >> "$CONFIG_FILE"
 
           # Helper
           apply_patch() {
@@ -152,13 +165,19 @@ jobs:
             rm -f "$file"
           }
 
-          # Common patches
-          apply_patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-gki-fixup.patch"
-
-          # Kernel-specific patches
+          # Apply patches
           echo '${{ toJSON(matrix.kernel.extra_patches) }}' | jq -r '.[]' | while read p; do
             [ -n "$p" ] && apply_patch "$p"
           done
+
+      - name: "🔧 Add BBG Support (KSU variant only)"
+        if: matrix.kernel.enable_ksu == true
+        working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
+        run: |
+          echo "Adding BBG...";
+          wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
+          echo "CONFIG_BBG=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
+          sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' security/Kconfig
 
       - name: "🔧 Setup Wild-KSU with SUSFS"
         if: matrix.kernel.enable_ksu == true
@@ -170,7 +189,7 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu ./Wild_KSU
           
           echo "📦 Installing Wild-KSU..."
-          curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/wild/kernel/setup.sh" | bash -s stable
+          curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/wild/kernel/setup.sh" | bash -s canary
           
           if [ ! -d "Wild_KSU" ]; then
             echo "❌ ERROR: Wild_KSU directory not found after installation!"
@@ -358,10 +377,7 @@ jobs:
         run: |
           CONFIG_FILE="./arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           
-          # Basic optimizations
-          echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
-
-          # Performance configs
+          # addon configs
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y
           CONFIG_TCP_CONG_ADVANCED=y
@@ -373,10 +389,19 @@ jobs:
           CONFIG_OVERLAY_FS=y
           CONFIG_TMPFS_XATTR=y
           CONFIG_TMPFS_POSIX_ACL=y
+          CONFIG_KALLSYMS=y
           EOF
           
           echo "✅ Basic configs added"
 
+      - name: "📝 Append custom Makefile line"
+        working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
+        run: |
+         # echo 'KBUILD_CFLAGS += -Wno-default-const-init-unsafe' >> Makefile
+         # echo 'KBUILD_CFLAGS += -Wno-uninitialized-const-pointer' >> Makefile
+         echo 'KBUILD_CFLAGS += -Wno-implicit-function-declaration' >> Makefile
+         echo "Custom Makefile line added successfully"
+    
       - name: "🔨 Build kernel"
         working-directory: ${{ env.WORK_DIR }}
         run: |
@@ -435,11 +460,12 @@ jobs:
           ╠═════════════════════════════════════════════════════╣
           ║                                                     ║
           ║     Features:                                       ║
-          ║     • Thin LTO + -O2 Optimization                   ║
+          ║     • Full LTO + -O2 Optimization                   ║
           ║     • Extra TCP Congestion (BBR, Westwood)          ║
           ║     • AOSP clang-r547379                            ║
           ║     • Non-KSU & Wild-KSU support                    ║
           ║     • SUSFS integration (for KSU builds)            ║
+          ║     • Baseband-Guard Support                        ║
           ║     • Metamodule Support                            ║
           ║                                                     ║
           ║     Info:                                           ║
@@ -474,36 +500,72 @@ jobs:
           files: ${{ env.ZIP_NAME }}
           tag_name: "YASK-NEXT"
 
-      - name: "🎉 Send success notification with download link"
-        if: success()
+      - name: "📱 Send Telegram Notification"
+        if: github.event.inputs.Telegram-Notifications == 'yes'
         run: |
           RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/YASK-NEXT"
-          MESSAGE="🎉 <b>YASK Kernel Package Released!</b>%0A%0A"
-          MESSAGE="${MESSAGE}✅ All kernels built successfully%0A%0A"
-          MESSAGE="${MESSAGE}📦 <b>Package:</b> <code>${{ env.ZIP_NAME }}</code>%0A"
-          MESSAGE="${MESSAGE}📊 <b>Size:</b> ${{ env.ZIP_SIZE }}%0A"
-          MESSAGE="${MESSAGE}📅 <b>Build Date:</b> ${{ env.BUILD_TIME }}%0A%0A"
-          MESSAGE="${MESSAGE}📥 <b>Included Variants:</b>%0A"
-          MESSAGE="${MESSAGE}• GKI + Wild-KSU + SUSFS%0A"
-          MESSAGE="${MESSAGE}• CLO + Wild-KSU + SUSFS%0A"
-          MESSAGE="${MESSAGE}• GKI (No KSU)%0A"
-          MESSAGE="${MESSAGE}• CLO (No KSU)%0A%0A"
-          MESSAGE="${MESSAGE}🔗 <a href='${RELEASE_URL}'>Download Now</a>"
-          
-          curl -s -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ env.TELEGRAM_CHAT_ID }}" \
-            -d text="${MESSAGE}" \
-            -d parse_mode="HTML" \
-            -d disable_web_page_preview=true
+          BANNER_URL="https://raw.githubusercontent.com/topnotchfreaks/kernel_msm-5.15/builder/assets/yask.png"
 
-      - name: "💔 Send failure notification"
-        if: failure()
-        run: |
-          MESSAGE="❌ <b>YASK Kernel Package Failed!</b>%0A%0A"
-          MESSAGE="${MESSAGE}⚠️ Package creation or upload failed%0A"
-          MESSAGE="${MESSAGE}📅 <b>Time:</b> $(date +'%Y-%m-%d %H:%M:%S')%0A"
-          MESSAGE="${MESSAGE}🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View Logs</a>"
+          if [[ "${{ job.status }}" == "success" ]]; then
+            MESSAGE="✅ *YASK Kernel Released*
+
+          📦 *Build Information:*
+          • Kernel: \`Linux 5.15\`
+          • Android: \`13-16\`
+          • Base: \`GKI & CLO\`
+          • KSU: \`Wild KSU (canary)\`
+          • SUSFS: \`Enabled (GKI A13-5.15)\`
+          • LTO: \`Full\`
+          • Optimization: \`-O2\`
+          • BBG: \`Enabled\`
+
+          📱 *Supported Devices:*
+          • Redmi Note 12 4G/NFC
+          • Redmi Note 13 4G/NFC
+          • Redmi Pad SE
+
+          📱 *Supported Manager:*
+          • KSU by tiann
+          • KSU by sidex15
+          • Wild-KSU
+          • KernelSU-Next
+          • Rissu-KSU
+          • KowSU
+
+          🕐 *Build Date:* $(date '+%Y-%m-%d %H:%M:%S UTC')
+          📦 *Package:* \`${{ env.ZIP_NAME }}\`
+
+          ⬇️ [Download Here]($RELEASE_URL)"
+
+            curl -s -X POST \
+              -d chat_id=${{ secrets.TELEGRAM_CHANNEL_ID }} \
+              -d photo="${BANNER_URL}" \
+              --data-urlencode "caption=${MESSAGE}" \
+              -d parse_mode="Markdown" \
+              -d disable_web_page_preview="false" \
+              "https://api.telegram.org/bot${{ secrets.TELEGRAM_YASK_BOT_TOKEN }}/sendPhoto"
+
+          else
+            FAILURE_MSG="❌ *YASK Kernel Build Failed*
+            
+          📦 *Build Information:*
+          • Kernel: \`Linux 5.15\`
+          • Android: \`13-16\`
+          • Base: \`GKI & CLO\`
+          • KSU: \`Wild KSU (canary)\`
+          • SUSFS: \`Enabled (GKI A13-5.15)\`
+          • LTO: \`Full\`
+          • Optimization: \`-O2\`
+          • BBG: \`Enabled\`
           
-          curl -s -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ env.TELEGRAM_CHAT_ID }}" \
-            -d text="${MESSAGE}" \
+          🕐 *Failed at:* $(date '+%Y-%m-%d %H:%M:%S UTC')
+
+          🔍 Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
+           
+            curl -s -X POST \
+              -d chat_id=${{ secrets.TELEGRAM_CHANNEL_ID }} \
+              -d photo="${BANNER_URL}" \
+              --data-urlencode "caption=${FAILURE_MSG}" \
+              -d parse_mode="Markdown" \
+              "https://api.telegram.org/bot${{ secrets.TELEGRAM_YASK_BOT_TOKEN }}/sendPhoto"
+          fi
