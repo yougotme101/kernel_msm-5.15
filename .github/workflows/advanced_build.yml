@@ -177,7 +177,7 @@ jobs:
             printf "%s" "$latest_url"  # Use printf to output only the URL
           }
       
-          clang_url="hhttps://github.com/ZyCromerZ/Clang/releases/download/15.0.7-20260208-release/Clang-15.0.7-20260208.tar.gz"
+          clang_url="https://github.com/ZyCromerZ/Clang/releases/download/23.0.0git-20260130-release/Clang-23.0.0git-20260130.tar.gz"
       
           echo "✅ Clang URL: $clang_url"
       
