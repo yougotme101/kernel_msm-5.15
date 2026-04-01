@@ -167,7 +167,7 @@ jobs:
           # Function to fetch latest release tar.gz URL from GitHub
           get_latest_github_release() {
             local repo_url="$1"
-            latest_url=$(curl -L -o "https://github.com/Xtra-Manager-Software/XClang-Binaries/releases/download/xclangpolly-thinlto-22.1.2/XClang-22.1.2-Polly.tar.gz")
+            latest_url=$(curl -sL "https://api.github.com/repos/$repo_url/releases/latest" | grep "browser_download_url.*tar.gz" | cut -d '"' -f 4 | head -n 1)
             
             if [[ -z "$latest_url" ]]; then
               echo "❌ Failed to fetch latest release from $repo_url!"
@@ -177,7 +177,7 @@ jobs:
             printf "%s" "$latest_url"  # Use printf to output only the URL
           }
       
-          clang_url=$(get_latest_github_release)
+          clang_url="https://github.com/Xtra-Manager-Software/XClang-Binaries/releases/download/xclangpolly-thinlto-22.1.2/XClang-22.1.2-Polly.tar.gz"
       
           echo "✅ Clang URL: $clang_url"
       
