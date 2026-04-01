@@ -41,10 +41,10 @@ on:
         description: "KSU implementation (if KSU enabled)"
         required: true
         type: choice
-        default: "kowsu"
+        default: "KowSU"
         options:
-         - "wildksu"
-         - "kowsu"
+         - "Wild-KSU"
+         - "KowSU"
       tickRate:
         description: "Kernel tick rate (Hz)"
         required: false
@@ -436,7 +436,7 @@ jobs:
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' security/Kconfig
           
       - name: "🔧 Setup Wild KSU with SUSFS"
-        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'wildksu'
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'Wild-KSU'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           rm -rf ./KernelSU ./drivers/kernelsu
@@ -529,7 +529,7 @@ jobs:
           echo "🎉 Wild KSU with SUSFS kernel patches fully integrated!"
 
       - name: "🔧 Setup KowSU"
-        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'kowsu'
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'KowSU'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           rm -rf ./KernelSU ./drivers/kernelsu
@@ -645,7 +645,7 @@ jobs:
          if [ "${{ github.event.inputs.buildKSU }}" != "noksu" ]; then
           KSU_TEXT="
           
-         🔐 *KSU Variant:* \`Wild KSU\`"
+         🔐 *KSU Variant:* \`${{ github.event.inputs.ksuVariant }}\`"
          fi
       
          CAPTION="✅ *Kernel Build Successful*
