@@ -387,8 +387,8 @@ jobs:
           ║     • AOSP clang-r547379                            ║
           ║     • Baseband-guard Support                        ║
           ║     • Vanilla & WildKSU Build(canary)               ║
-          ║     • SUSFS v2.1.0                                  ║
-          ║     • Metamodule (MagicMount or Mountify) Support   ║
+          ║     • Integrated with SUSFS(only for KSU Build)     ║
+          ║     • Metamodule (Magic-Mount or Mountify) Support  ║
           ║                                                     ║
           ║     Please ensure:                                  ║
           ║     • Your device is compatible                     ║
@@ -418,6 +418,8 @@ jobs:
       - name: "🎉 Send success notification with download link"
         if: success()
         run: |
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/XStock-WKSU"
+          
           if [[ "${{ job.status }}" == "success" ]]; then
             MESSAGE="✅ *XStock Kernel Released*
 
@@ -458,7 +460,7 @@ jobs:
               "https://api.telegram.org/bot${{ secrets.TELEGRAM_YASK_BOT_TOKEN }}/sendPhoto"
 
           else
-            FAILURE_MSG="❌ *YASK Kernel Build Failed*
+            FAILURE_MSG="❌ *XStock Kernel Build Failed*
             
           📦 *Build Information:*
           • Kernel: \`Linux 5.15\`
@@ -470,14 +472,14 @@ jobs:
           • Optimization: \`-O2\`
           • BBG: \`Enabled\`
 
-      - name: "💔 Send failure notification"
-        if: failure()
-        run: |
-          MESSAGE="❌ <b>XStock Kernel Package Failed!</b>%0A%0A"
-          MESSAGE="${MESSAGE}⚠️ Package creation or upload failed%0A"
-          MESSAGE="${MESSAGE}📅 <b>Time:</b> $(date +'%Y-%m-%d %H:%M:%S')%0A"
-          MESSAGE="${MESSAGE}🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View Logs</a>"
-          
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_USER_ID }}/sendMessage" \
-            -d chat_id="${{ secrets.TELEGRAM_USER_ID }}" \
-            -d text="${MESSAGE}" \
+          🕐 *Failed at:* $(date '+%Y-%m-%d %H:%M:%S UTC')
+
+          🔍 Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
+           
+            curl -s -X POST \
+              -d chat_id=${{ secrets.TELEGRAM_CHANNEL_ID }} \
+              -d photo="${BANNER_URL}" \
+              --data-urlencode "caption=${FAILURE_MSG}" \
+              -d parse_mode="Markdown" \
+              "https://api.telegram.org/bot${{ secrets.TELEGRAM_YASK_BOT_TOKEN }}/sendPhoto"
+          fi
