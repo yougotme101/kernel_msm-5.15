@@ -382,8 +382,8 @@ jobs:
           ║     • Extra TCP Congestion                          ║
           ║     • AOSP clang-r547379                            ║
           ║     • Baseband-guard Support                        ║
-          ║     • Vanilla & WildKSU are available               ║
-          ║     • SUSFS v2.0.0                                  ║
+          ║     • Vanilla & WildKSU Build(canary)               ║
+          ║     • SUSFS v2.1.0                                  ║
           ║     • Metamodule (MagicMount or Mountify) Support   ║
           ║                                                     ║
           ║     Please ensure:                                  ║
@@ -414,24 +414,57 @@ jobs:
       - name: "🎉 Send success notification with download link"
         if: success()
         run: |
-          RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/XStock"
-          MESSAGE="🎉 <b>XStock Kernel Package Released!</b>%0A%0A"
-          MESSAGE="${MESSAGE}✅ All kernels built successfully%0A%0A"
-          MESSAGE="${MESSAGE}📦 <b>Package:</b> <code>${{ env.ZIP_NAME }}</code>%0A"
-          MESSAGE="${MESSAGE}📊 <b>Size:</b> ${{ env.ZIP_SIZE }}%0A"
-          MESSAGE="${MESSAGE}📅 <b>Build Date:</b> ${{ env.BUILD_TIME }}%0A%0A"
-          MESSAGE="${MESSAGE}📥 <b>Included Variants:</b>%0A"
-          MESSAGE="${MESSAGE}• GKI + Wild-KSU + SUSFS%0A"
-          MESSAGE="${MESSAGE}• CLO + Wild-KSU + SUSFS%0A"
-          MESSAGE="${MESSAGE}• GKI (Vanilla)%0A"
-          MESSAGE="${MESSAGE}• CLO (Vanilla)%0A%0A"
-          MESSAGE="${MESSAGE}🔗 <a href='${RELEASE_URL}'>Download Now</a>"
-          
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ secrets.TELEGRAM_USER_ID }}" \
-            -d text="${MESSAGE}" \
-            -d parse_mode="HTML" \
-            -d disable_web_page_preview=true
+          if [[ "${{ job.status }}" == "success" ]]; then
+            MESSAGE="✅ *XStock Kernel Released*
+
+          📦 *Build Information:*
+          • Kernel: \`Linux 5.15\`
+          • Android: \`13-16\`
+          • Base: \`GKI & CLO\`
+          • KSU: \`Wild KSU (canary)\`
+          • SUSFS: \`Enabled (GKI A13-5.15)\`
+          • LTO: \`Full\`
+          • Optimization: \`-O2\`
+          • BBG: \`Enabled\`
+
+          📱 *Supported Devices:*
+          • Redmi Note 12 4G/NFC
+          • Redmi Note 13 4G/NFC
+          • Redmi Pad SE
+
+          📱 *Supported Manager:*
+          • KSU by tiann
+          • KSU by sidex15
+          • Wild-KSU
+          • KernelSU-Next
+          • Rissu-KSU
+          • KowSU
+
+          🕐 *Build Date:* $(date '+%Y-%m-%d %H:%M:%S UTC')
+          📦 *Package:* \`${{ env.ZIP_NAME }}\`
+
+          ⬇️ [Download Here]($RELEASE_URL)"
+
+            curl -s -X POST \
+              -d chat_id=${{ secrets.TELEGRAM_CHANNEL_ID }} \
+              -d photo="${BANNER_URL}" \
+              --data-urlencode "caption=${MESSAGE}" \
+              -d parse_mode="Markdown" \
+              -d disable_web_page_preview="false" \
+              "https://api.telegram.org/bot${{ secrets.TELEGRAM_YASK_BOT_TOKEN }}/sendPhoto"
+
+          else
+            FAILURE_MSG="❌ *YASK Kernel Build Failed*
+            
+          📦 *Build Information:*
+          • Kernel: \`Linux 5.15\`
+          • Android: \`13-16\`
+          • Base: \`GKI & CLO\`
+          • KSU: \`Wild KSU (canary)\`
+          • SUSFS: \`Enabled (GKI A13-5.15)\`
+          • LTO: \`Full\`
+          • Optimization: \`-O2\`
+          • BBG: \`Enabled\`
 
       - name: "💔 Send failure notification"
         if: failure()
