@@ -9,15 +9,6 @@ on:
   schedule:
     - cron: '0 0 * * 1'
   workflow_dispatch:
-    inputs:
-     Telegram-Notifications:
-        description: "Send notification to teleram"
-        required: true
-        type: choice
-        default: yes
-        options:
-          - "yes"
-          - "no"
 
 jobs:
   build-kernels:
@@ -424,8 +415,7 @@ jobs:
           files: ${{ env.ZIP_NAME }}
           tag_name: "XStock-WKSU"
 
-      - name: "🎉 Send success notification with download link"
-        if: success()
+      - name: "🎉 Send Telegram success notification"
         run: |
           RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/XStock-WKSU"
           BANNER_URL="https://raw.githubusercontent.com/yougotme101/kernel_msm-5.15/builder/assets/xeniel.png"
