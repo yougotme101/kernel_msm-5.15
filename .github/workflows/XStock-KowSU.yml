@@ -196,15 +196,11 @@ jobs:
         if: matrix.kernel.enable_ksu == true
         working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         run: |
-          # KernelSU
-          rm -rf KernelSU drivers/kernelsu
+          rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install KowSU
           curl -LSs "https://raw.githubusercontent.com/KOWX712/KernelSU/main/kernel/setup.sh" | bash -s master
           
-          # Basic optimizations
-          echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
-
           # Performance configs
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y
@@ -354,10 +350,10 @@ jobs:
           files: ${{ env.ZIP_NAME }}
           tag_name: "XStock-KowSU"
 
-      - name: "🎉 Send success notification with download link"
-        if: success()
+      - name: "🎉 Send Telegram success notification"
         run: |
-          RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/XStock-KowSU"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/XStock-WKSU"
+          BANNER_URL="https://raw.githubusercontent.com/yougotme101/kernel_msm-5.15/builder/assets/xeniel.png"
           
           if [[ "${{ job.status }}" == "success" ]]; then
             MESSAGE="✅ *XStock Kernel Released*
@@ -366,8 +362,8 @@ jobs:
           • Kernel: \`Linux 5.15\`
           • Android: \`13-16\`
           • Base: \`GKI & CLO\`
-          • KSU: \`KowSU (master)\`
-          • SUSFS: \`Enabled (GKI A13-5.15)\`
+          • KSU: \`KowSU (canary)\`
+          • SUSFS: \`Disabled\`
           • LTO: \`Full\`
           • Optimization: \`-O2\`
           • BBG: \`Enabled\`
@@ -421,4 +417,4 @@ jobs:
               --data-urlencode "caption=${FAILURE_MSG}" \
               -d parse_mode="Markdown" \
               "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendPhoto"
-          fi 
+          fi
