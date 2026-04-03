@@ -15,9 +15,14 @@ on:
         default: "https://github.com/topnotchfreaks/kernel_msm-5.15"
       kernelBranch:
         description: "Kernel branch"
-        required: false
-        type: string
+        required: true
+        type: choice
         default: "codelinaro"
+        options:
+          - "codelinaro"
+          - "google"
+          - "topnotchfreaks"
+          - "zepharo"
       kernelDevice:
         description: "Device (used for defconfig)"
         required: true
@@ -233,11 +238,11 @@ jobs:
       - name: 📐 Setup SWAP 20GB
         uses: pierotofy/set-swap-space@master
         with:
-            swap-size-gb: 20
+            swap-size-gb: 24
             
       - name: 📐 Tune Swap
         run: |
-            echo "vm.swappiness=80" | sudo tee -a /etc/sysctl.conf
+            echo "vm.swappiness=60" | sudo tee -a /etc/sysctl.conf
             sudo sysctl -p
             
       - name: "😎 Set args for GKI kernels"
