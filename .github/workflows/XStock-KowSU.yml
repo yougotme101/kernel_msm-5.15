@@ -200,10 +200,15 @@ jobs:
         if: matrix.kernel.enable_ksu == true
         working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         run: |
+          set -e
+          
           rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install KowSU
           curl -LSs "https://raw.githubusercontent.com/KOWX712/KernelSU/main/kernel/setup.sh" | bash -s master
+          
+          # Basic optimizations
+          echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
           
           # Performance configs
           cat >> "$CONFIG_FILE" << 'EOF'
