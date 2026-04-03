@@ -167,10 +167,10 @@ jobs:
           rm -rf .repo
           rm -rf common
 
-          aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r547379.tar.gz "https://github.com/topnotchfreaks/clang/releases/download/v1.0.0/clang-r547379.tar.gz"
-          mkdir -p prebuilts/clang/host/linux-x86/clang-r547379
-          tar -xzf prebuilts/clang/host/linux-x86/clang-r547379.tar.gz -C prebuilts/clang/host/linux-x86/clang-r547379
-          rm -rf prebuilts/clang/host/linux-x86/clang-r547379.tar.gz
+          aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r584948.tar.gz "https://github.com/topnotchfreaks/clang/releases/download/v1.0.0/clang-r584948.tar.gz"
+          mkdir -p prebuilts/clang/host/linux-x86/clang-r584948
+          tar -xzf prebuilts/clang/host/linux-x86/clang-r584948.tar.gz -C prebuilts/clang/host/linux-x86/clang-r584948
+          rm -rf prebuilts/clang/host/linux-x86/clang-r584948.tar.gz
 
           rm -rf prebuilts/clang/host/linux-x86/clang-3289846
           rm -rf prebuilts/clang/host/linux-x86/clang-r450784e
@@ -178,7 +178,7 @@ jobs:
           
           sed -i \
            -e 's/^BRANCH=.*/BRANCH=android13-5.15/' \
-           -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r547379/' \
+           -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r584948/' \
            ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.constants
           
           sed -i '/^DEFCONFIG=gki_defconfig/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
