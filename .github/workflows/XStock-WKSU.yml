@@ -428,7 +428,7 @@ jobs:
         if: success()
         run: |
           RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/XStock-WKSU"
-          BANNER_URL="https://raw.githubusercontent.com/topnotchfreaks/kernel_msm-5.15/builder/assets/xeniel.png"
+          BANNER_URL="https://raw.githubusercontent.com/yougotme101/kernel_msm-5.15/builder/assets/xeniel.png"
           
           if [[ "${{ job.status }}" == "success" ]]; then
             MESSAGE="✅ *XStock Kernel Released*
