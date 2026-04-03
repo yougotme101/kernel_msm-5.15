@@ -2814,7 +2814,8 @@ void kvm_sys_reg_table_init(void)
 	 *   value of 0b000, the values of Ctype4 to Ctype7 must be
 	 *   ignored.
 	 */
-	get_clidr_el1(NULL, &clidr); /* Ugly... */
+	u64 clidr = 0;  // Initialize the variable
+    get_clidr_el1(NULL, &clidr); /* Ugly... */
 	cache_levels = clidr.val;
 	for (i = 0; i < 7; i++)
 		if (((cache_levels >> (i*3)) & 7) == 0)
