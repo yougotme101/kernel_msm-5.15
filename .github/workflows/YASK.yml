@@ -9,15 +9,6 @@ on:
   schedule:
     - cron: '0 0 * * 0'
   workflow_dispatch:
-    inputs:
-     Telegram-Notifications:
-        description: "Send notification to teleram"
-        required: true
-        type: choice
-        default: yes
-        options:
-          - "yes"
-          - "no"
         
 jobs:
   build-kernels:
@@ -501,7 +492,6 @@ jobs:
           tag_name: "YASK-NEXT"
 
       - name: "📱 Send Telegram Notification"
-        if: github.event.inputs.Telegram-Notifications == 'yes'
         run: |
           RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/YASK-NEXT"
           BANNER_URL="https://raw.githubusercontent.com/topnotchfreaks/kernel_msm-5.15/builder/assets/yask.png"
