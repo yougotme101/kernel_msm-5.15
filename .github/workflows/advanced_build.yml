@@ -444,8 +444,6 @@ jobs:
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'Wild-KSU'
         working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         run: |
-          set -e
-          
           # Clean existing installations
           rm -rf ./KernelSU ./drivers/kernelsu ./Wild_KSU
           
