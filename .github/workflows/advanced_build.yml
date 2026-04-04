@@ -424,6 +424,26 @@ jobs:
               ;;
           esac
 
+          # Extra TCP configs
+          cat >> "$CONFIG_FILE" << 'EOF'
+          sed -i '/^CONFIG_TCP_CONG_ADVANCED=/d' "$CONFIG_FILE"
+          sed -i '/^CONFIG_TCP_CONG_BIC=/d' "$CONFIG_FILE"
+          sed -i '/^CONFIG_TCP_CONG_WESTWOOD=/d' "$CONFIG_FILE"
+          sed -i '/^CONFIG_TCP_CONG_HTCP=/d' "$CONFIG_FILE"
+          sed -i '/^CONFIG_TCP_CONG_BBR=/d' "$CONFIG_FILE"
+          sed -i '/^CONFIG_TCP_CONG_RENO=/d' "$CONFIG_FILE"
+          sed -i '/^CONFIG_TCP_CONG_CUBIC=/d' "$CONFIG_FILE"
+          sed -i '/^CONFIG_DEFAULT_BBR=/d' "$CONFIG_FILE"
+          CONFIG_TCP_CONG_ADVANCED=y
+          CONFIG_TCP_CONG_BIC=n
+          CONFIG_TCP_CONG_WESTWOOD=y
+          CONFIG_TCP_CONG_HTCP=n
+          CONFIG_TCP_CONG_BBR=y
+          CONFIG_TCP_CONG_RENO=n
+          CONFIG_TCP_CONG_CUBIC=y
+          CONFIG_DEFAULT_BBR=y
+          EOF
+
           # Sign Builds
           curl -L -o sign.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch" 
           patch -p1 < sign.patch || echo "Warning: Strings patch failed"
@@ -433,7 +453,6 @@ jobs:
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
       - name: "🔧 Add BBG Support (KSU variant only)"
-        if: matrix.variant == 'ksu'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           echo "Adding BBG...";
