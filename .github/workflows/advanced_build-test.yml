@@ -1,4 +1,4 @@
-name: "Advanced Build"
+name: "Advanced Build-test"
 
 env:
   OUT_DIR: "out"
@@ -484,6 +484,9 @@ jobs:
           echo "Patching kernel system files for SuSFS..."
           patch -p1 < susfs/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch || echo "Hunks failed but continuing..."
           rm -rf susfs
+
+          # Define the config file path
+            CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           
           if [ "${{ matrix.variant }}" == "ksu" ]; then
              echo "Enabling KSU + SuSFS..."
