@@ -609,7 +609,7 @@ jobs:
          if [ "${{ github.event.inputs.buildKSU }}" != "noksu" ]; then
           KSU_TEXT="
           
-         🔐 *KSU Variant:* \`${{ KernelSU-Next with Multiple Manager Support }}\`"
+         🔐 KSU Variant: KernelSU-Next with Multiple Manager Support"
          fi
       
          CAPTION="✅ *Kernel Build Successful*
