@@ -255,6 +255,7 @@ jobs:
           echo "🎉 KernelSU-Next and Multiple Manager Support with SUSFS kernel patches fully integrated!"
 
           # Add metamodule and OverlayFS support for KSU variant
+          cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_OVERLAY_FS=y
           CONFIG_TMPFS_XATTR=y
           CONFIG_TMPFS_POSIX_ACL=y
