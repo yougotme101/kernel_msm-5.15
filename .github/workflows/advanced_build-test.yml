@@ -504,9 +504,6 @@ jobs:
              echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$CONFIG_FILE"
              echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> "$CONFIG_FILE"
           fi
-          # hooks patch
-          # curl -L -o hooks.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-69-pure-manual-hooks-only.patch" 
-          # patch -p1 < hooks.patch || echo "Warning: Strings patch failed"
           
           echo "🎉 KernelSU-Next and Multiple Manager Support with SUSFS kernel patches fully integrated!"
           
