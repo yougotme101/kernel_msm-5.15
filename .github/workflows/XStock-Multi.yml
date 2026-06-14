@@ -411,11 +411,14 @@ jobs:
           📱 *Supported Manager:*
           • KSU by tiann
           • KSU by sidex15
-          • MamboSU
           • Wild-KSU
           • KernelSU-Next
           • Rissu-KSU
           • KowSU
+          • MamboSU
+          • KamiSU
+          • VortexSU
+          • pershoot
 
           🕐 *Build Date:* $(date '+%Y-%m-%d %H:%M:%S UTC')
           📦 *Package:* \`${{ env.ZIP_NAME }}\`
