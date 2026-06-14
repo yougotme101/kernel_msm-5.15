@@ -119,7 +119,7 @@ jobs:
       - name: 📐 Setup SWAP 8GB
         uses: pierotofy/set-swap-space@master
         with:
-            swap-size-gb: 12
+            swap-size-gb: 24
             
       - name: 📐 Tune Swap
         run: |
@@ -230,9 +230,9 @@ jobs:
           rm -rf susfs
 
           # Define the config file path
-          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          CONFIG_FILE="./arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           
-          if [ "${{ matrix.variant }}" == "ksu" ]; then
+          if [ "${{ matrix.kernel.enable_ksu }}" == "true" ]; then
              echo "Enabling KSU + SuSFS..."
              echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
              echo "CONFIG_KSU_SUSFS=y" >> "$CONFIG_FILE"
