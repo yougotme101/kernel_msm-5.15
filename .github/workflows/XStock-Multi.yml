@@ -233,19 +233,6 @@ jobs:
           patch -p1 < susfs/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch || echo "Hunks failed but continuing..."
           rm -rf susfs
 
-          
-          cp -f susfs4ksu/kernel_patches/fs/susfs.c fs/susfs.c \
-            && echo "✔ Copied fs/susfs.c" \
-            || { echo "❌ fs/susfs.c missing!"; exit 1; }
-
-          cp -f susfs4ksu/kernel_patches/include/linux/susfs.h include/linux/susfs.h \
-            && echo "✔ Copied include/linux/susfs.h" \
-            || { echo "❌ susfs.h missing!"; exit 1; }
-
-          [ -f "susfs4ksu/kernel_patches/include/linux/susfs_def.h" ] && \
-            cp -f susfs4ksu/kernel_patches/include/linux/susfs_def.h include/linux/susfs_def.h && \
-            echo "✔ Copied susfs_def.h" || echo "⚠️ susfs_def.h not found, skipping"
-
           # Define the config file path
           CONFIG_FILE="./arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           
