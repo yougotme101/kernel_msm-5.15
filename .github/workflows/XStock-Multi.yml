@@ -221,6 +221,12 @@ jobs:
           cp -f susfs/kernel_patches/include/linux/susfs_def.h include/linux/ || true
           cp -f susfs/kernel_patches/fs/susfs.c fs/
 
+      - name: Fix SUSFS implicit declaration error
+        if: matrix.kernel.enable_ksu == true
+        working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
+        run: |
+          sed -i '1s/^/#include <linux\/susfs.h>\n/' common/fs/proc/task_mmu.c
+
       - name: "🔧 Apply SuSFS System Patches"
         if: matrix.kernel.enable_ksu == true
         working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
