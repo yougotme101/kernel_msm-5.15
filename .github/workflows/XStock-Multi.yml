@@ -116,10 +116,10 @@ jobs:
           echo "Disk space after cleanup:"
           df -h /
           
-      - name: 📐 Setup SWAP 8GB
+      - name: 📐 Setup SWAP 10GB
         uses: pierotofy/set-swap-space@master
         with:
-            swap-size-gb: 24
+            swap-size-gb: 10
             
       - name: 📐 Tune Swap
         run: |
