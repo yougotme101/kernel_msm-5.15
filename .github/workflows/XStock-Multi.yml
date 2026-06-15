@@ -216,17 +216,27 @@ jobs:
         run: |
           echo "Retrieving SuSFS components..."
           git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15 susfs
-          mkdir -p include/linux fs
+         
+          mkdir -p fs include/linux
+          
           cp -f susfs/kernel_patches/include/linux/susfs.h include/linux/
+          
           cp -f susfs/kernel_patches/include/linux/susfs_def.h include/linux/ || true
+          
           cp -f susfs/kernel_patches/fs/susfs.c fs/
 
-      - name: Fix SUSFS implicit declaration error
-        if: matrix.kernel.enable_ksu == true
-        working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
-        run: |
-          sed -i '1s/^/#include <linux\/susfs.h>\n/' common/fs/proc/task_mmu.c
+          cp -f susfs4ksu/kernel_patches/fs/susfs.c fs/susfs.c \
+            && echo "✔ Copied fs/susfs.c" \
+            || { echo "❌ fs/susfs.c missing!"; exit 1; }
 
+          cp -f susfs4ksu/kernel_patches/include/linux/susfs.h include/linux/susfs.h \
+            && echo "✔ Copied include/linux/susfs.h" \
+            || { echo "❌ susfs.h missing!"; exit 1; }
+
+          [ -f "susfs4ksu/kernel_patches/include/linux/susfs_def.h" ] && \
+            cp -f susfs4ksu/kernel_patches/include/linux/susfs_def.h include/linux/susfs_def.h && \
+            echo "✔ Copied susfs_def.h" || echo "⚠️ susfs_def.h not found, skipping"
+          
       - name: "🔧 Apply SuSFS System Patches"
         if: matrix.kernel.enable_ksu == true
         working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
