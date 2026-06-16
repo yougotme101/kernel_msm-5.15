@@ -234,7 +234,7 @@ jobs:
             
       - name: 📐 Tune Swap
         run: |
-            echo "vm.swappiness=60" | sudo tee -a /etc/sysctl.conf
+            echo "vm.swappiness=80" | sudo tee -a /etc/sysctl.conf
             sudo sysctl -p
             
       - name: "😎 Set args for GKI kernels"
