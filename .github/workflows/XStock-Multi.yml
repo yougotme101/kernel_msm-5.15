@@ -196,67 +196,25 @@ jobs:
           echo "CONFIG_BBG=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' security/Kconfig
 
-      - name: "🔧 Setup Wild-KSU with SUSFS"
+      - name: "🔧 Setup ReSukiSU with SUSFS"
         if: matrix.kernel.enable_ksu == true
-        working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
+        working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         run: |
           set -e
-          rm -rf ./KernelSU ./KernelSU-Next ./drivers/kernelsu
-          echo "Applying KernelSU-Next (dev-susfs)..."
-          curl -LSs "https://raw.githubusercontent.com/pershoot/KernelSU-Next/dev-susfs/kernel/setup.sh" | bash -s dev-susfs
-          echo "Applying All Managers Patch..."
-          curl -LSs "https://raw.githubusercontent.com/yougotme101/extra_stuff/main/ksun-add-more-managers-support.patch" | patch -p1 -d KernelSU-Next
-          if [ ! -L "drivers/kernelsu" ]; then
-             ln -sf ../KernelSU-Next drivers/kernelsu
-          fi
+          rm -rf ./KernelSU ./drivers/kernelsu
           
-      - name: "🔧 Provide SuSFS Headers"
-        if: matrix.kernel.enable_ksu == true
-        working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
-        run: |
-          echo "Retrieving SuSFS components..."
-          git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15 susfs
-         
-          mkdir -p fs include/linux
+          echo "📦 Installing ReSukiSU..."
+          # Install ReSukiSU
+          curl -LSs "https://raw.githubusercontent.com/yougotme101/ReSukiSU/main/kernel/setup.sh" | bash
           
-          cp -f susfs/kernel_patches/include/linux/susfs.h include/linux/
-          
-          cp -f susfs/kernel_patches/include/linux/susfs_def.h include/linux/ || true
-          
-          cp -f susfs/kernel_patches/fs/susfs.c fs/
-
-      - name: "🔧 Apply SuSFS System Patches"
-        if: matrix.kernel.enable_ksu == true
-        working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
-        run: |
-          echo "Patching kernel system files for SuSFS..."
-          patch -p1 < susfs/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch || echo "Hunks failed but continuing..."
-          rm -rf susfs
-
-          # Define the config file path
+          # Add KSU configs
           CONFIG_FILE="./arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          cat >> "$CONFIG_FILE" << 'EOF'
+          CONFIG_KSU=y
+          EOF
           
-          if [ "${{ matrix.kernel.enable_ksu }}" == "true" ]; then
-             echo "Enabling KSU + SuSFS..."
-             echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$CONFIG_FILE"
-             echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> "$CONFIG_FILE"
-          fi
-          
-          echo "🎉 KernelSU-Next and Multiple Manager Support with SUSFS kernel patches fully integrated!"
+          echo "🎉 ReSukiSU with multiple manager support are installed"
+          echo "Included Manager: KernelSU/MKSU/RKSU/SukiSU Ultra/MamboSU"
 
           # Add metamodule and OverlayFS support for KSU variant
           cat >> "$CONFIG_FILE" << 'EOF'
@@ -361,8 +319,8 @@ jobs:
           ║     • Extra TCP Congestion                          ║
           ║     • AOSP clang-r547379                            ║
           ║     • Baseband-guard Support                        ║
-          ║     • Vanilla & KSU-Next and Multi Manager Support  ║
-          ║     • Integrated with SUSFS(only for KSU Build)     ║
+          ║     • Vanilla & ReSukiSU and Multi Manager Support  ║
+          ║     • Integrated without SUSFS.                     ║
           ║     • Metamodule (Magic-Mount or Mountify) Support  ║
           ║                                                     ║
           ║     Please ensure:                                  ║
@@ -402,7 +360,7 @@ jobs:
           • Kernel: \`Linux 5.15\`
           • Android: \`13-16\`
           • Base: \`GKI & CLO\`
-          • KSU: \`KernelSU-Next\`
+          • KSU: \`ReSukiSU\`
           • SUSFS: \`Enabled (GKI A13-5.15)\`
           • LTO: \`Full\`
           • Optimization: \`-O2\`
@@ -415,14 +373,10 @@ jobs:
 
           📱 *Supported Manager:*
           • KSU by tiann
-          • KSU by sidex15
-          • Wild-KSU
-          • KernelSU-Next
+          • ReSukiSU
           • Rissu-KSU
           • KowSU
           • MamboSU
-          • KamiSU
-          • VortexSU
           • pershoot
 
           🕐 *Build Date:* $(date '+%Y-%m-%d %H:%M:%S UTC')
@@ -445,7 +399,7 @@ jobs:
           • Kernel: \`Linux 5.15\`
           • Android: \`13-16\`
           • Base: \`GKI & CLO\`
-          • KSU: \`Wild KSU (canary)\`
+          • KSU: \`ReSukiSU\`
           • SUSFS: \`Enabled (GKI A13-5.15)\`
           • LTO: \`Full\`
           • Optimization: \`-O2\`
