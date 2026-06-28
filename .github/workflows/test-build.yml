@@ -376,7 +376,8 @@ jobs:
           patch -p1 < droidspaces_sysvipc_kabi.patch || echo "Warning: Droidspaces sysvipc patch failed"
           rm -f droidspaces_sysvipc_kabi.patch
           
-          CONFIG_FILE=".arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          # Define the config file path
+          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_SYSVIPC=y
           CONFIG_POSIX_MQUEUE=y
@@ -418,9 +419,9 @@ jobs:
           CONFIG_IP_SET_LIST_SET=y
           # CONFIG_USER_NS is not set
           EOF
-
+          
           echo "🚀 Droidspaces: done"
-      
+          
       - name: "🔧 Add BBG Support (KSU variant only)"
         if: matrix.variant == 'ksu'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
