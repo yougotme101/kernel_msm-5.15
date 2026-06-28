@@ -371,11 +371,11 @@ jobs:
       - name: "🚀 Add Droidspaces support"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
-          apply_patch \
-          "https://raw.githubusercontent.com/ravindu644/Droidspaces-OSS/refs/heads/main/Documentation/resources/kernel-patches/GKI/below-kernel-6.12/001.GKI-below-6.12-fix_sysvipc_kabi_6_7_8.patch" \
-          "droidspaces_sysvipc_kabi" \
-          "1"
-
+          curl -L -o droidspaces_sysvipc_kabi.patch \
+            "https://raw.githubusercontent.com/ravindu644/Droidspaces-OSS/refs/heads/main/Documentation/resources/kernel-patches/GKI/below-kernel-6.12/001.GKI-below-6.12-fix_sysvipc_kabi_6_7_8.patch"
+          patch -p1 < droidspaces_sysvipc_kabi.patch || echo "Warning: Droidspaces sysvipc patch failed"
+          rm -f droidspaces_sysvipc_kabi.patch
+          
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           cat >> "$DEFCONFIG" << 'EOF'
           CONFIG_SYSVIPC=y
@@ -419,7 +419,7 @@ jobs:
           # CONFIG_USER_NS is not set
           EOF
 
-          echo "🚀Droidspaces: done"
+          echo "🚀 Droidspaces: done"
       
       - name: "🔧 Add BBG Support (KSU variant only)"
         if: matrix.variant == 'ksu'
@@ -454,6 +454,79 @@ jobs:
           # patch -p1 < hooks.patch || echo "Warning: Strings patch failed"
           
           echo "🎉 KSU with SUSFS kernel patches fully integrated!"
+
+      - name: "🩹 Apply SUSFS patches (KSU variant only)"
+        if: matrix.variant == 'ksu'
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          echo "📦 Cloning SUSFS4KSU for GKI android13-5.15..."
+          git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
+
+          # 1. Apply the kernel-side SUSFS patch
+          echo "🔧 Applying SUSFS kernel patch..."
+          if patch -p1 < susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch; then
+            echo "✅ SUSFS kernel patch applied successfully"
+          else
+            echo "⚠️ Patch had conflicts — copying source files manually"
+          fi
+
+          # 2. Force-copy SUSFS source files (always, in case patch was partial)
+          echo "📄 Copying SUSFS source files..."
+          mkdir -p fs include/linux
+          cp -f susfs4ksu/kernel_patches/fs/susfs.c                         fs/susfs.c
+          cp -f susfs4ksu/kernel_patches/include/linux/susfs.h              include/linux/susfs.h
+          [ -f susfs4ksu/kernel_patches/include/linux/susfs_def.h ] && \
+            cp -f susfs4ksu/kernel_patches/include/linux/susfs_def.h        include/linux/susfs_def.h
+          echo "✔ SUSFS source files in place"
+
+          # 3. Copy SUSFS→KSU integration files into KernelSU
+          if [ -d "susfs4ksu/kernel_patches/KernelSU/kernel" ]; then
+            cp -rf susfs4ksu/kernel_patches/KernelSU/kernel/* KernelSU/kernel/
+            echo "✔ Copied SUSFS integration files into KernelSU/kernel/"
+          fi
+
+          # 4. Apply the KSU-side SUSFS patch
+          echo "🔧 Applying KSU SUSFS integration patch..."
+          KSU_PATCH="susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
+          KSU_C="KernelSU/kernel/ksu.c"
+          if grep -q "susfs_init" "$KSU_C" 2>/dev/null; then
+            echo "⚠️ SUSFS already integrated in ksu.c — skipping"
+          else
+            cd KernelSU
+            if patch -p1 --dry-run < "../$KSU_PATCH" >/dev/null 2>&1; then
+              patch -p1 < "../$KSU_PATCH"
+              echo "✔ KSU SUSFS patch applied"
+            else
+              echo "⚠️ Patch failed — applying manual fallback"
+              cd ..
+              sed -i '/#include <linux\/module\.h>/a #include <linux\/susfs.h>' "$KSU_C"
+              sed -i '/ksu_core_init();/a \\tsusfs_init();' "$KSU_C"
+            fi
+            cd ..
+          fi
+
+          # 5. Append SUSFS Kconfig options to defconfig
+          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          cat >> "$CONFIG_FILE" << 'EOF'
+          CONFIG_KSU_SUSFS=y
+          CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y
+          CONFIG_KSU_SUSFS_SUS_PATH=y
+          CONFIG_KSU_SUSFS_SUS_MOUNT=y
+          CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y
+          CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y
+          CONFIG_KSU_SUSFS_SUS_KSTAT=y
+          CONFIG_KSU_SUSFS_TRY_UMOUNT=y
+          CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y
+          CONFIG_KSU_SUSFS_SPOOF_UNAME=y
+          CONFIG_KSU_SUSFS_ENABLE_LOG=y
+          CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
+          CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
+          CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
+          CONFIG_KSU_SUSFS_SUS_SU=y
+          EOF
+
+          rm -rf susfs4ksu
+          echo "🎉 SUSFS for GKI android13-5.15 fully integrated!"
 
       - name: "🔨 Build kernel"
         if: github.event.inputs.buildToolchains == 'android-tools'
