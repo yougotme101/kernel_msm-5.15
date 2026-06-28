@@ -144,7 +144,7 @@ jobs:
           rm -rf common
 
           # Download and setup custom clang toolchain
-          aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r547379.tar.gz "https://github.com/topnotchfreaks/clang/releases/download/v1.0.0/clang-r584948b.tar.gz"
+          aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r584948b.tar.gz "https://github.com/topnotchfreaks/clang/releases/download/v1.0.0/clang-r584948b.tar.gz"
           mkdir -p prebuilts/clang/host/linux-x86/clang-r584948b
           tar -xzf prebuilts/clang/host/linux-x86/clang-r584948b.tar.gz -C prebuilts/clang/host/linux-x86/clang-r584948b
           rm -rf prebuilts/clang/host/linux-x86/clang-r584948b.tar.gz
