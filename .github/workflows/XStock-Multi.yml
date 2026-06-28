@@ -361,7 +361,7 @@ jobs:
           • Android: \`13-16\`
           • Base: \`GKI & CLO\`
           • KSU: \`ReSukiSU\`
-          • SUSFS: \`Enabled (GKI A13-5.15)\`
+          • SUSFS: \`No\`
           • LTO: \`Full\`
           • Optimization: \`-O2\`
           • BBG: \`Enabled\`
@@ -400,7 +400,7 @@ jobs:
           • Android: \`13-16\`
           • Base: \`GKI & CLO\`
           • KSU: \`ReSukiSU\`
-          • SUSFS: \`Enabled (GKI A13-5.15)\`
+          • SUSFS: \`No\`
           • LTO: \`Full\`
           • Optimization: \`-O2\`
           • BBG: \`Enabled\`
