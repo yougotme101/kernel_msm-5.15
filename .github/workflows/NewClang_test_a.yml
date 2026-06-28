@@ -166,16 +166,16 @@ jobs:
           CPULLVM_ASSET_URL=$(curl -s \
             "https://api.github.com/repos/qualcomm/cpullvm-toolchain/releases/tags/cpullvm-22.1.2" \
             | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-assets = data.get('assets', [])
-# Pick the Linux Ubuntu x86_64 tarball (not aarch64, not windows, not musl overlay)
-for a in assets:
-    name = a['name'].lower()
-    if ('linux' in name or 'ubuntu' in name) and 'x86_64' in name and name.endswith('.tar.gz') and 'musl' not in name and 'aarch64' not in name:
-        print(a['browser_download_url'])
-        break
-")
+            import sys, json
+            data = json.load(sys.stdin)
+            assets = data.get('assets', [])
+          # Pick the Linux Ubuntu x86_64 tarball (not aarch64, not windows, not musl overlay)
+          for a in assets:
+          name = a['name'].lower()
+          if ('linux' in name or 'ubuntu' in name) and 'x86_64' in name and name.endswith('.tar.gz') and 'musl' not in name and 'aarch64' not in name:
+            print(a['browser_download_url'])
+          break
+          ")
           echo "Resolved CPULLVM asset URL: $CPULLVM_ASSET_URL"
           if [ -z "$CPULLVM_ASSET_URL" ]; then
             echo "::error::Could not resolve CPULLVM download URL from GitHub API"
