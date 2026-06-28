@@ -258,7 +258,7 @@ jobs:
           
           echo "📦 Installing ReSukiSU..."
           # Install ReSukiSU
-          curl -LSs "https://raw.githubusercontent.com/yougotme101/ReSukiSU/main/kernel/setup.sh" | bash
+          curl -LSs "https://raw.githubusercontent.com/yougotme101/ReSukiSU/main/kernel/setup.sh" | bash -dev
           
           # Add KSU configs
           CONFIG_FILE="./arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
