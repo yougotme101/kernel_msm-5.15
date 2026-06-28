@@ -145,11 +145,11 @@ jobs:
       - name: 📐 Setup SWAP for runners
         uses: pierotofy/set-swap-space@master
         with:
-            swap-size-gb: 20
+            swap-size-gb: 12
             
       - name: 📐 Tune Swap
         run: |
-            echo "vm.swappiness=60" | sudo tee -a /etc/sysctl.conf
+            echo "vm.swappiness=80" | sudo tee -a /etc/sysctl.conf
             sudo sysctl -p
       
       - name: "🌟 Clone kernel source"
