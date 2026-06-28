@@ -377,7 +377,7 @@ jobs:
           rm -f droidspaces_sysvipc_kabi.patch
           
           CONFIG_FILE=".arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
-          cat >> "$DEFCONFIG" << 'EOF'
+          cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_SYSVIPC=y
           CONFIG_POSIX_MQUEUE=y
           CONFIG_IPC_NS=y
