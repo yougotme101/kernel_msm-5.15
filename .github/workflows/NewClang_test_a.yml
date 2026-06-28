@@ -162,30 +162,11 @@ jobs:
           rm -rf common
 
           # Download Qualcomm CPULLVM 22.1.2 toolchain
-          # Dynamically resolve the correct Linux x86_64 asset URL via GitHub API
-          CPULLVM_ASSET_URL=$(curl -s \
-            "https://api.github.com/repos/qualcomm/cpullvm-toolchain/releases/tags/cpullvm-22.1.2" \
-            | python3 -c "
-            import sys, json
-            data = json.load(sys.stdin)
-            assets = data.get('assets', [])
-          # Pick the Linux Ubuntu x86_64 tarball (not aarch64, not windows, not musl overlay)
-          for a in assets:
-          name = a['name'].lower()
-          if ('linux' in name or 'ubuntu' in name) and 'x86_64' in name and name.endswith('.tar.gz') and 'musl' not in name and 'aarch64' not in name:
-            print(a['browser_download_url'])
-          break
-          ")
-          echo "Resolved CPULLVM asset URL: $CPULLVM_ASSET_URL"
-          if [ -z "$CPULLVM_ASSET_URL" ]; then
-            echo "::error::Could not resolve CPULLVM download URL from GitHub API"
-            exit 1
-          fi
-          CPULLVM_TARBALL=$(basename "$CPULLVM_ASSET_URL")
-          aria2c -x 16 -s 16 -o "$CPULLVM_TARBALL" "$CPULLVM_ASSET_URL"
+          aria2c -x 16 -s 16 -o cpullvm-22.1.2-Linux-x86_64.tar.xz \
+            "https://github.com/qualcomm/cpullvm-toolchain/releases/download/cpullvm-22.1.2/cpullvm-22.1.2-Linux-x86_64.tar.xz"
           mkdir -p prebuilts/clang/host/linux-x86/cpullvm-22.1.2
-          tar -xzf "$CPULLVM_TARBALL" -C prebuilts/clang/host/linux-x86/cpullvm-22.1.2 --strip-components=1
-          rm -f "$CPULLVM_TARBALL"
+          tar -xJf cpullvm-22.1.2-Linux-x86_64.tar.xz -C prebuilts/clang/host/linux-x86/cpullvm-22.1.2 --strip-components=1
+          rm -f cpullvm-22.1.2-Linux-x86_64.tar.xz
 
           # Remove old/unused clang prebuilts to save space
           rm -rf prebuilts/clang/host/linux-x86/clang-3289846
