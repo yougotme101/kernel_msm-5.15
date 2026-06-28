@@ -187,58 +187,10 @@ jobs:
             [ -n "$p" ] && apply_patch "$p"
           done
 
-      - name: "🚀 Add Droidspaces support"
+      - name: "🚀 Add Droidspaces Support (fix KABI sysvipc)"
         working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         run: |
-          curl -L -o droidspaces_sysvipc_kabi.patch \
-            "https://raw.githubusercontent.com/ravindu644/Droidspaces-OSS/refs/heads/main/Documentation/resources/kernel-patches/GKI/below-kernel-6.12/001.GKI-below-6.12-fix_sysvipc_kabi_6_7_8.patch"
-          patch -p1 < droidspaces_sysvipc_kabi.patch || echo "Warning: Droidspaces sysvipc patch failed"
-          rm -f droidspaces_sysvipc_kabi.patch
-          
-          CONFIG_FILE="./arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
-          cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_SYSVIPC=y
-          CONFIG_POSIX_MQUEUE=y
-          CONFIG_IPC_NS=y
-          CONFIG_PID_NS=y
-          CONFIG_DEVTMPFS=y
-          CONFIG_NETFILTER_XT_MATCH_ADDRTYPE=y
-          CONFIG_NETFILTER_XT_TARGET_REJECT=y
-          CONFIG_NETFILTER_XT_TARGET_LOG=y
-          CONFIG_NETFILTER_XT_MATCH_RECENT=y
-          CONFIG_NETFILTER_XT_SET=y
-          CONFIG_OVERLAY_FS=y
-          CONFIG_OVERLAY_FS_REDIRECT_DIR=y
-          CONFIG_OVERLAY_FS_REDIRECT_ALWAYS_FOLLOW=y
-          CONFIG_OVERLAY_FS_INDEX=y
-          CONFIG_OVERLAY_FS_XINO_AUTO=y
-          CONFIG_OVERLAY_FS_METACOPY=y
-          CONFIG_TMPFS_POSIX_ACL=y
-          CONFIG_TMPFS_XATTR=y
-          CONFIG_IP6_NF_NAT=y
-          CONFIG_IP6_NF_TARGET_MASQUERADE=y
-          CONFIG_IP_SET=y
-          CONFIG_IP_SET_MAX=65534
-          CONFIG_IP_SET_BITMAP_IP=y
-          CONFIG_IP_SET_BITMAP_IPMAC=y
-          CONFIG_IP_SET_BITMAP_PORT=y
-          CONFIG_IP_SET_HASH_IP=y
-          CONFIG_IP_SET_HASH_IPMARK=y
-          CONFIG_IP_SET_HASH_IPPORT=y
-          CONFIG_IP_SET_HASH_IPPORTIP=y
-          CONFIG_IP_SET_HASH_IPPORTNET=y
-          CONFIG_IP_SET_HASH_IPMAC=y
-          CONFIG_IP_SET_HASH_MAC=y
-          CONFIG_IP_SET_HASH_NETPORTNET=y
-          CONFIG_IP_SET_HASH_NET=y
-          CONFIG_IP_SET_HASH_NETNET=y
-          CONFIG_IP_SET_HASH_NETPORT=y
-          CONFIG_IP_SET_HASH_NETIFACE=y
-          CONFIG_IP_SET_LIST_SET=y
-          # CONFIG_USER_NS is not set
-          EOF
-
-          echo "🚀 Droidspaces: done"
+          curl -sL "https://raw.githubusercontent.com/ravindu644/Droidspaces-OSS/main/Documentation/resources/kernel-patches/GKI/below-kernel-6.12/001.GKI-below-6.12-fix_sysvipc_kabi_6_7_8.patch" | git apply -v --ignore-whitespace
           
       - name: "😋 Add BBG Support"
         if: matrix.kernel.enable_ksu == true
@@ -249,86 +201,70 @@ jobs:
           echo "CONFIG_BBG=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' security/Kconfig
 
-      - name: "🔧 Setup ReSukiSU"
+      - name: "🔧 Setup RESUKISU with SUSFS"
         if: matrix.kernel.enable_ksu == true
         working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         run: |
-          set -e
           rm -rf ./KernelSU ./drivers/kernelsu
           
-          echo "📦 Installing ReSukiSU..."
-          # Install ReSukiSU
-          curl -LSs "https://raw.githubusercontent.com/yougotme101/ReSukiSU/main/kernel/setup.sh" | bash
+          echo "📦 Installing KSU..."
+
+          # Install KSU with SUSFS
+
+          curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
+          echo "✔ KSU installed successfully"
+          
+          # Clone SUSFS4KSU for kernel patches only (not KSU integration)
+          echo "📦 Cloning SUSFS4KSU for kernel patches..."
+          git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
+          
+          SUSFS_KERNEL_PATCH="susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch"
+          
+          echo "🔧 Applying SUSFS kernel patch..."
+          if patch -p1 < "$SUSFS_KERNEL_PATCH"; then
+            echo "✅ SUSFS patch successfully applied"
+          else
+            echo "⚠️ SUSFS patch failed — copying files manually"
+          fi
+
+          echo "🔧 Applying SUSFS -> KernelSU patch..."
+          KSU_PATCH="susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
+          
+          echo "📄 Forcing SUSFS source injection..."
+          
+          # Always replace fs/susfs.c
+          mkdir -p fs
+          cp -f susfs4ksu/kernel_patches/fs/susfs.c fs/susfs.c
+          echo "✔ Copied fs/susfs.c"
+          
+          # Always replace include/linux/susfs.h
+          mkdir -p include/linux
+          cp -f susfs4ksu/kernel_patches/include/linux/susfs.h include/linux/susfs.h
+          echo "✔ Copied include/linux/susfs.h"
+          
+          # Also install missing susfs_def.h
+          if [ -f susfs4ksu/kernel_patches/include/linux/susfs_def.h ]; then
+            cp -f susfs4ksu/kernel_patches/include/linux/susfs_def.h include/linux/susfs_def.h
+            echo "✔ Copied include/linux/susfs_def.h"
+          else
+            echo "⚠️ susfs_def.h not found in repo"
+          fi
+          
+          echo "🔍 Verifying SUSFS files..."
+          for f in fs/susfs.c include/linux/susfs.h include/linux/susfs_def.h; do
+            if [ -f "$f" ]; then echo "✔ Found: $f"; else echo "❌ Missing: $f"; fi
+          done
+          
+          # Clean up SUSFS repo (we only needed kernel patches, not KSU integration)
+          rm -rf susfs4ksu
+          
+          # Create symbolic link for drivers/kernelsu (if needed by build system)
+          if [ ! -L "drivers/kernelsu" ]; then
+            ln -sf ../KernelSU drivers/kernelsu
+            echo "✔ Created drivers/kernelsu symlink"
+          fi
           
           # Add KSU configs
-          CONFIG_FILE="./arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
-          cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_KSU=y
-          EOF
-          
-          echo "🎉 ReSukiSU with multiple manager support are installed"
-          echo "Included Manager: KernelSU/MKSU/RKSU/SukiSU Ultra/MamboSU"
-
-          # Add metamodule and OverlayFS support for KSU variant
-          cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_OVERLAY_FS=y
-          CONFIG_TMPFS_XATTR=y
-          CONFIG_TMPFS_POSIX_ACL=y
-          EOF
-
-          echo "✅ KSU configs added"
-
-      - name: "🩹 Apply SUSFS patches (KSU variant only)"
-        if: matrix.kernel.enable_ksu == true
-        working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
-        run: |
-          echo "📦 Cloning SUSFS4KSU for GKI android13-5.15..."
-          git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
-
-          # 1. Apply the kernel-side SUSFS patch
-          echo "🔧 Applying SUSFS kernel patch..."
-          if patch -p1 < susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch; then
-            echo "✅ SUSFS kernel patch applied successfully"
-          else
-            echo "⚠️ Patch had conflicts — copying source files manually"
-          fi
-
-          # 2. Force-copy SUSFS source files (always, in case patch was partial)
-          echo "📄 Copying SUSFS source files..."
-          mkdir -p fs include/linux
-          cp -f susfs4ksu/kernel_patches/fs/susfs.c                         fs/susfs.c
-          cp -f susfs4ksu/kernel_patches/include/linux/susfs.h              include/linux/susfs.h
-          [ -f susfs4ksu/kernel_patches/include/linux/susfs_def.h ] && \
-            cp -f susfs4ksu/kernel_patches/include/linux/susfs_def.h        include/linux/susfs_def.h
-          echo "✔ SUSFS source files in place"
-
-          # 3. Copy SUSFS→KSU integration files into KernelSU
-          if [ -d "susfs4ksu/kernel_patches/KernelSU/kernel" ]; then
-            cp -rf susfs4ksu/kernel_patches/KernelSU/kernel/* KernelSU/kernel/
-            echo "✔ Copied SUSFS integration files into KernelSU/kernel/"
-          fi
-
-          # 4. Apply the KSU-side SUSFS patch
-          echo "🔧 Applying KSU SUSFS integration patch..."
-          KSU_PATCH="susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
-          KSU_C="kernelSU/kernel/ksu.c"
-          if grep -q "susfs_init" "$KSU_C" 2>/dev/null; then
-            echo "⚠️ SUSFS already integrated in ksu.c — skipping"
-          else
-            cd KernelSU
-            if patch -p1 --dry-run < "../$KSU_PATCH" >/dev/null 2>&1; then
-              patch -p1 < "../$KSU_PATCH"
-              echo "✔ KSU SUSFS patch applied"
-            else
-              echo "⚠️ Patch failed — applying manual fallback"
-              cd ..
-              sed -i '/#include <linux\/module\.h>/a #include <linux\/susfs.h>' "$KSU_C"
-              sed -i '/ksu_core_init();/a \\tsusfs_init();' "$KSU_C"
-            fi
-            cd ..
-          fi
-
-          # 5. Append SUSFS Kconfig options to defconfig
           CONFIG_FILE="./arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_KSU_SUSFS=y
@@ -347,9 +283,20 @@ jobs:
           CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
           CONFIG_KSU_SUSFS_SUS_SU=y
           EOF
+          
+          echo "🎉 ReSukiSU with multiple manager support are installed"
+          echo "Included Manager: KernelSU/MKSU/RKSU/SukiSU Ultra/M"
 
-          rm -rf susfs4ksu
-          echo "🎉 SUSFS for GKI android13-5.15 fully integrated!"
+          # Add metamodule and OverlayFS support for KSU variant
+          cat >> "$CONFIG_FILE" << 'EOF'
+          CONFIG_OVERLAY_FS=y
+          CONFIG_TMPFS_XATTR=y
+          CONFIG_TMPFS_POSIX_ACL=y
+          EOF
+
+          echo "✅ KSU configs added"
+
+          echo "🎉 ReSukiSU installed and SUSFS for GKI android13-5.15 fully integrated!"
 
       - name: "⚙️ Setup basic configs"
         working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
@@ -492,6 +439,7 @@ jobs:
           • LTO: \`Full\`
           • Optimization: \`-O2\`
           • BBG: \`Enabled\`
+          • Droidspaces: \`Enabled\`
 
           📱 *Supported Devices:*
           • Redmi Note 12 4G/NFC
@@ -531,6 +479,7 @@ jobs:
           • LTO: \`Full\`
           • Optimization: \`-O2\`
           • BBG: \`Enabled\`
+          • Droidspaces: \`Enabled\`
 
           🕐 *Failed at:* $(date '+%Y-%m-%d %H:%M:%S UTC')
 
