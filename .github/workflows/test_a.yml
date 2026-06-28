@@ -793,7 +793,7 @@ jobs:
           
           echo "✅ Installed MamboSU
 
-      - name: "🔧 Setup MamboSU"
+      - name: "🔧 Setup ReSukiSU"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'resukisu'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -814,6 +814,7 @@ jobs:
           EOF
           
           echo "🎉 ReSukiSU with multiple manager support are installed"
+          echo "Included Manager: KernelSU/MKSU/RKSU/SukiSU Ultra/MamboSU"
 
       - name: "🔨 Build kernel"
         working-directory: ${{ env.WORK_DIR }}
