@@ -303,15 +303,15 @@ jobs:
           echo "✔ SUSFS source files in place"
 
           # 3. Copy SUSFS→KSU integration files into KernelSU
-          if [ -d "susfs4ksu/kernel_patches/KernelSU/kernel" ]; then
-            cp -rf susfs4ksu/kernel_patches/KernelSU/kernel/* KernelSU/kernel/
-            echo "✔ Copied SUSFS integration files into KernelSU/kernel/"
+          if [ -d "susfs4ksu/kernel_patches/kernelsu/kernel" ]; then
+            cp -rf susfs4ksu/kernel_patches/kernelsu/kernel/* kernelsu/kernel/
+            echo "✔ Copied SUSFS integration files into kernelsu/kernel/"
           fi
 
           # 4. Apply the KSU-side SUSFS patch
           echo "🔧 Applying KSU SUSFS integration patch..."
-          KSU_PATCH="susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
-          KSU_C="KernelSU/kernel/ksu.c"
+          KSU_PATCH="susfs4ksu/kernel_patches/kernelsu/10_enable_susfs_for_ksu.patch"
+          KSU_C="kernelsu/kernel/ksu.c"
           if grep -q "susfs_init" "$KSU_C" 2>/dev/null; then
             echo "⚠️ SUSFS already integrated in ksu.c — skipping"
           else
