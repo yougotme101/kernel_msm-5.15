@@ -15,14 +15,9 @@ on:
         default: "https://github.com/topnotchfreaks/kernel_msm-5.15"
       kernelBranch:
         description: "Kernel branch"
-        required: true
-        type: choice
+        required: false
+        type: string
         default: "codelinaro"
-        options:
-          - "codelinaro"
-          - "google"
-          - "topnotchfreaks"
-          - "zepharo"
       kernelDevice:
         description: "Device (used for defconfig)"
         required: true
