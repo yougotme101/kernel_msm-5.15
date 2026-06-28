@@ -54,6 +54,7 @@ on:
           - "wild-ksu"
           - "kowsu"
           - "mambosu"
+          - "resukisu"
       optimizationLevel:
         description: "Compiler optimization level"
         required: false
@@ -790,7 +791,29 @@ jobs:
           CONFIG_TMPFS_POSIX_ACL=y
           EOF
           
-          echo "✅ Installed MamboSU"
+          echo "✅ Installed MamboSU
+
+      - name: "🔧 Setup MamboSU"
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'resukisu'
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          rm -rf ./KernelSU ./drivers/kernelsu
+          
+          echo "📦 Installing ResSukiSU..."
+
+          # Install ReSukiSU
+          curl -LSs "https://raw.githubusercontent.com/yougotme101/ReSukiSU/main/kernel/setup.sh" | bash
+          
+          # Add KSU configs
+          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          cat >> "$CONFIG_FILE" << 'EOF'
+          CONFIG_KSU=y
+          CONFIG_OVERLAY_FS=y
+          CONFIG_TMPFS_XATTR=y
+          CONFIG_TMPFS_POSIX_ACL=y
+          EOF
+          
+          echo "🎉 ReSukiSU with multiple manager support are installed"
 
       - name: "🔨 Build kernel"
         working-directory: ${{ env.WORK_DIR }}
