@@ -473,20 +473,11 @@ jobs:
           CONFIG_KSU_SUSFS_ENABLE_LOG=y
           CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
           CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
-          CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
+          CONFIG_KSU_SUSFS_OPEN_REDIRECT=n
           CONFIG_KSU_SUSFS_SUS_SU=y
           EOF
           
           echo "🎉 RESUKISU with SUSFS kernel patches fully integrated!"
-          
-      - name: "🔧 Fix compilation error on FUSE"
-        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
-        run: |
-          echo "🛠 Corrigindo fs/fuse/dev.c..."
-          
-          sed -i 's/dprintk("Request finished/pr_debug("Request finished/g' fs/fuse/dev.c
-          sed -i 's/dprintk("Interrupt already queued/pr_debug("Interrupt already queued/g' fs/fuse/dev.c
-          sed -i 's/FR_INTR_QUEUED/FR_INTERRUPTED/g' fs/fuse/dev.c
           
       - name: "🔨 Build kernel"
         if: github.event.inputs.buildToolchains == 'android-tools'
