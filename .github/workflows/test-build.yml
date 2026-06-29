@@ -372,23 +372,6 @@ jobs:
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           curl -sL "https://raw.githubusercontent.com/ravindu644/Droidspaces-OSS/main/Documentation/resources/kernel-patches/GKI/below-kernel-6.12/001.GKI-below-6.12-fix_sysvipc_kabi_6_7_8.patch" | git apply -v --ignore-whitespace
-          
-      - name: "🔧 Apply GKI Kernel Patches"
-        if: matrix.variant == 'ksu'
-        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
-        run: |
-          echo "📥 Downloading patch script..."
-          curl -sL -o patch_gki.py "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/patch_gki.py"
-           
-          echo "🔧 Applying patches to kernel..."
-          python3 patch_gki.py $(pwd)
-           
-          if [ $? -eq 0 ]; then
-            echo "✅ GKI patches applied successfully"
-          else
-            echo "❌ Patch application failed"
-            exit 1
-          fi
       
       - name: "😋 Add BBG Support"
         if: matrix.variant == 'ksu'
@@ -452,6 +435,20 @@ jobs:
           for f in fs/susfs.c include/linux/susfs.h include/linux/susfs_def.h; do
             if [ -f "$f" ]; then echo "✔ Found: $f"; else echo "❌ Missing: $f"; fi
           done
+
+          # 🔧 Apply GKI Kernel Patches
+          echo "📥 Downloading patch script..."
+          curl -sL -o patch_gki.py "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/patch_gki.py"
+           
+          echo "🔧 Applying patches to kernel..."
+          python3 patch_gki.py $(pwd)
+           
+          if [ $? -eq 0 ]; then
+            echo "✅ GKI patches applied successfully"
+          else
+            echo "❌ Patch application failed"
+            exit 1
+          fi
           
           # Clean up SUSFS repo (we only needed kernel patches, not KSU integration)
           rm -rf susfs4ksu
