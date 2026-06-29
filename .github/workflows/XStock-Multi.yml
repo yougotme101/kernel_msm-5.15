@@ -144,10 +144,10 @@ jobs:
           rm -rf common
 
           # Download and setup custom clang toolchain
-          aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r584948b.tar.gz "https://github.com/topnotchfreaks/clang/releases/download/v1.0.0/clang-r584948b.tar.gz"
-          mkdir -p prebuilts/clang/host/linux-x86/clang-r584948b
-          tar -xzf prebuilts/clang/host/linux-x86/clang-r584948b.tar.gz -C prebuilts/clang/host/linux-x86/clang-r584948b
-          rm -rf prebuilts/clang/host/linux-x86/clang-r584948b.tar.gz
+          aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r547379.tar.gz "https://github.com/topnotchfreaks/clang/releases/download/v1.0.0/clang-r547379.tar.gz"
+          mkdir -p prebuilts/clang/host/linux-x86/clang-r547379
+          tar -xzf prebuilts/clang/host/linux-x86/clang-r547379.tar.gz -C prebuilts/clang/host/linux-x86/clang-r547379
+          rm -rf prebuilts/clang/host/linux-x86/clang-r547379.tar.gz
 
           # Remove unused clang for more space
           rm -rf prebuilts/clang/host/linux-x86/clang-3289846
@@ -157,7 +157,7 @@ jobs:
           # Update build config constants
           sed -i \
            -e 's/^BRANCH=.*/BRANCH=android13-5.15/' \
-           -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r584948b/' \
+           -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r547379/' \
            ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}/build.config.constants
           
           # Remove defconfig check (if exists)
@@ -255,19 +255,6 @@ jobs:
             if [ -f "$f" ]; then echo "✔ Found: $f"; else echo "❌ Missing: $f"; fi
           done
 
-          # ✅ NEW: Apply GKI-specific patches for namespace.c and task_mmu.c
-          echo "🔧 Applying GKI-specific patches (namespace.c & task_mmu.c)..."
-    
-          # Download patch_gki.py
-          curl -L -o patch_gki.py "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/patch_gki.py"
-    
-          # Apply patches
-          if python3 patch_gki.py .; then
-            echo "✅ GKI-specific patches applied successfully"
-          else
-            echo "❌ GKI-specific patches failed"
-           exit 1
-          fi
           
           # Clean up SUSFS repo (we only needed kernel patches, not KSU integration)
           rm -rf susfs4ksu
@@ -298,9 +285,6 @@ jobs:
           CONFIG_KSU_SUSFS_SUS_SU=y
           EOF
           
-          echo "🎉 ReSukiSU with multiple manager support are installed"
-          echo "Included Manager: KernelSU/MKSU/RKSU/SukiSU Ultra/M"
-
           # Add metamodule and OverlayFS support for KSU variant
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_OVERLAY_FS=y
@@ -462,11 +446,11 @@ jobs:
 
           📱 *Supported Manager:*
           • KSU by tiann
-          • ReSukiSU
+          • MKSU
           • Rissu-KSU
           • KowSU
-          • MamboSU
-          • pershoot
+          • ReSukiSU
+          • SukiSU-Ultra
 
           🕐 *Build Date:* $(date '+%Y-%m-%d %H:%M:%S UTC')
           📦 *Package:* \`${{ env.ZIP_NAME }}\`
@@ -494,7 +478,7 @@ jobs:
           • Optimization: \`-O2\`
           • BBG: \`Enabled\`
           • Droidspaces: \`Enabled\`
-
+          
           🕐 *Failed at:* $(date '+%Y-%m-%d %H:%M:%S UTC')
 
           🔍 Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
