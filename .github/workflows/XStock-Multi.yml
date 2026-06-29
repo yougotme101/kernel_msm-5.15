@@ -254,6 +254,20 @@ jobs:
           for f in fs/susfs.c include/linux/susfs.h include/linux/susfs_def.h; do
             if [ -f "$f" ]; then echo "✔ Found: $f"; else echo "❌ Missing: $f"; fi
           done
+
+          # ✅ NEW: Apply GKI-specific patches for namespace.c and task_mmu.c
+          echo "🔧 Applying GKI-specific patches (namespace.c & task_mmu.c)..."
+    
+          # Download patch_gki.py
+          curl -L -o patch_gki.py "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/patch_gki.py"
+    
+          # Apply patches
+          if python3 patch_gki.py .; then
+            echo "✅ GKI-specific patches applied successfully"
+          else
+            echo "❌ GKI-specific patches failed"
+           exit 1
+          fi
           
           # Clean up SUSFS repo (we only needed kernel patches, not KSU integration)
           rm -rf susfs4ksu
