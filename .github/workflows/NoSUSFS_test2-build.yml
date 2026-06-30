@@ -156,7 +156,7 @@ jobs:
           # Function to fetch latest release tar.gz URL from GitHub
           get_latest_github_release() {
             local repo_url="$1"
-            latest_url=$(curl -sL "https://api.github.com/repos/$repo_url/releases/latest" | grep "browser_download_url.*tar.gz" | cut -d '"' -f 4 | head -n 1)
+            latest_url=$(curl -sL "https://api.github.com/Neutron-Toolchains/clang-build-catalogue/releases/latest" | grep "browser_download_url.*tar.gz" | cut -d '"' -f 4 | head -n 1)
             
             if [[ -z "$latest_url" ]]; then
               echo "❌ Failed to fetch latest release from $repo_url!"
@@ -166,7 +166,7 @@ jobs:
             printf "%s" "$latest_url"  # Use printf to output only the URL
           }
       
-          clang_url=$(get_latest_github_release "greenforce-project/greenforce_clang")
+          clang_url=$(get_latest_github_release "neutron-toolchains/neutron_clang")
       
           echo "✅ Clang URL: $clang_url"
       
