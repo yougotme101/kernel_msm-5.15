@@ -542,7 +542,7 @@ jobs:
          if [ "${{ github.event.inputs.buildKSU }}" != "noksu" ]; then
           KSU_TEXT="
           
-         🔐 *KSU Variant:* \`ReSukiSU\`"
+         🔐 *KSU Variant:* \`KernelSU-Next\`"
          fi
       
          CAPTION="✅ *Kernel Build Successful*
@@ -558,12 +558,12 @@ jobs:
          • Optimization: \`-${{ github.event.inputs.optimizationLevel }}\`
          • Tick Rate: \`${{ github.event.inputs.tickRate }}\`
          • Build Type: \`${{ github.event.inputs.buildKSU }}\`${KSU_TEXT}
-         • SUSFS: \`Disabled\`
+         • SUSFS: \`Enabled(GKI-Android13.5-15)\`
          • BBG: \`Enabled\`
          • Droidspaces: \`Enabled\`
          • Local Version: \`${{ github.event.inputs.localVersion }}\`
          • Build Tools: \`${{ github.event.inputs.buildToolchains }}\`
-         • Manager: \`ReSukiSU,SukiSU-Ultra,KSU,MKSU,rKSU and KowSU\`
+         • Manager: \`KSUN, pershoot, KOWSU, MamboSU, KamiSU, VortexSU, WildKSU, Rsuntk, KSU, 5ec1cff\`
     
          🕐 *Build Date:* $(date '+%Y-%m-%d %H:%M:%S UTC')
          📦 *Package:* \`${{ env.ZIP_NAME }}\`"
@@ -587,12 +587,12 @@ jobs:
          • Optimization: \`-${{ github.event.inputs.optimizationLevel }}\`
          • Tick Rate: \`${{ github.event.inputs.tickRate }}\`
          • Build Type: \`${{ github.event.inputs.buildKSU }}\`${KSU_TEXT}
-         • SUSFS: \`Disabled\`
+         • SUSFS: \`Enabled(GKI-Android13.5-15)\`
          • BBG: \`Enabled\`
          • Droidspaces: \`Enabled\`
          • Local Version: \`${{ github.event.inputs.localVersion }}\`
          • Build Tools: \`${{ github.event.inputs.buildToolchains }}\`
-         • Manager: \`ReSukiSU,SukiSU-Ultra,KSU,MKSU,rKSU and KowSU\`
+         • Manager: \`KSUN, pershoot, KOWSU, MamboSU, KamiSU, VortexSU, WildKSU, Rsuntk, KSU, 5ec1cff\`
       
          🕐 *Failed at:* $(date '+%Y-%m-%d %H:%M:%S UTC')
     
