@@ -361,7 +361,7 @@ jobs:
           esac
 
           # Clone the official Google BBR v3 source code branch
-          git clone -b v3 --single-branch https://github.com/google/bbr.git bbr_v3_src
+          git clone -b v3 --single-branch "https://github.com/google/bbr.git bbr_v3_src"
 
           # Replace the existing TCP BBR implementation in the Android kernel source
           cp bbr_v3_src/net/ipv4/tcp_bbr.c ./net/ipv4/tcp_bbr.c
