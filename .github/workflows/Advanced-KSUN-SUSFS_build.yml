@@ -360,14 +360,6 @@ jobs:
               ;;
           esac
 
-          # Clone the official Google BBR v3 source code branch
-          git clone -b v3 --single-branch "https://github.com/google/bbr.git bbr_v3_src"
-
-          # Replace the existing TCP BBR implementation in the Android kernel source
-          cp bbr_v3_src/net/ipv4/tcp_bbr.c ./net/ipv4/tcp_bbr.c
-
-          echo "BBR v3 source files injected successfully!"
-          
           # Extra TCP configs
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_TCP_CONG_ADVANCED=y
@@ -376,7 +368,6 @@ jobs:
           CONFIG_TCP_CONG_HTCP=n
           CONFIG_TCP_CONG_BBR=y
           CONFIG_DEFAULT_BBR=y
-          CONFIG_DEFAULT_TCP_CONG="bbr"
           EOF
 
           # Script sign patch
