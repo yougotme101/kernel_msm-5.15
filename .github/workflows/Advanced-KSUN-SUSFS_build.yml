@@ -424,6 +424,12 @@ jobs:
             exit 1
           fi
 
+          # Ensure the susfs include is present at the top of task_mmu.c
+          if ! grep -q '#include <linux/susfs.h>' fs/proc/task_mmu.c; then
+            sed -i '/#include <linux\/seq_file.h>/a #include <linux/susfs.h>' fs/proc/task_mmu.c
+            echo "✔ Manually inserted #include <linux/susfs.h> into task_mmu.c"
+          fi
+
           echo "🔧 Applying SUSFS -> KernelSU patch..."
           KSU_PATCH="susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
           
