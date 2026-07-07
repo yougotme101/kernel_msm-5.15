@@ -412,10 +412,9 @@ jobs:
         run: |
           echo "Retrieving SuSFS components..."
           git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15 susfs
-          mkdir -p include/linux fs
-          cp -f susfs/kernel_patches/include/linux/susfs.h include/linux/
-          cp -f susfs/kernel_patches/include/linux/susfs_def.h include/linux/ || true
-          cp -f susfs/kernel_patches/fs/susfs.c fs/
+          cp /susfs4ksu/kernel_patches/fs/"* "/kernel/common/fs/"
+          cp /susfs4ksu/kernel_patches/include/linux/"* "/kernel/common/include/linux/"
+          cp /susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./
 
       - name: "Apply SuSFS System Patches"
         if: matrix.variant == 'ksu'
