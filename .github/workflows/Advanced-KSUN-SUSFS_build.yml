@@ -494,8 +494,7 @@ jobs:
       - name: "Trying to fix error on fuse"
         working-directory: ${{ env.WORK_DIR }}
         run: |
-          # In fuse_i.h — add the missing flag to the enum
-          sed -i '/FR_PRIVATE,/a\	FR_INTR_QUEUED,' fs/fuse/fuse_i.h
+          sed -i 's/FR_INTR_QUEUED/FR_INTERRUPTED/g' fs/fuse/dev.c
           
       - name: "🔨 Build kernel"
         if: github.event.inputs.buildToolchains == 'android-tools'
