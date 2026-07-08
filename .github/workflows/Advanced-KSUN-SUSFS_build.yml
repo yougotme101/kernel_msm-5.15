@@ -379,13 +379,6 @@ jobs:
           # curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
-      - name: Debug fuse files before build
-        run: |
-          echo "=== fuse_i.h enum ==="
-          grep -n "FR_" common_gki/common/fs/fuse/fuse_i.h || true
-          echo "=== dev.c FR_INTR_QUEUED check ==="
-          grep -n "FR_INTR_QUEUED" -B5 -A5 common_gki/common/fs/fuse/dev.c || echo "Not found — OK, no mismatch"
-      
       - name: "🚀 Add Droidspaces Support (fix KABI sysvipc)"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -497,6 +490,12 @@ jobs:
              echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$CONFIG_FILE"
              echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> "$CONFIG_FILE"
           fi
+
+      - name: "Trying to fix error on fuse"
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          # In fuse_i.h — add the missing flag to the enum
+          sed -i '/FR_PRIVATE,/a\	FR_INTR_QUEUED,' fs/fuse/fuse_i.h
           
       - name: "🔨 Build kernel"
         if: github.event.inputs.buildToolchains == 'android-tools'
