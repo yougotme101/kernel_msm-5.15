@@ -75,6 +75,14 @@ on:
           - "thin"
           - "full"
 
+  name: "Debug fuse files before build"
+  run: |
+    echo "=== fuse_i.h enum ==="
+    grep -n "FR_" common_gki/common/fs/fuse/fuse_i.h
+    echo "=== dev.c around FR_INTR_QUEUED ==="
+    grep -n "FR_INTR_QUEUED" -B5 -A5 common_gki/common/fs/fuse/dev.c
+    
+
 jobs:
   Build-Kernel:
     name: "🚀 Build Kernel"
