@@ -492,8 +492,10 @@ jobs:
           fi
 
       - name: "Trying to fix error on fuse"
-        working-directory: ${{ env.WORK_DIR }}
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
+          sed -i 's/dprintk("Request finished/pr_debug("Request finished/g' fs/fuse/dev.c
+          sed -i 's/dprintk("Interrupt already queued/pr_debug("Interrupt already queued/g' fs/fuse/dev.c
           sed -i 's/FR_INTR_QUEUED/FR_INTERRUPTED/g' fs/fuse/dev.c
           
       - name: "🔨 Build kernel"
