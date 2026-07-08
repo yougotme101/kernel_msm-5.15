@@ -285,8 +285,21 @@ jobs:
           CONFIG_KSU_SUSFS_SUS_SU=y
           EOF
           
-          # Add metamodule and OverlayFS support for KSU variant
+          # Basic optimizations
+          echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
+
+          # Extra TCP and Performance configs
           cat >> "$CONFIG_FILE" << 'EOF'
+          CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y
+          CONFIG_TCP_CONG_ADVANCED=y
+          CONFIG_TCP_CONG_BIC=n
+          CONFIG_TCP_CONG_WESTWOOD=y
+          CONFIG_TCP_CONG_HTCP=n
+          CONFIG_TCP_CONG_BBR=y
+          CONFIG_DEFAULT_BBR=y
+
+          # Add metamodule support and OverlayFS support for Vanilla variant
+          cat >> "$CONFIG_FILE" << 'EOF
           CONFIG_OVERLAY_FS=y
           CONFIG_TMPFS_XATTR=y
           CONFIG_TMPFS_POSIX_ACL=y
@@ -304,7 +317,7 @@ jobs:
           # Basic optimizations
           echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
 
-          # Performance configs
+          # Extra TCP and Performance configs
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y
           CONFIG_TCP_CONG_ADVANCED=y
@@ -312,15 +325,23 @@ jobs:
           CONFIG_TCP_CONG_WESTWOOD=y
           CONFIG_TCP_CONG_HTCP=n
           CONFIG_TCP_CONG_BBR=y
-          CONFIG_DEFAULT_WESTWOOD=y
+          CONFIG_DEFAULT_BBR=y
 
           # Add metamodule support and OverlayFS support for Vanilla variant
+          cat >> "$CONFIG_FILE" << 'EOF
           CONFIG_OVERLAY_FS=y
           CONFIG_TMPFS_XATTR=y
           CONFIG_TMPFS_POSIX_ACL=y
           EOF
           
           echo "✅ Basic configs added"
+
+      - name: "Trying to fix error on fuse"
+        working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
+        run: |
+          sed -i 's/dprintk("Request finished/pr_debug("Request finished/g' fs/fuse/dev.c
+          sed -i 's/dprintk("Interrupt already queued/pr_debug("Interrupt already queued/g' fs/fuse/dev.c
+          sed -i 's/FR_INTR_QUEUED/FR_INTERRUPTED/g' fs/fuse/dev.c
 
       - name: "🔨 Build kernel"
         working-directory: ${{ env.WORK_DIR }}
