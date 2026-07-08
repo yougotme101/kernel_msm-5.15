@@ -236,6 +236,10 @@ jobs:
             echo "✔ Manually inserted #include <linux/susfs.h> into task_mmu.c"
           fi
 
+          if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)
+          include <linux/susfs_def.h>
+          endif
+
           echo "🔧 Applying SUSFS -> KernelSU patch..."
           KSU_PATCH="susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
           
