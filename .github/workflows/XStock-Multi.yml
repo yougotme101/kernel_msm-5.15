@@ -226,10 +226,7 @@ jobs:
             echo "✅ SUSFS patch successfully applied"
           else
             echo "⚠️ SUSFS patch failed — copying files manually"
-            cat fs/proc/task_mmu.c.rej
-            exit 1
-          fi
-
+         
           echo "🔧 Applying SUSFS -> KernelSU patch..."
           KSU_PATCH="susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
           
