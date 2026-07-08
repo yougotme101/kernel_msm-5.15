@@ -422,48 +422,6 @@ jobs:
             echo "⚠️ SUSFS patch failed — copying files manually"
           fi
 
-          TASK_MMU="fs/proc/task_mmu.c"
-            if ! grep -q "susfs_def.h" "$TASK_MMU"; then
-              echo "🩹 Patching $TASK_MMU manually (hunk #1 fallback)..."
-              python3 - "$TASK_MMU" << 'EOF'
-            import sys
-            
-            path = sys.argv[1]
-            with open(path, "r") as f:
-                content = f.read()
-            
-            anchor = "#include <trace/hooks/mm.h>\n"
-            guard = (
-                "#if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || "
-                "defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)\n"
-                "#include <linux/susfs_def.h>\n"
-                "#endif // #if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || "
-                "defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)\n"
-            )
-            
-            if anchor not in content:
-                print(f"::error::Anchor line not found in {path}, cannot apply fallback patch")
-                sys.exit(1)
-            
-            if guard not in content:
-                content = content.replace(anchor, anchor + guard, 1)
-                with open(path, "w") as f:
-                    f.write(content)
-                print(f"✅ Inserted susfs_def.h guard into {path}")
-            else:
-                print(f"ℹ️ Guard already present in {path}, skipping")
-            EOF
-            else
-              echo "ℹ️ $TASK_MMU already contains susfs_def.h guard, skipping manual patch"
-            fi
-            
-            # Verify no other .rej files remain (real failures should still stop the build)
-            if find . -name "*.rej" | grep -q .; then
-              echo "❌ Unresolved patch rejects found:"
-              find . -name "*.rej" -exec echo "  {}" \; -exec cat {} \;
-              exit 1
-            fi
-
           echo "🔧 Applying SUSFS -> KernelSU patch..."
           KSU_PATCH="susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
           
