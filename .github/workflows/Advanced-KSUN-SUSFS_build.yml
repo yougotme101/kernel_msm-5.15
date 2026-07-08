@@ -75,13 +75,6 @@ on:
           - "thin"
           - "full"
 
-  name: "Debug fuse files before build"
-  run: |
-    echo "=== fuse_i.h enum ==="
-    grep -n "FR_" common_gki/common/fs/fuse/fuse_i.h
-    echo "=== dev.c around FR_INTR_QUEUED ==="
-    grep -n "FR_INTR_QUEUED" -B5 -A5 common_gki/common/fs/fuse/dev.c
-    
 
 jobs:
   Build-Kernel:
@@ -386,6 +379,13 @@ jobs:
           # curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
+      - name: "Debug fuse files before build"
+        run: |
+          echo "=== fuse_i.h enum ==="
+          grep -n "FR_" common_gki/common/fs/fuse/fuse_i.h
+          echo "=== dev.c around FR_INTR_QUEUED ==="
+          grep -n "FR_INTR_QUEUED" -B5 -A5 common_gki/common/fs/fuse/dev.c
+      
       - name: "🚀 Add Droidspaces Support (fix KABI sysvipc)"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
