@@ -52,6 +52,8 @@ Get build results sent to Telegram:
 - **@ssocozy** – Contributor  
 - **@NVG-064** – Contributor
 - **@ShirkNeko** – SUSFS integration
+- **@RapliVx** - Multi Manager support script
+- **@Koneko_dev** - Some helps
 
 ---
 
@@ -70,15 +72,3 @@ Get build results sent to Telegram:
 3. Add these secrets in repository **Settings** → **Secrets**:
    - `TELEGRAM_BOT_TOKEN`
    - `TELEGRAM_USER_ID`
-
-## 🤝 Credits
-
-- **@PhamtomK12** – Original builder
-- **@ssocozy** – Contributor  
-- **@NVG-064** – Contributor
-- **@ShirkNeko** – SUSFS integration
-- **@thewildjames** – Wild-KSU
-
----
-
-**Ready to build? Hit that "Run workflow" button! 🎉**
