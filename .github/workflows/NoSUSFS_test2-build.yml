@@ -544,7 +544,7 @@ jobs:
       - name: "📦 Create flashable ZIP"
         run: |
           BUILD_TIME=$(date +'%Y-%m-%d')
-          git clone --depth=1 https://github.com/topnotchfreaks/AnyKernel3 -b master AnyKernel3
+          git clone --depth=1 https://github.com/yougotme101/AnyKernel3 -b master AnyKernel3
           
           # Copy kernels
           find kernels -name "Image.*" -exec cp {} AnyKernel3/ \;
