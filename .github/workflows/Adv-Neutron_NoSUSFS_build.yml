@@ -225,60 +225,6 @@ jobs:
          echo 'KBUILD_CFLAGS += -Wno-sometimes-uninitialized' >> Makefile
          echo "Custom Makefile line added successfully"
 
-      - name: "🌊 Inject BBRv3 (Google's tcp_bbr.c)"
-        shell: bash
-        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
-        run: |
-          set -euo pipefail
-
-          BBR_BRANCH="v3"
-          BBR_FILE="net/ipv4/tcp_bbr.c"
-
-          # Google's BBRv3 release lives as a full kernel-tree branch, not a
-          # single pinned file path — try the expected path, then fall back
-          # to asking the GitHub API where tcp_bbr.c actually sits on that branch.
-          echo "🚀 Fetching BBRv3 source from google/bbr ($BBR_BRANCH branch)..."
-          curl -sfL -o "${BBR_FILE}.new" \
-            "https://raw.githubusercontent.com/google/bbr/${BBR_BRANCH}/net/ipv4/tcp_bbr.c" || true
-
-          if [ ! -s "${BBR_FILE}.new" ] || ! grep -qi "bbr" "${BBR_FILE}.new"; then
-            echo "⚠️ Direct path fetch failed or content looks wrong. Searching via GitHub API..."
-            API_HIT=$(curl -sL "https://api.github.com/search/code?q=filename:tcp_bbr.c+repo:google/bbr" | grep -o '"path":[^,]*' | head -n 1 || true)
-            echo "API search result: $API_HIT"
-
-            echo "----- First 20 lines of what we actually downloaded: -----"
-            head -n 20 "${BBR_FILE}.new" || echo "(file is empty or missing)"
-            echo "------------------------------------------------------------"
-
-            echo "❌ Could not confirm BBRv3 source at the expected path."
-            echo "❌ Check https://github.com/google/bbr/tree/${BBR_BRANCH}/net/ipv4 manually,"
-            echo "❌ confirm the exact path, and update BBR_FILE above accordingly."
-            rm -f "${BBR_FILE}.new"
-            exit 1
-          fi
-
-          # Back up the tree's existing tcp_bbr.c, then swap in BBRv3
-          if [ -f "$BBR_FILE" ]; then
-            cp "$BBR_FILE" "${BBR_FILE}.orig"
-          fi
-          mv "${BBR_FILE}.new" "$BBR_FILE"
-
-          echo "✅ BBRv3 source installed at $BBR_FILE"
-
-          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
-          if [ -f "$CONFIG_FILE" ]; then
-            sed -i '/^CONFIG_TCP_CONG_BBR/d' "$CONFIG_FILE"
-            sed -i '/^CONFIG_DEFAULT_BBR/d' "$CONFIG_FILE"
-            sed -i '/^CONFIG_DEFAULT_TCP_CONG/d' "$CONFIG_FILE"
-            {
-              echo "CONFIG_TCP_CONG_BBR=y"
-              echo "CONFIG_DEFAULT_BBR=y"
-              echo "CONFIG_DEFAULT_TCP_CONG=\"bbr\""
-            } >> "$CONFIG_FILE"
-          fi
-
-          echo "🎉 Inject BBRv3 setup complete!"
-    
       - name: "⚙️ Configure kernel"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -390,6 +336,9 @@ jobs:
           CONFIG_TCP_CONG_BIC=n
           CONFIG_TCP_CONG_WESTWOOD=y
           CONFIG_TCP_CONG_HTCP=n
+          CONFIG_TCP_CONG_BBR=y
+          CONFIG_DEFAULT_BBR=y
+          CONFIG_DEFAULT_TCP_CONG="bbr"
           EOF
 
           # Script sign patch
