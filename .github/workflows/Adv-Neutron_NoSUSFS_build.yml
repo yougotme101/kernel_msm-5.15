@@ -1,4 +1,4 @@
-name: "Advanced NoSUSFS Build test-2"
+name: "Advanced NeutronClang NoSUSFS Build"
 
 env:
   OUT_DIR: "out"
@@ -47,9 +47,9 @@ on:
           - "ReSukiSU"
       tickRate:
         description: "Kernel tick rate (Hz)"
-        required: false
+        required: true
         type: choice
-        default: "250"
+        default: "default"
         options:
           - "default"
           - "100Hz"
@@ -58,7 +58,7 @@ on:
           - "1000Hz"
       optimizationLevel:
         description: "Compiler optimization level"
-        required: false
+        required: true
         type: choice
         default: "O3"
         options:
