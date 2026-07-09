@@ -41,10 +41,10 @@ on:
         description: "KSU implementation (if KSU enabled)"
         required: true
         type: choice
-        default: "kowsu"
+        default: "KowSU"
         options:
-          - "kowsu"
-          - "resukisu"
+          - "KowSU"
+          - "ReSukiSU"
       tickRate:
         description: "Kernel tick rate (Hz)"
         required: false
@@ -453,7 +453,7 @@ jobs:
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' security/Kconfig
 
       - name: "🔧 Setup KowSU"
-        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'kowsu'
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'KowSU'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           rm -rf ./KernelSU ./drivers/kernelsu
@@ -470,7 +470,7 @@ jobs:
           echo "✅ Installed KowSU"
       
       - name: "🔧 Setup RESUKISU"
-        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'resukisu'
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'ReSukiSU'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           rm -rf ./KernelSU ./drivers/kernelsu
@@ -599,7 +599,7 @@ jobs:
          • Droidspaces: \`Enabled\`
          • Local Version: \`${{ github.event.inputs.localVersion }}\`
          • Build Tools: \`${{ github.event.inputs.buildToolchains }}\`
-         • Manager: \`ReSukiSU,SukiSU-Ultra,KSU,MKSU,rKSU and KowSU\`
+         • Manager: \`${{ github.event.inputs.ksuVariant }}\`
     
          🕐 *Build Date:* $(date '+%Y-%m-%d %H:%M:%S UTC')
          📦 *Package:* \`${{ env.ZIP_NAME }}\`"
@@ -628,7 +628,7 @@ jobs:
          • Droidspaces: \`Enabled\`
          • Local Version: \`${{ github.event.inputs.localVersion }}\`
          • Build Tools: \`${{ github.event.inputs.buildToolchains }}\`
-         • Manager: \`ReSukiSU,SukiSU-Ultra,KSU,MKSU,rKSU and KowSU\`
+         • Manager: \`${{ github.event.inputs.ksuVariant }}\`
       
          🕐 *Failed at:* $(date '+%Y-%m-%d %H:%M:%S UTC')
     
