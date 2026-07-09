@@ -389,14 +389,14 @@ jobs:
           EOF
 
           # Script sign patch
-          curl -L -o sign.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/mint-scriptsign.patch"
+          curl -L -o sign.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch"
           patch -p1 < sign.patch || echo "Warning: Strings patch failed"
           
           # localversion
           # curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
-      - name: 'Inject Standalone Spoof bootloader Engine (v2 - Universal Fail-Safe)'
+      - name: 'Inject Standalone Spoof bootloader Engine'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -437,6 +437,7 @@ jobs:
               echo "--> Layer 3 already patched, skipping."
             fi
           fi
+          
       - name: "🚀 Add Droidspaces Support (fix KABI sysvipc)"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
