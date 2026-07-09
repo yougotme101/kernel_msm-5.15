@@ -425,6 +425,52 @@ jobs:
           fi
           
           echo "🎉 Inject Reflex Governor setup complete!"
+
+      - name: "🌡️ Apply Thermal Perf/Gaming Tuning Patch"
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          set -euo pipefail
+
+          curl -sfL -o /tmp/0001-thermal-perf-gaming-tuning.patch \
+            "https://raw.githubusercontent.com/yougotme101/extra_patches/main/0001-thermal-perf-gaming-tuning.patch"
+
+          if ! grep -q "^diff --git" /tmp/0001-thermal-perf-gaming-tuning.patch; then
+            echo "❌ Downloaded file doesn't look like a patch. Contents:"
+            head -n 20 /tmp/0001-thermal-perf-gaming-tuning.patch
+            exit 1
+          fi
+
+          if git apply -v --ignore-whitespace --check /tmp/0001-thermal-perf-gaming-tuning.patch 2>/tmp/thermal-apply-err.log; then
+            git apply -v --ignore-whitespace /tmp/0001-thermal-perf-gaming-tuning.patch
+            echo "✅ Thermal tuning patch applied."
+          else
+            echo "⚠️ Thermal patch did not apply cleanly (node names likely don't match this tree yet):"
+            cat /tmp/thermal-apply-err.log
+            echo "⚠️ Skipping for now — see patch commit message for the grep commands needed to fix node names."
+          fi
+
+      - name: "🔋 Apply Charging Speed Boost Patch"
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          set -euo pipefail
+
+          curl -sfL -o /tmp/0002-charging-speed-boost.patch \
+            "https://raw.githubusercontent.com/yougotme101/extra_patches/main/0001-charging-speed-boost.patch"
+
+          if ! grep -q "^diff --git" /tmp/0001-charging-speed-boost.patch; then
+            echo "❌ Downloaded file doesn't look like a patch. Contents:"
+            head -n 20 /tmp/0002-charging-speed-boost.patch
+            exit 1
+          fi
+
+          if git apply -v --ignore-whitespace --check /tmp/0001-charging-speed-boost.patch 2>/tmp/charging-apply-err.log; then
+            git apply -v --ignore-whitespace /tmp/0001-charging-speed-boost.patch
+            echo "✅ Charging speed boost patch applied."
+          else
+            echo "⚠️ Charging patch did not apply cleanly (charger node name likely doesn't match this tree yet):"
+            cat /tmp/charging-apply-err.log
+            echo "⚠️ Skipping for now — see patch commit message for the grep commands needed to find the real charger node."
+          fi
       
       - name: "🚀 Add Droidspaces Support (fix KABI sysvipc)"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
