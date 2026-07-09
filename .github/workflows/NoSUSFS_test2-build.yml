@@ -276,6 +276,8 @@ jobs:
               echo "CONFIG_DEFAULT_TCP_CONG=\"bbr\""
             } >> "$CONFIG_FILE"
           fi
+
+          echo "🎉 Inject BBRv3 setup complete!"
     
       - name: "⚙️ Configure kernel"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
@@ -398,7 +400,7 @@ jobs:
           # curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
-      - name: 'Inject Standalone Spoof bootloader Engine'
+      - name: '⚙️ Inject Standalone Spoof bootloader Engine'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -440,6 +442,8 @@ jobs:
             fi
           fi
 
+          echo "🎉 Inject Spoof bootloader engine setup complete!"
+
       - name: "🔍 Debug schedutil Kconfig/Makefile placement"
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
@@ -471,7 +475,7 @@ jobs:
           echo "===== Checking for hardcoded 'schedutil' string in C source ====="
           grep -rn '"schedutil"' --include="*.c" drivers/cpufreq/ kernel/sched/ 2>/dev/null
 
-      - name: 'Inject Reflex Governor'
+      - name: '⚙️ Inject Reflex Governor'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -482,7 +486,9 @@ jobs:
             "https://raw.githubusercontent.com/kusonekoworld-max/KonekoKernel-GKI/refs/heads/main/.github/actions/build-kernel/patches/reflex/cpufreq_reflex.c"
 
           # Sanity check: make sure we got C source, not a 404 HTML page
-          if ! head -c 200 kernel/sched/cpufreq_reflex.c | grep -q "#include"; then
+          # (checks first 100 lines, since real source often has a long
+          # SPDX/copyright comment block before the first #include)
+          if ! head -n 100 kernel/sched/cpufreq_reflex.c | grep -q "#include"; then
             echo "❌ Downloaded file doesn't look like C source. Check the URL/path."
             echo "----- First 20 lines of what was actually downloaded: -----"
             head -n 20 kernel/sched/cpufreq_reflex.c
@@ -525,11 +531,15 @@ jobs:
               echo "CONFIG_CPU_FREQ_DEFAULT_GOV_REFLEX=y" >> "$CONFIG_FILE"
             fi
           fi
+          
+          echo "🎉 Inject Reflex Governor setup complete!"
       
       - name: "🚀 Add Droidspaces Support (fix KABI sysvipc)"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           curl -sL "https://raw.githubusercontent.com/ravindu644/Droidspaces-OSS/main/Documentation/resources/kernel-patches/GKI/below-kernel-6.12/001.GKI-below-6.12-fix_sysvipc_kabi_6_7_8.patch" | git apply -v --ignore-whitespace
+
+          echo "🎉 Droidspaces setup complete!"
       
       - name: "😋 Add BBG Support"
         if: matrix.variant == 'ksu'
@@ -539,6 +549,8 @@ jobs:
           wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
           echo "CONFIG_BBG=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' security/Kconfig
+
+          echo "🎉 BBG setup complete!"
 
       - name: "🔧 Setup KowSU"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'KowSU'
@@ -555,7 +567,7 @@ jobs:
           CONFIG_KSU=y
           EOF
           
-          echo "✅ Installed KowSU"
+          echo "🎉 KowSU setup complete!"
       
       - name: "🔧 Setup RESUKISU"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'ReSukiSU'
@@ -571,7 +583,7 @@ jobs:
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_KSU=y
           EOF
-          echo "🎉 ReSukiSU + SUSFS setup complete!"
+          echo "🎉 ReSukiSU setup complete!"
           
       - name: "🔨 Build kernel"
         if: github.event.inputs.buildToolchains == 'android-tools'
