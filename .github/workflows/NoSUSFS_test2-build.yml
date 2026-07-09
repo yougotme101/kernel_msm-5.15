@@ -396,7 +396,7 @@ jobs:
           # curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
-      - name: 'Inject Standalone Ayunda Safeprop Engine (v2 - Universal Fail-Safe)'
+      - name: 'Inject Standalone Spoof bootloader Engine (v2 - Universal Fail-Safe)'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
