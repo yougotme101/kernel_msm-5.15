@@ -159,74 +159,36 @@ jobs:
       - name: "💫 Get Toolchains"
         if: github.event.inputs.buildToolchains == 'custom-tools'
         run: |
-          set -e  # Exit on errors
-      
-          # Function to fetch latest release tar.gz URL from GitHub
-          get_latest_github_release() {
-            local repo_url="$1"
-            latest_url=$(curl -sL "https://api.github.com/Neutron-Toolchains/clang-build-catalogue/releases/latest" | grep "browser_download_url.*tar.gz" | cut -d '"' -f 4 | head -n 1)
-            
-            if [[ -z "$latest_url" ]]; then
-              echo "❌ Failed to fetch latest release from $repo_url!"
-              exit 1
-            fi
-      
-            printf "%s" "$latest_url"  # Use printf to output only the URL
-          }
-      
-          clang_url=$(get_latest_github_release "neutron-toolchains/neutron_clang")
-      
-          echo "✅ Clang URL: $clang_url"
-      
-          # Create clang directory
+          set -e
+
           mkdir -p clang
-      
-          # Check if it's an archive or a Git repo
-          if [[ "$clang_url" == *.tar.gz ]]; then
-            echo "🚀 Downloading latest Clang from: $clang_url..."
-            wget --progress=bar:force -O "clang/clang.tar.gz" "$clang_url" || { echo "❌ Failed to download Clang!"; exit 1; }
-      
-            # Extract Clang
-            echo "📦 Extracting Clang..."
-            tar -xf clang/clang.tar.gz -C clang || { echo "❌ Extraction failed!"; exit 1; }
-            rm -f clang/clang.tar.gz
-          else
-            echo "🚀 Cloning Clang from $clang_url..."
-            git clone --recursive --depth=1 "$clang_url" clang || { echo "❌ Cloning failed!"; exit 1; }
-          fi
-      
-          # Find Clang's bin directory
-          if [ -d "clang/bin" ]; then
-            CLANG_PATH="${{ github.workspace }}/clang/bin"
-          else
-            CLANG_PATH=$(find clang -type d -name "bin" | head -n 1)
-            CLANG_PATH="${{ github.workspace }}/${CLANG_PATH}"
-          fi
-      
-          # Ensure Clang binary exists
+          cd clang
+
+          echo "🚀 Fetching Neutron Clang via antman..."
+          curl -LSs -o antman "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"
+          chmod +x antman
+
+          # -S pulls the latest stable sync; use -S=<date> to pin a specific build if needed
+          ./antman -S
+
+          cd ..
+
+          CLANG_PATH="${{ github.workspace }}/clang/bin"
+
           if [ ! -f "$CLANG_PATH/clang" ]; then
             echo "❌ Clang binary not found in $CLANG_PATH! Build might fail."
-            ls -R clang  # Debugging: Show extracted files
+            ls -R clang
             exit 1
           fi
-      
+
           echo "✅ Using Clang from $CLANG_PATH"
           echo "CLANG_PATH=$CLANG_PATH" >> $GITHUB_ENV
-          echo "$CLANG_PATH" >> $GITHUB_PATH  # Ensures path is updated
-      
-          export PATH="$CLANG_PATH:$PATH"
-          export CLANG_TRIPLE="aarch64-linux-gnu-"
-          export CC=clang
-          export AR="llvm-ar"
-          export AS="llvm-as"
-          export NM="llvm-nm"
-          export OBJCOPY="llvm-objcopy"
-          export OBJDUMP="llvm-objdump"
-          export STRIP="llvm-strip"
-      
-          echo "⚙️ Using Clang version:"
-          clang --version || echo "❌ Clang not found in PATH!"
+          echo "$CLANG_PATH" >> $GITHUB_PATH
 
+          export PATH="$CLANG_PATH:$PATH"
+          echo "⚙️ Using Clang version:"
+          "$CLANG_PATH/clang" --version
+          
       - name: 📐 Setup SWAP 20GB
         uses: pierotofy/set-swap-space@master
         with:
@@ -578,6 +540,7 @@ jobs:
           KSU_TEXT=""
          if [ "${{ github.event.inputs.buildKSU }}" != "noksu" ]; then
           KSU_TEXT="
+         
          🔐 *KSU Variant:* \`${{ github.event.inputs.ksuVariant }}\`"
          fi
       
