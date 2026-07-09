@@ -578,8 +578,7 @@ jobs:
           KSU_TEXT=""
          if [ "${{ github.event.inputs.buildKSU }}" != "noksu" ]; then
           KSU_TEXT="
-          
-         🔐 *KSU Variant:* \`ReSukiSU\`"
+         🔐 *KSU Variant:* \`${{ github.event.inputs.ksuVariant }}\`"
          fi
       
          CAPTION="✅ *Kernel Build Successful*
