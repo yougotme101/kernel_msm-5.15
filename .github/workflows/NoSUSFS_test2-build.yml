@@ -437,7 +437,7 @@ jobs:
             fi
           fi
 
-            - name: "🔍 Debug schedutil Kconfig/Makefile placement"
+      - name: "🔍 Debug schedutil Kconfig/Makefile placement"
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
