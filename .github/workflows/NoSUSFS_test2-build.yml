@@ -22,7 +22,7 @@ on:
         description: "Device (used for defconfig)"
         required: true
         type: string
-        default: "gki"
+        default: "kaze"
       localVersion:
         description: "Custom localversion name (e.g., -mybuild)"
         required: false
@@ -60,7 +60,7 @@ on:
         description: "Compiler optimization level"
         required: false
         type: choice
-        default: "O2"
+        default: "O3"
         options:
           - "default"
           - "O2"
@@ -70,7 +70,7 @@ on:
         description: "build tools"
         required: true
         type: choice
-        default: "android-tools"
+        default: "custom-tools"
         options:
           - "android-tools"
           - "custom-tools"
