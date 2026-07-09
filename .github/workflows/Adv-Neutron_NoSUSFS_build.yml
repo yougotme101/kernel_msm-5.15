@@ -426,7 +426,7 @@ jobs:
           
           echo "🎉 Inject Reflex Governor setup complete!"
 
-            - name: "🌡️ Apply Thermal Perf/Gaming Tuning Patch"
+      - name: "🌡️ Apply Thermal Perf/Gaming Tuning Patch"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           set -euo pipefail
