@@ -224,6 +224,55 @@ jobs:
          echo 'KBUILD_CFLAGS += -Wno-implicit-function-declaration' >> Makefile
          echo 'KBUILD_CFLAGS += -Wno-sometimes-uninitialized' >> Makefile
          echo "Custom Makefile line added successfully"
+
+      - name: "🌊 Inject BBRv3 (Google's tcp_bbr.c)"
+        shell: bash
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          set -euo pipefail
+
+          # Google's BBR development happens on a dedicated branch of their
+          # linux fork, not upstream mainline. This is the branch that
+          # actually contains BBRv3 (net/ipv4/tcp_bbr.c).
+          BBR_BRANCH="v3"
+          BBR_FILE="net/ipv4/tcp_bbr.c"
+
+          echo "🚀 Fetching BBRv3 source from google/bbr ($BBR_BRANCH branch)..."
+          curl -sfL -o "${BBR_FILE}.new" \
+            "https://raw.githubusercontent.com/google/bbr/${BBR_BRANCH}/net/ipv4/tcp_bbr.c"
+
+          # Sanity check: make sure we actually got C source, not a 404 page
+          if ! head -c 200 "${BBR_FILE}.new" | grep -q "BBR congestion control"; then
+            echo "❌ Downloaded file doesn't look like Google's tcp_bbr.c. Aborting BBR swap."
+            rm -f "${BBR_FILE}.new"
+            exit 1
+          fi
+
+          # Back up the tree's existing tcp_bbr.c, then swap in BBRv3
+          if [ -f "$BBR_FILE" ]; then
+            cp "$BBR_FILE" "${BBR_FILE}.orig"
+          fi
+          mv "${BBR_FILE}.new" "$BBR_FILE"
+
+          echo "✅ BBRv3 source installed at $BBR_FILE"
+
+          # Confirm the kernel's pluggable-congestion-control ops struct name
+          # is what tcp_bbr.c expects to register against (tcp_register_congestion_control).
+          # Most 5.15 trees need no header changes since BBRv3 keeps the same
+          # tcp_congestion_ops interface as v1/v2 — but verify no reject/fuzz
+          # errors show up in the "🔨 Build kernel" step logs.
+
+          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          if [ -f "$CONFIG_FILE" ]; then
+            sed -i '/^CONFIG_TCP_CONG_BBR/d' "$CONFIG_FILE"
+            sed -i '/^CONFIG_DEFAULT_BBR/d' "$CONFIG_FILE"
+            sed -i '/^CONFIG_DEFAULT_TCP_CONG/d' "$CONFIG_FILE"
+            {
+              echo "CONFIG_TCP_CONG_BBR=y"
+              echo "CONFIG_DEFAULT_BBR=y"
+              echo "CONFIG_DEFAULT_TCP_CONG=\"bbr\""
+            } >> "$CONFIG_FILE"
+          fi
     
       - name: "⚙️ Configure kernel"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
@@ -330,24 +379,12 @@ jobs:
               ;;
           esac
 
-          # Basic optimizations
-          echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
-          
-          # KSU Stuff
-          cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_OVERLAY_FS=y
-          CONFIG_TMPFS_XATTR=y
-          CONFIG_TMPFS_POSIX_ACL=y
-          EOF
-          
           # Extra TCP configs
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_TCP_CONG_ADVANCED=y
           CONFIG_TCP_CONG_BIC=n
           CONFIG_TCP_CONG_WESTWOOD=y
           CONFIG_TCP_CONG_HTCP=n
-          CONFIG_TCP_CONG_BBR=y
-          CONFIG_DEFAULT_BBR=y
           EOF
 
           # Script sign patch
@@ -400,6 +437,37 @@ jobs:
             fi
           fi
 
+            - name: "🔍 Debug schedutil Kconfig/Makefile placement"
+        shell: bash
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          set +e  # Don't fail the build on this — it's informational only
+
+          echo "===== Searching for schedutil registration in Makefiles ====="
+          grep -rn "cpufreq_schedutil.o" --include="Makefile" . 2>/dev/null
+
+          echo ""
+          echo "===== Searching for CPU_FREQ_GOV_SCHEDUTIL Kconfig entry ====="
+          grep -rn "config CPU_FREQ_GOV_SCHEDUTIL" --include="Kconfig" . 2>/dev/null
+
+          echo ""
+          echo "===== Searching for the default-governor choice block ====="
+          grep -rn "CPU_FREQ_DEFAULT_GOV_SCHEDUTIL" --include="Kconfig" . 2>/dev/null
+
+          echo ""
+          echo "===== Context around the default-gov choice (schedutil Kconfig file) ====="
+          SCHEDUTIL_KCONFIG=$(grep -rl "CPU_FREQ_DEFAULT_GOV_SCHEDUTIL" --include="Kconfig" . 2>/dev/null | head -n 1)
+          if [ -n "$SCHEDUTIL_KCONFIG" ]; then
+            echo "Found in: $SCHEDUTIL_KCONFIG"
+            grep -n -B2 -A10 "CPU_FREQ_DEFAULT_GOV_SCHEDUTIL" "$SCHEDUTIL_KCONFIG"
+          else
+            echo "Not found — default-gov choice may be defined elsewhere (check drivers/cpufreq/Kconfig manually)."
+          fi
+
+          echo ""
+          echo "===== Checking for hardcoded 'schedutil' string in C source ====="
+          grep -rn '"schedutil"' --include="*.c" drivers/cpufreq/ kernel/sched/ 2>/dev/null
+
       - name: 'Inject Reflex Governor'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
@@ -407,27 +475,48 @@ jobs:
           set -euo pipefail
 
           mkdir -p kernel/sched
-          curl -sL -o kernel/sched/cpufreq_reflex.c \
+          curl -sfL -o kernel/sched/cpufreq_reflex.c \
             "https://raw.githubusercontent.com/kusonekoworld-max/KonekoKernel-GKI/refs/heads/main/.github/actions/build-kernel/patches/reflex/cpufreq_reflex.c"
+
+          # Sanity check: make sure we got C source, not a 404 HTML page
+          if ! head -c 200 kernel/sched/cpufreq_reflex.c | grep -q "#include"; then
+            echo "❌ Downloaded file doesn't look like C source. Check the URL/path."
+            exit 1
+          fi
 
           if ! grep -q "cpufreq_reflex.o" "kernel/sched/Makefile"; then
             echo 'obj-$(CONFIG_CPU_FREQ_GOV_REFLEX) += cpufreq_reflex.o' >> "kernel/sched/Makefile"
           fi
 
-          if ! grep -q "config CPU_FREQ_GOV_REFLEX" "drivers/cpufreq/Kconfig"; then
-            printf "\nconfig CPU_FREQ_GOV_REFLEX\n" >> "drivers/cpufreq/Kconfig"
-            printf "\ttristate \"'reflex' cpufreq governor\"\n" >> "drivers/cpufreq/Kconfig"
-            printf "\tdepends on CPU_FREQ && SMP\n" >> "drivers/cpufreq/Kconfig"
-            printf "\tselect CPU_FREQ_GOV_ATTR_SET\n" >> "drivers/cpufreq/Kconfig"
-            printf "\thelp\n" >> "drivers/cpufreq/Kconfig"
-            printf "\t  'reflex' is an advanced CPU frequency governor based on schedutil,\n" >> "drivers/cpufreq/Kconfig"
-            printf "\t  featuring idle-time accounting and PELT-complementary exponential decay.\n" >> "drivers/cpufreq/Kconfig"
+          if ! grep -q "config CPU_FREQ_GOV_REFLEX" "kernel/sched/Kconfig"; then
+            printf "\nconfig CPU_FREQ_GOV_REFLEX\n" >> "kernel/sched/Kconfig"
+            printf "\ttristate \"'reflex' cpufreq governor\"\n" >> "kernel/sched/Kconfig"
+            printf "\tdepends on CPU_FREQ && SMP\n" >> "kernel/sched/Kconfig"
+            printf "\tselect CPU_FREQ_GOV_ATTR_SET\n" >> "kernel/sched/Kconfig"
+            printf "\thelp\n" >> "kernel/sched/Kconfig"
+            printf "\t  'reflex' is an advanced CPU frequency governor based on schedutil,\n" >> "kernel/sched/Kconfig"
+            printf "\t  featuring idle-time accounting and PELT-complementary exponential decay.\n" >> "kernel/sched/Kconfig"
+          fi
+
+          # Make reflex the default governor (Kconfig side)
+          if ! grep -q "config CPU_FREQ_DEFAULT_GOV_REFLEX" "kernel/sched/Kconfig"; then
+            printf "\nconfig CPU_FREQ_DEFAULT_GOV_REFLEX\n" >> "kernel/sched/Kconfig"
+            printf "\tbool \"reflex\"\n" >> "kernel/sched/Kconfig"
+            printf "\tselect CPU_FREQ_GOV_REFLEX\n" >> "kernel/sched/Kconfig"
+            printf "\thelp\n" >> "kernel/sched/Kconfig"
+            printf "\t  Use the 'reflex' governor as default.\n" >> "kernel/sched/Kconfig"
           fi
 
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           if [ -f "$CONFIG_FILE" ]; then
             if ! grep -q "CONFIG_CPU_FREQ_GOV_REFLEX" "$CONFIG_FILE"; then
               echo "CONFIG_CPU_FREQ_GOV_REFLEX=y" >> "$CONFIG_FILE"
+            fi
+
+            # Make reflex the default governor (defconfig side)
+            sed -i 's/^CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL=y/# CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL is not set/' "$CONFIG_FILE"
+            if ! grep -q "CONFIG_CPU_FREQ_DEFAULT_GOV_REFLEX" "$CONFIG_FILE"; then
+              echo "CONFIG_CPU_FREQ_DEFAULT_GOV_REFLEX=y" >> "$CONFIG_FILE"
             fi
           fi
       
