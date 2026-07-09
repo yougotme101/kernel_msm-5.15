@@ -231,19 +231,28 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Google's BBR development happens on a dedicated branch of their
-          # linux fork, not upstream mainline. This is the branch that
-          # actually contains BBRv3 (net/ipv4/tcp_bbr.c).
           BBR_BRANCH="v3"
           BBR_FILE="net/ipv4/tcp_bbr.c"
 
+          # Google's BBRv3 release lives as a full kernel-tree branch, not a
+          # single pinned file path — try the expected path, then fall back
+          # to asking the GitHub API where tcp_bbr.c actually sits on that branch.
           echo "🚀 Fetching BBRv3 source from google/bbr ($BBR_BRANCH branch)..."
           curl -sfL -o "${BBR_FILE}.new" \
-            "https://raw.githubusercontent.com/google/bbr/${BBR_BRANCH}/net/ipv4/tcp_bbr.c"
+            "https://raw.githubusercontent.com/google/bbr/${BBR_BRANCH}/net/ipv4/tcp_bbr.c" || true
 
-          # Sanity check: make sure we actually got C source, not a 404 page
-          if ! head -c 200 "${BBR_FILE}.new" | grep -q "BBR congestion control"; then
-            echo "❌ Downloaded file doesn't look like Google's tcp_bbr.c. Aborting BBR swap."
+          if [ ! -s "${BBR_FILE}.new" ] || ! grep -qi "bbr" "${BBR_FILE}.new"; then
+            echo "⚠️ Direct path fetch failed or content looks wrong. Searching via GitHub API..."
+            API_HIT=$(curl -sL "https://api.github.com/search/code?q=filename:tcp_bbr.c+repo:google/bbr" | grep -o '"path":[^,]*' | head -n 1 || true)
+            echo "API search result: $API_HIT"
+
+            echo "----- First 20 lines of what we actually downloaded: -----"
+            head -n 20 "${BBR_FILE}.new" || echo "(file is empty or missing)"
+            echo "------------------------------------------------------------"
+
+            echo "❌ Could not confirm BBRv3 source at the expected path."
+            echo "❌ Check https://github.com/google/bbr/tree/${BBR_BRANCH}/net/ipv4 manually,"
+            echo "❌ confirm the exact path, and update BBR_FILE above accordingly."
             rm -f "${BBR_FILE}.new"
             exit 1
           fi
@@ -255,12 +264,6 @@ jobs:
           mv "${BBR_FILE}.new" "$BBR_FILE"
 
           echo "✅ BBRv3 source installed at $BBR_FILE"
-
-          # Confirm the kernel's pluggable-congestion-control ops struct name
-          # is what tcp_bbr.c expects to register against (tcp_register_congestion_control).
-          # Most 5.15 trees need no header changes since BBRv3 keeps the same
-          # tcp_congestion_ops interface as v1/v2 — but verify no reject/fuzz
-          # errors show up in the "🔨 Build kernel" step logs.
 
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           if [ -f "$CONFIG_FILE" ]; then
