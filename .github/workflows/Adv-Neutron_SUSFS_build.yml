@@ -1,4 +1,4 @@
-name: "Advanced KSUN-SUSFS Build"
+name: "Advanced NeutronClang SUSFS Build"
 
 env:
   OUT_DIR: "out"
@@ -12,17 +12,17 @@ on:
         description: "Kernel source URL"
         required: true
         type: string
-        default: "https://github.com/topnotchfreaks/kernel_msm-5.15"
+        default: "https://github.com/yougotme101/kernel_msm-5.15"
       kernelBranch:
         description: "Kernel branch"
-        required: false
+        required: true
         type: string
-        default: "codelinaro"
+        default: "zepharo"
       kernelDevice:
         description: "Device (used for defconfig)"
         required: true
         type: string
-        default: "gki"
+        default: "kaze"
       localVersion:
         description: "Custom localversion name (e.g., -mybuild)"
         required: false
@@ -37,11 +37,19 @@ on:
           - "noksu"
           - "ksu"
           - "both"
+      ksuVariant:
+        description: "KSU implementation (if KSU enabled)"
+        required: true
+        type: choice
+        default: "KowSU"
+        options:
+          - "KowSU"
+          - "ReSukiSU"
       tickRate:
         description: "Kernel tick rate (Hz)"
-        required: false
+        required: true
         type: choice
-        default: "250"
+        default: "default"
         options:
           - "default"
           - "100Hz"
@@ -50,9 +58,9 @@ on:
           - "1000Hz"
       optimizationLevel:
         description: "Compiler optimization level"
-        required: false
+        required: true
         type: choice
-        default: "O2"
+        default: "O3"
         options:
           - "default"
           - "O2"
@@ -62,7 +70,7 @@ on:
         description: "build tools"
         required: true
         type: choice
-        default: "android-tools"
+        default: "custom-tools"
         options:
           - "android-tools"
           - "custom-tools"
@@ -74,7 +82,6 @@ on:
         options:
           - "thin"
           - "full"
-
 
 jobs:
   Build-Kernel:
@@ -152,74 +159,36 @@ jobs:
       - name: "💫 Get Toolchains"
         if: github.event.inputs.buildToolchains == 'custom-tools'
         run: |
-          set -e  # Exit on errors
-      
-          # Function to fetch latest release tar.gz URL from GitHub
-          get_latest_github_release() {
-            local repo_url="$1"
-            latest_url=$(curl -sL "https://api.github.com/Neutron-Toolchains/clang-build-catalogue/releases/latest" | grep "browser_download_url.*tar.gz" | cut -d '"' -f 4 | head -n 1)
-            
-            if [[ -z "$latest_url" ]]; then
-              echo "❌ Failed to fetch latest release from $repo_url!"
-              exit 1
-            fi
-      
-            printf "%s" "$latest_url"  # Use printf to output only the URL
-          }
-      
-          clang_url=$(get_latest_github_release "neutron-toolchains/neutron_clang")
-      
-          echo "✅ Clang URL: $clang_url"
-      
-          # Create clang directory
+          set -e
+
           mkdir -p clang
-      
-          # Check if it's an archive or a Git repo
-          if [[ "$clang_url" == *.tar.gz ]]; then
-            echo "🚀 Downloading latest Clang from: $clang_url..."
-            wget --progress=bar:force -O "clang/clang.tar.gz" "$clang_url" || { echo "❌ Failed to download Clang!"; exit 1; }
-      
-            # Extract Clang
-            echo "📦 Extracting Clang..."
-            tar -xf clang/clang.tar.gz -C clang || { echo "❌ Extraction failed!"; exit 1; }
-            rm -f clang/clang.tar.gz
-          else
-            echo "🚀 Cloning Clang from $clang_url..."
-            git clone --recursive --depth=1 "$clang_url" clang || { echo "❌ Cloning failed!"; exit 1; }
-          fi
-      
-          # Find Clang's bin directory
-          if [ -d "clang/bin" ]; then
-            CLANG_PATH="${{ github.workspace }}/clang/bin"
-          else
-            CLANG_PATH=$(find clang -type d -name "bin" | head -n 1)
-            CLANG_PATH="${{ github.workspace }}/${CLANG_PATH}"
-          fi
-      
-          # Ensure Clang binary exists
+          cd clang
+
+          echo "🚀 Fetching Neutron Clang via antman..."
+          curl -LSs -o antman "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"
+          chmod +x antman
+
+          # -S pulls the latest stable sync; use -S=<date> to pin a specific build if needed
+          ./antman -S
+
+          cd ..
+
+          CLANG_PATH="${{ github.workspace }}/clang/bin"
+
           if [ ! -f "$CLANG_PATH/clang" ]; then
             echo "❌ Clang binary not found in $CLANG_PATH! Build might fail."
-            ls -R clang  # Debugging: Show extracted files
+            ls -R clang
             exit 1
           fi
-      
+
           echo "✅ Using Clang from $CLANG_PATH"
           echo "CLANG_PATH=$CLANG_PATH" >> $GITHUB_ENV
-          echo "$CLANG_PATH" >> $GITHUB_PATH  # Ensures path is updated
-      
-          export PATH="$CLANG_PATH:$PATH"
-          export CLANG_TRIPLE="aarch64-linux-gnu-"
-          export CC=clang
-          export AR="llvm-ar"
-          export AS="llvm-as"
-          export NM="llvm-nm"
-          export OBJCOPY="llvm-objcopy"
-          export OBJDUMP="llvm-objdump"
-          export STRIP="llvm-strip"
-      
-          echo "⚙️ Using Clang version:"
-          clang --version || echo "❌ Clang not found in PATH!"
+          echo "$CLANG_PATH" >> $GITHUB_PATH
 
+          export PATH="$CLANG_PATH:$PATH"
+          echo "⚙️ Using Clang version:"
+          "$CLANG_PATH/clang" --version
+          
       - name: 📐 Setup SWAP 20GB
         uses: pierotofy/set-swap-space@master
         with:
@@ -255,6 +224,60 @@ jobs:
          echo 'KBUILD_CFLAGS += -Wno-implicit-function-declaration' >> Makefile
          echo 'KBUILD_CFLAGS += -Wno-sometimes-uninitialized' >> Makefile
          echo "Custom Makefile line added successfully"
+
+      - name: "🌊 Inject BBRv3 (Google's tcp_bbr.c)"
+        shell: bash
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          set -euo pipefail
+
+          BBR_BRANCH="v3"
+          BBR_FILE="net/ipv4/tcp_bbr.c"
+
+          # Google's BBRv3 release lives as a full kernel-tree branch, not a
+          # single pinned file path — try the expected path, then fall back
+          # to asking the GitHub API where tcp_bbr.c actually sits on that branch.
+          echo "🚀 Fetching BBRv3 source from google/bbr ($BBR_BRANCH branch)..."
+          curl -sfL -o "${BBR_FILE}.new" \
+            "https://raw.githubusercontent.com/google/bbr/${BBR_BRANCH}/net/ipv4/tcp_bbr.c" || true
+
+          if [ ! -s "${BBR_FILE}.new" ] || ! grep -qi "bbr" "${BBR_FILE}.new"; then
+            echo "⚠️ Direct path fetch failed or content looks wrong. Searching via GitHub API..."
+            API_HIT=$(curl -sL "https://api.github.com/search/code?q=filename:tcp_bbr.c+repo:google/bbr" | grep -o '"path":[^,]*' | head -n 1 || true)
+            echo "API search result: $API_HIT"
+
+            echo "----- First 20 lines of what we actually downloaded: -----"
+            head -n 20 "${BBR_FILE}.new" || echo "(file is empty or missing)"
+            echo "------------------------------------------------------------"
+
+            echo "❌ Could not confirm BBRv3 source at the expected path."
+            echo "❌ Check https://github.com/google/bbr/tree/${BBR_BRANCH}/net/ipv4 manually,"
+            echo "❌ confirm the exact path, and update BBR_FILE above accordingly."
+            rm -f "${BBR_FILE}.new"
+            exit 1
+          fi
+
+          # Back up the tree's existing tcp_bbr.c, then swap in BBRv3
+          if [ -f "$BBR_FILE" ]; then
+            cp "$BBR_FILE" "${BBR_FILE}.orig"
+          fi
+          mv "${BBR_FILE}.new" "$BBR_FILE"
+
+          echo "✅ BBRv3 source installed at $BBR_FILE"
+
+          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          if [ -f "$CONFIG_FILE" ]; then
+            sed -i '/^CONFIG_TCP_CONG_BBR/d' "$CONFIG_FILE"
+            sed -i '/^CONFIG_DEFAULT_BBR/d' "$CONFIG_FILE"
+            sed -i '/^CONFIG_DEFAULT_TCP_CONG/d' "$CONFIG_FILE"
+            {
+              echo "CONFIG_TCP_CONG_BBR=y"
+              echo "CONFIG_DEFAULT_BBR=y"
+              echo "CONFIG_DEFAULT_TCP_CONG=\"bbr\""
+            } >> "$CONFIG_FILE"
+          fi
+
+          echo "🎉 Inject BBRv3 setup complete!"
     
       - name: "⚙️ Configure kernel"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
@@ -268,6 +291,170 @@ jobs:
          # Set localversion
          if [ -n "${{ github.event.inputs.localVersion }}" ]; then
           echo "CONFIG_LOCALVERSION=\"${{ github.event.inputs.localVersion }}\"" >> "$CONFIG_FILE"
+         fi
+    
+         # LTO Configuration - Enable Thin LTO only
+         if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
+           sed -i '/CONFIG_LTO_CLANG_FULL/d' "$CONFIG_FILE"
+           echo "CONFIG_LTO_CLANG=y" >> "$CONFIG_FILE"
+           echo "# CONFIG_LTO_CLANG_FULL is not set" >> "$CONFIG_FILE"
+           echo "CONFIG_LTO_CLANG_THIN=y" >> "$CONFIG_FILE"
+           echo "CONFIG_THINLTO=y" >> "$CONFIG_FILE"
+         else
+           sed -i '/CONFIG_LTO_CLANG_FULL/d' "$CONFIG_FILE"
+           echo "CONFIG_LTO_CLANG=y" >> "$CONFIG_FILE"
+           echo "CONFIG_LTO_CLANG_FULL=y" >> "$CONFIG_FILE"
+           echo "# CONFIG_LTO_CLANG_THIN is not set" >> "$CONFIG_FILE"
+           echo "# CONFIG_THINLTO is not set" >> "$CONFIG_FILE"
+         fi
+
+         # Full Metamodule Support
+         echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
+         echo "CONFIG_TMPFS_XATTR=y" >> "$CONFIG_FILE"
+         echo "CONFIG_TMPFS_POSIX_ACL=y" >> "$CONFIG_FILE"
+         echo "CONFIG_OVERLAY_FS=y" >> "$CONFIG_FILE"
+          
+         # Remove existing optimization configs
+         sed -i '/CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE/d' "$CONFIG_FILE"
+         sed -i '/CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3/d' "$CONFIG_FILE"
+         sed -i '/CONFIG_CC_OPTIMIZE_FOR_SIZE/d' "$CONFIG_FILE"
+          
+          # Apply selected optimization level
+          case "${{ github.event.inputs.optimizationLevel }}" in
+            default)
+              # nothing to add here (keep it default)
+              ;;
+            O2)
+              echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y" >> "$CONFIG_FILE"
+              echo "# CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3 is not set" >> "$CONFIG_FILE"
+              echo "# CONFIG_CC_OPTIMIZE_FOR_SIZE is not set" >> "$CONFIG_FILE"
+              ;;
+            O3)
+              echo "# CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set" >> "$CONFIG_FILE"
+              echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3=y" >> "$CONFIG_FILE"
+              echo "# CONFIG_CC_OPTIMIZE_FOR_SIZE is not set" >> "$CONFIG_FILE"
+              ;;
+            Os)
+              echo "# CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set" >> "$CONFIG_FILE"
+              echo "# CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3 is not set" >> "$CONFIG_FILE"
+              echo "CONFIG_CC_OPTIMIZE_FOR_SIZE=y" >> "$CONFIG_FILE"
+              ;;
+          esac
+                   
+          # Apply selected tick rate
+          case "${{ github.event.inputs.tickRate }}" in
+            default)
+              # nothing to add here (keep it default)
+              ;;
+            100Hz)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
+              echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ=100" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ_100=y" >> "$CONFIG_FILE"
+              ;;
+            250Hz)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
+              echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ=250" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ_250=y" >> "$CONFIG_FILE"
+              ;;
+            300Hz)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
+              echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ=300" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ_300=y" >> "$CONFIG_FILE"
+              ;;
+            1000Hz)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
+              echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ=1000" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ_1000=y" >> "$CONFIG_FILE"
+              ;;
+          esac
+
+          # Extra TCP configs
+          cat >> "$CONFIG_FILE" << 'EOF'
+          CONFIG_TCP_CONG_ADVANCED=y
+          CONFIG_TCP_CONG_BIC=n
+          CONFIG_TCP_CONG_WESTWOOD=y
+          CONFIG_TCP_CONG_HTCP=n
+          EOF
+
+          # Script sign patch
+          curl -L -o sign.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch"
+          patch -p1 < sign.patch || echo "Warning: Strings patch failed"
+          
+          # localversion
+          # curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
+          # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
+
+      - name: '⚙️ Inject Standalone Spoof bootloader Engine'
+        shell: bash
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          set -euo pipefail
+
+          # Layer 1: init/main.c
+          if [ -f "init/main.c" ]; then
+            if ! grep -q "verifiedbootstate=green" init/main.c; then
+              perl -0pi -e 's/(static void __init setup_command_line\(char \*command_line\)\n\{\n\tsize_t len, xlen = 0, ilen = 0;\n)/$1\n\t{\n\t\tchar *ks;\n\t\twhile((ks=strstr(command_line,"verifiedbootstate=orange"))) memcpy(ks,"verifiedbootstate=green ",24);\n\t\twhile((ks=strstr(command_line,"verifiedbootstate=red"))) memcpy(ks,"verifiedbootstate=green",23);\n\t\twhile((ks=strstr(command_line,"flash.locked=0"))) memcpy(ks,"flash.locked=1",14);\n\t\twhile((ks=strstr(command_line,"veritymode=logging"))) memcpy(ks,"veritymode=enforcing",20);\n\t}\n/' init/main.c
+              if ! grep -q "verifiedbootstate=green" init/main.c; then
+                echo "ERROR: Layer 1 injection failed" >&2
+                exit 1
+              fi
+              echo "--> Layer 1 (init/main.c) patched successfully!"
+            else
+                echo "--> Layer 1 already patched, skipping."
+              fi
+            fi
+
+          # Layer 2: fs/proc/cmdline.c
+          if [ -f "fs/proc/cmdline.c" ]; then
+            if ! grep -q "verifiedbootstate=green" fs/proc/cmdline.c; then
+              sed -i '1 i\#include <linux/slab.h>' fs/proc/cmdline.c
+              perl -0pi -e 's/(static int\s+cmdline_proc_show\s*\(struct seq_file\s*\*m,\s*void\s*\*v\)\s*\{)/$1\n\tchar *c = kstrdup(saved_command_line, GFP_KERNEL);\n\tif(c){\n\t\tchar *s;\n\t\twhile((s=strstr(c,"verifiedbootstate=orange"))) memcpy(s,"verifiedbootstate=green ",24);\n\t\twhile((s=strstr(c,"verifiedbootstate=red"))) memcpy(s,"verifiedbootstate=green",23);\n\t\twhile((s=strstr(c,"flash.locked=0"))) memcpy(s,"flash.locked=1",14);\n\t\twhile((s=strstr(c,"veritymode=logging"))) memcpy(s,"veritymode=enforcing",20);\n\t\tseq_printf(m, "%s\\n", c);\n\t\tkfree(c);\n\t\treturn 0;\n\t}/' fs/proc/cmdline.c
+              echo "--> Layer 2 (fs/proc/cmdline.c) patched successfully!"
+            else
+              echo "--> Layer 2 already patched, skipping."
+            fi
+           fi
+
+          # Layer 3: fs/proc/bootconfig.c
+          if [ -f "fs/proc/bootconfig.c" ]; then
+            if ! grep -q "verifiedbootstate.*green" fs/proc/bootconfig.c; then
+              sed -i '1 i\#include <linux/slab.h>' fs/proc/bootconfig.c
+              perl -0pi -e 's/(static int\s+bootconfig_proc_show\s*\(struct seq_file\s*\*m,\s*void\s*\*v\)\s*\{)/$1\n\tchar *b = kmalloc(bootconfig_data_size + 1, GFP_KERNEL);\n\tif(b){\n\t\tchar *s;\n\t\tmemcpy(b, bootconfig_data, bootconfig_data_size);\n\t\tb[bootconfig_data_size] = 0;\n\t\twhile((s=strstr(b,"verifiedbootstate = \"orange\""))) memcpy(s, "verifiedbootstate  = \"green\"", 27);\n\t\twhile((s=strstr(b,"device_state = \"unlocked\""))) memcpy(s, "device_state   = \"locked\"", 25);\n\t\twhile((s=strstr(b,"flash.locked = \"0\""))) memcpy(s, "flash.locked = \"1\"", 18);\n\t\twhile((s=strstr(b,"veritymode = \"logging\""))) memcpy(s, "veritymode = \"enforcing\"", 24);\n\t\tseq_write(m, b, bootconfig_data_size);\n\t\tkfree(b);\n\t\treturn 0;\n\t}/' fs/proc/bootconfig.c
+              echo "--> Layer 3 (fs/proc/bootconfig.c) patched successfully!"
+            else
+              echo "--> Layer 3 already patched, skipping."
+            fi
+          fi
+
+          echo "🎉 Inject Spoof bootloader engine setup complete!"
+
+      - name: "🔍 Debug schedutil Kconfig/Makefile placement"
+        shell: bash
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          set +e  # Don't fail the build on this — it's informational only
+
+          echo "===== Searching for schedutil registration in Makefiles ====="
+          grep -rn "cpufreq_schedutil.o" --include="Makefile" . 2>/dev/null
+
+          echo ""
+          echo "===== Searching for CPU_FREQ_GOV_SCHEDUTONFIG_FILE"
          fi
     
          # LTO Configuration - Enable Thin LTO only
