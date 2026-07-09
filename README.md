@@ -52,8 +52,9 @@ Get build results sent to Telegram:
 - **@ssocozy** – Contributor  
 - **@NVG-064** – Contributor
 - **@ShirkNeko** – SUSFS integration
+- **@belowzeroiq** - Main Developer of TNF Project
 - **@RapliVx** - Multi Manager support script
-- **@Koneko_dev** - Some helps
+- **@Koneko_dev** - Some helps, spoof bootloader script
 
 ---
 
