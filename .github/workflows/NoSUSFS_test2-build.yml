@@ -398,7 +398,7 @@ jobs:
 
       - name: 'Inject Standalone Ayunda Safeprop Engine (v2 - Universal Fail-Safe)'
         shell: bash
-        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}/kernel/common
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           set -euo pipefail
 
