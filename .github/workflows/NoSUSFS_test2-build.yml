@@ -374,9 +374,9 @@ jobs:
               fi
               echo "--> Layer 1 (init/main.c) patched successfully!"
             else
-              echo "--> Layer 1 already patched, skipping."
+                echo "--> Layer 1 already patched, skipping."
+              fi
             fi
-          fi
 
           # Layer 2: fs/proc/cmdline.c
           if [ -f "fs/proc/cmdline.c" ]; then
@@ -387,7 +387,7 @@ jobs:
             else
               echo "--> Layer 2 already patched, skipping."
             fi
-          fi
+           fi
 
           # Layer 3: fs/proc/bootconfig.c
           if [ -f "fs/proc/bootconfig.c" ]; then
@@ -399,7 +399,38 @@ jobs:
               echo "--> Layer 3 already patched, skipping."
             fi
           fi
-          
+
+      - name: 'Inject Reflex Governor'
+        shell: bash
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p kernel/sched
+          curl -sL -o kernel/sched/cpufreq_reflex.c \
+            "https://raw.githubusercontent.com/kusonekoworld-max/KonekoKernel-GKI/refs/heads/main/.github/actions/build-kernel/patches/reflex/cpufreq_reflex.c"
+
+          if ! grep -q "cpufreq_reflex.o" "kernel/sched/Makefile"; then
+            echo 'obj-$(CONFIG_CPU_FREQ_GOV_REFLEX) += cpufreq_reflex.o' >> "kernel/sched/Makefile"
+          fi
+
+          if ! grep -q "config CPU_FREQ_GOV_REFLEX" "drivers/cpufreq/Kconfig"; then
+            printf "\nconfig CPU_FREQ_GOV_REFLEX\n" >> "drivers/cpufreq/Kconfig"
+            printf "\ttristate \"'reflex' cpufreq governor\"\n" >> "drivers/cpufreq/Kconfig"
+            printf "\tdepends on CPU_FREQ && SMP\n" >> "drivers/cpufreq/Kconfig"
+            printf "\tselect CPU_FREQ_GOV_ATTR_SET\n" >> "drivers/cpufreq/Kconfig"
+            printf "\thelp\n" >> "drivers/cpufreq/Kconfig"
+            printf "\t  'reflex' is an advanced CPU frequency governor based on schedutil,\n" >> "drivers/cpufreq/Kconfig"
+            printf "\t  featuring idle-time accounting and PELT-complementary exponential decay.\n" >> "drivers/cpufreq/Kconfig"
+          fi
+
+          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          if [ -f "$CONFIG_FILE" ]; then
+            if ! grep -q "CONFIG_CPU_FREQ_GOV_REFLEX" "$CONFIG_FILE"; then
+              echo "CONFIG_CPU_FREQ_GOV_REFLEX=y" >> "$CONFIG_FILE"
+            fi
+          fi
+      
       - name: "🚀 Add Droidspaces Support (fix KABI sysvipc)"
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
