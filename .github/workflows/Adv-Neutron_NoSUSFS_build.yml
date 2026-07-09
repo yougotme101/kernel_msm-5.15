@@ -209,7 +209,7 @@ jobs:
               mkdir -p $(pwd)/${{ env.OUT_DIR }}
               args="$args O=$(pwd)/${{ env.OUT_DIR }}"
             fi
-            args="$args ARCH=arm64 LLVM=1 LTO=thin"
+            args="$args ARCH=arm64 LLVM=1 LTO=full"
             args="$args CROSS_COMPILE=aarch64-linux-gnu-"
             args="$args CLANG_TRIPLE=aarch64-linux-gnu-"
             args="$args AR=llvm-ar"
@@ -393,37 +393,6 @@ jobs:
 
           echo "🎉 Inject Spoof bootloader engine setup complete!"
 
-      - name: "🔍 Debug schedutil Kconfig/Makefile placement"
-        shell: bash
-        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
-        run: |
-          set +e  # Don't fail the build on this — it's informational only
-
-          echo "===== Searching for schedutil registration in Makefiles ====="
-          grep -rn "cpufreq_schedutil.o" --include="Makefile" . 2>/dev/null
-
-          echo ""
-          echo "===== Searching for CPU_FREQ_GOV_SCHEDUTIL Kconfig entry ====="
-          grep -rn "config CPU_FREQ_GOV_SCHEDUTIL" --include="Kconfig" . 2>/dev/null
-
-          echo ""
-          echo "===== Searching for the default-governor choice block ====="
-          grep -rn "CPU_FREQ_DEFAULT_GOV_SCHEDUTIL" --include="Kconfig" . 2>/dev/null
-
-          echo ""
-          echo "===== Context around the default-gov choice (schedutil Kconfig file) ====="
-          SCHEDUTIL_KCONFIG=$(grep -rl "CPU_FREQ_DEFAULT_GOV_SCHEDUTIL" --include="Kconfig" . 2>/dev/null | head -n 1)
-          if [ -n "$SCHEDUTIL_KCONFIG" ]; then
-            echo "Found in: $SCHEDUTIL_KCONFIG"
-            grep -n -B2 -A10 "CPU_FREQ_DEFAULT_GOV_SCHEDUTIL" "$SCHEDUTIL_KCONFIG"
-          else
-            echo "Not found — default-gov choice may be defined elsewhere (check drivers/cpufreq/Kconfig manually)."
-          fi
-
-          echo ""
-          echo "===== Checking for hardcoded 'schedutil' string in C source ====="
-          grep -rn '"schedutil"' --include="*.c" drivers/cpufreq/ kernel/sched/ 2>/dev/null
-
       - name: '⚙️ Inject Reflex Governor'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
@@ -431,53 +400,27 @@ jobs:
           set -euo pipefail
 
           mkdir -p kernel/sched
-          curl -sfL -o kernel/sched/cpufreq_reflex.c \
+          curl -sL -o kernel/sched/cpufreq_reflex.c \
             "https://raw.githubusercontent.com/kusonekoworld-max/KonekoKernel-GKI/refs/heads/main/.github/actions/build-kernel/patches/reflex/cpufreq_reflex.c"
-
-          # Sanity check: make sure we got C source, not a 404 HTML page
-          # (checks first 100 lines, since real source often has a long
-          # SPDX/copyright comment block before the first #include)
-          if ! head -n 100 kernel/sched/cpufreq_reflex.c | grep -q "#include"; then
-            echo "❌ Downloaded file doesn't look like C source. Check the URL/path."
-            echo "----- First 20 lines of what was actually downloaded: -----"
-            head -n 20 kernel/sched/cpufreq_reflex.c
-            echo "------------------------------------------------------------"
-            exit 1
-          fi
 
           if ! grep -q "cpufreq_reflex.o" "kernel/sched/Makefile"; then
             echo 'obj-$(CONFIG_CPU_FREQ_GOV_REFLEX) += cpufreq_reflex.o' >> "kernel/sched/Makefile"
           fi
 
-          if ! grep -q "config CPU_FREQ_GOV_REFLEX" "kernel/sched/Kconfig"; then
-            printf "\nconfig CPU_FREQ_GOV_REFLEX\n" >> "kernel/sched/Kconfig"
-            printf "\ttristate \"'reflex' cpufreq governor\"\n" >> "kernel/sched/Kconfig"
-            printf "\tdepends on CPU_FREQ && SMP\n" >> "kernel/sched/Kconfig"
-            printf "\tselect CPU_FREQ_GOV_ATTR_SET\n" >> "kernel/sched/Kconfig"
-            printf "\thelp\n" >> "kernel/sched/Kconfig"
-            printf "\t  'reflex' is an advanced CPU frequency governor based on schedutil,\n" >> "kernel/sched/Kconfig"
-            printf "\t  featuring idle-time accounting and PELT-complementary exponential decay.\n" >> "kernel/sched/Kconfig"
-          fi
-
-          # Make reflex the default governor (Kconfig side)
-          if ! grep -q "config CPU_FREQ_DEFAULT_GOV_REFLEX" "kernel/sched/Kconfig"; then
-            printf "\nconfig CPU_FREQ_DEFAULT_GOV_REFLEX\n" >> "kernel/sched/Kconfig"
-            printf "\tbool \"reflex\"\n" >> "kernel/sched/Kconfig"
-            printf "\tselect CPU_FREQ_GOV_REFLEX\n" >> "kernel/sched/Kconfig"
-            printf "\thelp\n" >> "kernel/sched/Kconfig"
-            printf "\t  Use the 'reflex' governor as default.\n" >> "kernel/sched/Kconfig"
+          if ! grep -q "config CPU_FREQ_GOV_REFLEX" "drivers/cpufreq/Kconfig"; then
+            printf "\nconfig CPU_FREQ_GOV_REFLEX\n" >> "drivers/cpufreq/Kconfig"
+            printf "\ttristate \"'reflex' cpufreq governor\"\n" >> "drivers/cpufreq/Kconfig"
+            printf "\tdepends on CPU_FREQ && SMP\n" >> "drivers/cpufreq/Kconfig"
+            printf "\tselect CPU_FREQ_GOV_ATTR_SET\n" >> "drivers/cpufreq/Kconfig"
+            printf "\thelp\n" >> "drivers/cpufreq/Kconfig"
+            printf "\t  'reflex' is an advanced CPU frequency governor based on schedutil,\n" >> "drivers/cpufreq/Kconfig"
+            printf "\t  featuring idle-time accounting and PELT-complementary exponential decay.\n" >> "drivers/cpufreq/Kconfig"
           fi
 
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           if [ -f "$CONFIG_FILE" ]; then
             if ! grep -q "CONFIG_CPU_FREQ_GOV_REFLEX" "$CONFIG_FILE"; then
               echo "CONFIG_CPU_FREQ_GOV_REFLEX=y" >> "$CONFIG_FILE"
-            fi
-
-            # Make reflex the default governor (defconfig side)
-            sed -i 's/^CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL=y/# CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL is not set/' "$CONFIG_FILE"
-            if ! grep -q "CONFIG_CPU_FREQ_DEFAULT_GOV_REFLEX" "$CONFIG_FILE"; then
-              echo "CONFIG_CPU_FREQ_DEFAULT_GOV_REFLEX=y" >> "$CONFIG_FILE"
             fi
           fi
           
