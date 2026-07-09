@@ -478,9 +478,9 @@ jobs:
           set -euo pipefail
 
           mkdir -p kernel/sched
-          curl -sfL -o kernel/sched/cpufreq_reflex.c \
+          curl -sL -o kernel/sched/cpufreq_reflex.c \
             "https://raw.githubusercontent.com/kusonekoworld-max/KonekoKernel-GKI/refs/heads/main/.github/actions/build-kernel/patches/reflex/cpufreq_reflex.c"
-
+            
           # Sanity check: make sure we got C source, not a 404 HTML page
           if ! head -c 200 kernel/sched/cpufreq_reflex.c | grep -q "#include"; then
             echo "❌ Downloaded file doesn't look like C source. Check the URL/path."
