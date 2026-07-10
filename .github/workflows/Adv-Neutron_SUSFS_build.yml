@@ -483,12 +483,11 @@ jobs:
           EOF
           echo "🎉 ReSukiSU setup complete!"
           
+      
       - name: "🔧 Setup KSU-Next with SUSFS"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'KSU-Next'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
-          # Inject KSU-Next (dev-susfs branch)
-          set -euo pipefail
           rm -rf ./KernelSU ./drivers/kernelsu
 
           echo "📦 Installing KSU..."
@@ -498,30 +497,32 @@ jobs:
           echo "📦 Cloning SUSFS4KSU for kernel patches..."
           git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
 
-          # Copy SUSFS source files BEFORE patching — the GKI patch's hunks
-          # to fs/Makefile and fs/Kconfig are what wire susfs.c into the
-          # build. If susfs.c doesn't exist yet, that's fine, but if THOSE
-          # hunks fail silently, susfs.o never gets compiled/linked, which
-          # is exactly the "undefined symbol: SUSFS_IS_INODE_*" you hit.
+          # Copy SUSFS source files before patching
           mkdir -p fs include/linux
           cp -f susfs4ksu/kernel_patches/fs/susfs.c fs/susfs.c
+          echo "✔ Copied fs/susfs.c"
           cp -f susfs4ksu/kernel_patches/include/linux/susfs.h include/linux/susfs.h
+          echo "✔ Copied include/linux/susfs.h"
           if [ -f susfs4ksu/kernel_patches/include/linux/susfs_def.h ]; then
             cp -f susfs4ksu/kernel_patches/include/linux/susfs_def.h include/linux/susfs_def.h
+            echo "✔ Copied include/linux/susfs_def.h"
           fi
-          echo "✔ SUSFS source files staged"
+          if [ -f susfs4ksu/kernel_patches/fs/susfs.Kconfig ]; then
+            cp -f susfs4ksu/kernel_patches/fs/susfs.Kconfig fs/susfs.Kconfig
+            echo "✔ Copied fs/susfs.Kconfig"
+          fi
 
           SUSFS_KERNEL_PATCH="susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch"
           echo "🔧 Applying SUSFS kernel patch..."
           if ! patch -p1 --forward < "$SUSFS_KERNEL_PATCH" > patch_susfs.log 2>&1; then
-            echo "::warning::SUSFS patch had rejected hunks, checking if they're recoverable..."
+            echo "::warning::SUSFS patch had rejected hunks, applying known manual fixes..."
             cat patch_susfs.log
             echo "--- rejected hunks (.rej files) ---"
             find . -name "*.rej" -exec echo "  >>> {}" \; -exec cat {} \;
           fi
 
-          # Manually patch the one known-bad hunk (task_mmu.c include block)
-          # regardless of overall patch exit code above.
+          # Manual fix 1: task_mmu.c include (context mismatch due to
+          # extra #include <trace/hooks/mm.h> line in this tree)
           if ! grep -q "susfs_def.h" fs/proc/task_mmu.c; then
             sed -i '/#include <linux\/pkeys.h>/a\
           #if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)\
@@ -531,24 +532,12 @@ jobs:
             echo "✔ Manually inserted susfs_def.h include in task_mmu.c"
           fi
 
-          # Fix fs/Kconfig source line (NEW — add this block)
-          if [ -f susfs4ksu/kernel_patches/fs/susfs.Kconfig ]; then
-            cp -f susfs4ksu/kernel_patches/fs/susfs.Kconfig fs/susfs.Kconfig
-          fi
+          # Manual fix 2: fs/Kconfig source line
           if ! grep -q "fs/susfs.Kconfig" fs/Kconfig; then
             sed -i '/source "fs\/incfs\/Kconfig"/a\
           source "fs/susfs.Kconfig"' fs/Kconfig
             echo "✔ Manually inserted susfs.Kconfig source line"
           fi
-
-          # Verification (already have this, keep it)
-          if ! grep -q "susfs.o" fs/Makefile; then
-            echo "::error::fs/Makefile wasn't updated to build susfs.o — a hunk other than task_mmu.c failed"
-            exit 1
-          fi
-          if ! grep -qi "susfs" fs/Kconfig; then
-            echo "::error::fs/Kconfig has no SUSFS entry"
-            exit 1
 
           rm -rf susfs4ksu
 
@@ -556,8 +545,21 @@ jobs:
             ln -sf ../KernelSU drivers/kernelsu
             echo "✔ Created drivers/kernelsu symlink"
           fi
-          
-          # Add KSU configs with SUSFS
+
+          echo "🔍 Verifying SUSFS build wiring..."
+          for f in fs/susfs.c include/linux/susfs.h include/linux/susfs_def.h; do
+            if [ -f "$f" ]; then echo "✔ Found: $f"; else echo "❌ Missing: $f"; fi
+          done
+          if ! grep -q "susfs.o" fs/Makefile; then
+            echo "::error::fs/Makefile wasn't updated to build susfs.o"
+            exit 1
+          fi
+          if ! grep -qi "susfs" fs/Kconfig; then
+            echo "::error::fs/Kconfig has no SUSFS entry"
+            exit 1
+          fi
+          echo "✅ SUSFS build wiring verified"
+
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_KSU=y
@@ -580,7 +582,7 @@ jobs:
           CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
           CONFIG_KSU_SUSFS_SUS_SU=y
           EOF
-          
+
           echo "🎉 KSU-Next with SUSFS kernel patches fully integrated!"
           
       - name: "🔨 Build kernel"
