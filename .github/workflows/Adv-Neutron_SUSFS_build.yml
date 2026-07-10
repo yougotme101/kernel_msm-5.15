@@ -531,7 +531,17 @@ jobs:
             echo "✔ Manually inserted susfs_def.h include in task_mmu.c"
           fi
 
-          # Now verify the build wiring actually landed before continuing
+          # Fix fs/Kconfig source line (NEW — add this block)
+          if [ -f susfs4ksu/kernel_patches/fs/susfs.Kconfig ]; then
+            cp -f susfs4ksu/kernel_patches/fs/susfs.Kconfig fs/susfs.Kconfig
+          fi
+          if ! grep -q "fs/susfs.Kconfig" fs/Kconfig; then
+            sed -i '/source "fs\/incfs\/Kconfig"/a\
+          source "fs/susfs.Kconfig"' fs/Kconfig
+            echo "✔ Manually inserted susfs.Kconfig source line"
+          fi
+
+          # Verification (already have this, keep it)
           if ! grep -q "susfs.o" fs/Makefile; then
             echo "::error::fs/Makefile wasn't updated to build susfs.o — a hunk other than task_mmu.c failed"
             exit 1
@@ -539,19 +549,6 @@ jobs:
           if ! grep -qi "susfs" fs/Kconfig; then
             echo "::error::fs/Kconfig has no SUSFS entry"
             exit 1
-          fi
-          echo "✅ SUSFS build wiring verified"
-
-          # Verify the build wiring actually landed instead of trusting exit code alone
-          if ! grep -q "susfs.o" fs/Makefile; then
-            echo "::error::fs/Makefile wasn't updated to build susfs.o"
-            exit 1
-          fi
-          if ! grep -qi "susfs" fs/Kconfig; then
-            echo "::error::fs/Kconfig has no SUSFS entry"
-            exit 1
-          fi
-          echo "✅ Verified fs/Makefile and fs/Kconfig reference SUSFS"
 
           rm -rf susfs4ksu
 
