@@ -1,17 +1,16 @@
 name: Setup inject patch
 description: apply custom patches
 inputs:
-   bootloader_script:
-     description:
-     required: false
+  bootloader_script:
+    description:
+    required: false
     default: ""
 
-runs:
+runs:  
   using: composite
   steps:
       - name: '⚙️ Inject Standalone Spoof bootloader Engine'
         shell: bash
-        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           set -euo pipefail
 
