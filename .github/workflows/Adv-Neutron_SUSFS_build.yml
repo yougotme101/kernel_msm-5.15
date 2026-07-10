@@ -1,4 +1,4 @@
-name: "Advanced NeutronClang NoSUSFS Build"
+name: "Advanced NeutronClang SUSFS Build"
 
 env:
   OUT_DIR: "out"
