@@ -400,7 +400,7 @@ jobs:
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
       - name: Inject patch
-        uses: ./.github/workflows/patches/inject_patch
+        uses: ./.github/workflows/patches/inject
 
       - name: '⚙️ Inject Reflex Governor'
         shell: bash
@@ -490,14 +490,16 @@ jobs:
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'KSU-Next'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
-          rm -rf ./KernelSU ./drivers/kernelsu
-          
-          echo "📦 Installing KSU..."
-
-          # Install KSU with SUSFS
-
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s dev
-          echo "✔ KSU installed successfully"
+          # Inject KSU-Next (dev-susfs branch)
+          set -e
+          rm -rf ./KernelSU ./KernelSU-Next ./drivers/kernelsu
+          echo "Applying KernelSU-Next (dev-susfs)..."
+          curl -LSs "https://raw.githubusercontent.com/pershoot/KernelSU-Next/dev-susfs/kernel/setup.sh" | bash -s dev-susfs
+          echo "Applying All Managers Patch..."
+          curl -LSs "https://raw.githubusercontent.com/RapliVx/kernel_builder/refs/heads/main/patch/ksun-add-more-managers-support.patch" | patch -p1 -d KernelSU-Next
+          if [ ! -L "drivers/kernelsu" ]; then
+             ln -sf ../KernelSU-Next drivers/kernelsu
+          fi
           
           # Clone SUSFS4KSU for kernel patches only (not KSU integration)
           echo "📦 Cloning SUSFS4KSU for kernel patches..."
@@ -549,7 +551,7 @@ jobs:
             echo "✔ Created drivers/kernelsu symlink"
           fi
           
-          # Add Wild KSU configs with SUSFS
+          # Add KSU configs with SUSFS
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_KSU=y
