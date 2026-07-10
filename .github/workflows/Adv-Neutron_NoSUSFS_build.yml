@@ -269,15 +269,15 @@ jobs:
          sed -i '/CONFIG_CC_OPTIMIZE_FOR_SIZE/d' "$CONFIG_FILE"
           
           # Apply selected optimization level
-          apply_patch() {
-            local url="$1";
-            local file=$(basename "$url")
-            curl -L -o "$file" "$url"
-            patch -p1 < "$file" || echo "::warning::Hunks failed in $file"
-            rm -f "$file"
-          }
+          #apply_patch() {
+            #local url="$1";
+            #local file=$(basename "$url")
+            #curl -L -o "$file" "$url"
+            #patch -p1 < "$file" || echo "::warning::Hunks failed in $file"
+            #rm -f "$file"
+          #}
           
-          apply_patch "https://raw.githubusercontent.com/yougotme101/extra_stuff/main/custom-tickrate-options.patch"
+          #apply_patch "https://raw.githubusercontent.com/yougotme101/extra_stuff/main/custom-tickrate-options.patch"
           
           case "${{ github.event.inputs.optimizationLevel }}" in
             default)
