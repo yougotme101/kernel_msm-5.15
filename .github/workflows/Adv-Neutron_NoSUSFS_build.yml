@@ -17,7 +17,7 @@ on:
         description: "Kernel branch"
         required: true
         type: string
-        default: "zepharo"
+        default: "kaze"
       kernelDevice:
         description: "Device (used for defconfig)"
         required: true
@@ -598,7 +598,7 @@ jobs:
           find kernels -name "Image.*" -exec cp {} AnyKernel3/ \;
           
           # Create ZIP
-          ZIP_NAME="${{ github.event.inputs.ksuVariant }}_${{ github.event.inputs.localVersion }}_${BUILD_TIME}.zip"
+          ZIP_NAME="${{ github.event.inputs.ksuVariant }}_AK3${{ github.event.inputs.localVersion }}_${BUILD_TIME}.zip"
           cd AnyKernel3
           zip -r9 "../$ZIP_NAME" * -x .git/*
           cd ..
