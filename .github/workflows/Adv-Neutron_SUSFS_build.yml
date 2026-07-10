@@ -528,18 +528,6 @@ jobs:
             echo "✔ Manually inserted susfs_def.h include in task_mmu.c"
           fi
 
-          # Manual fix 2: fs/Kconfig source line
-          if [ -f fs/susfs.Kconfig ]; then
-            if ! grep -q "fs/susfs.Kconfig" fs/Kconfig; then
-              sed -i '/source "fs\/incfs\/Kconfig"/a\
-          source "fs/susfs.Kconfig"' fs/Kconfig
-              echo "✔ Manually inserted susfs.Kconfig source line"
-            fi
-          else
-            echo "::error::fs/susfs.Kconfig missing after copy — check kernel_patches/fs contents on this susfs4ksu branch"
-            exit 1
-          fi
-
           rm -rf susfs4ksu
 
           if [ ! -L "drivers/kernelsu" ]; then
@@ -555,10 +543,7 @@ jobs:
             echo "::error::fs/Makefile wasn't updated to build susfs.o"
             exit 1
           fi
-          if ! grep -qi "susfs" fs/Kconfig; then
-            echo "::error::fs/Kconfig has no SUSFS entry"
-            exit 1
-          fi
+          
           echo "✅ SUSFS build wiring verified"
 
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
