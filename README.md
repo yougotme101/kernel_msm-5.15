@@ -3,11 +3,14 @@
 
 This workflow is configured for specific devices. **You must modify the settings for your device** or it may not work properly.
 
-## Extra Optimization (Only for test-a workflow)
+## Extra Optimization
 - Added Extra TCP Congestion: BBR, Cubic, Westwood
-- Added KSU Fork: KowSU, MamboSU
+- Added KSU Fork: KowSU, MamboSU, ReSukiSU
 - Added Custom Tickrate Options: 500hz, 600hz, 750hz
 - Added options to build with BBG
+- Added Droidspaces Support
+- Added Reflex Governor Script
+- Added Spoof Bootloader state kernel-level
 - FullLTO build
 - Add Swapfile options and Cleanup Disk tools to free up space for runners
 - Added XStock, update weekly (basically YASK, but i changed the the default manager to WildKSU, bring back BBG Support, and remove KPM Feature for SukiSU)
