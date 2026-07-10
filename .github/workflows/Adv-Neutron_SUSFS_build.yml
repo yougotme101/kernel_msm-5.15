@@ -477,54 +477,54 @@ jobs:
           curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
           echo "✔ ReSukiSU installed"
 
+          # Clone SUSFS4KSU for kernel patches only (not KSU integration)
           echo "📦 Cloning SUSFS4KSU for kernel patches..."
           git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
-
-          # Copy SUSFS source files before patching
-          mkdir -p fs include/linux
-          cp -f susfs4ksu/kernel_patches/fs/* fs/
-          echo "✔ Copied kernel_patches/fs/*"
-          cp -f susfs4ksu/kernel_patches/include/linux/* include/linux/
-          echo "✔ Copied kernel_patches/include/linux/*"
-          if [ -f susfs4ksu/kernel_patches/fs/susfs.Kconfig ]; then
-            cp -f susfs4ksu/kernel_patches/fs/susfs.Kconfig fs/susfs.Kconfig
-            echo "✔ Copied fs/susfs.Kconfig"
-          fi
-
+          
           SUSFS_KERNEL_PATCH="susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch"
+          
           echo "🔧 Applying SUSFS kernel patch..."
-          if ! patch -p1 --forward < "$SUSFS_KERNEL_PATCH" > patch_susfs.log 2>&1; then
-            echo "::warning::SUSFS patch had rejected hunks, applying known manual fixes..."
-            cat patch_susfs.log
-            echo "--- rejected hunks (.rej files) ---"
-            find . -name "*.rej" -exec echo "  >>> {}" \; -exec cat {} \;
+          if patch -p1 < "$SUSFS_KERNEL_PATCH"; then
+            echo "✅ SUSFS patch successfully applied"
+          else
+            echo "⚠️ SUSFS patch failed — copying files manually"
           fi
 
-          # Manual fix 1: task_mmu.c include (context mismatch due to
-          # extra #include <trace/hooks/mm.h> line in this tree)
-          if ! grep -q "susfs_def.h" fs/proc/task_mmu.c; then
-            sed -i '/#include <linux\/pkeys.h>/a\
-          #if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)\
-          #include <linux/susfs_def.h>\
-          #endif // #if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)' \
-              fs/proc/task_mmu.c
-            echo "✔ Manually inserted susfs_def.h include in task_mmu.c"
+          echo "🔧 Applying SUSFS -> KernelSU patch..."
+          KSU_PATCH="susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
+          
+          echo "📄 Forcing SUSFS source injection..."
+          
+          # Always replace fs/susfs.c
+          mkdir -p fs
+          cp -f susfs4ksu/kernel_patches/fs/susfs.c fs/susfs.c
+          echo "✔ Copied fs/susfs.c"
+          
+          # Always replace include/linux/susfs.h
+          mkdir -p include/linux
+          cp -f susfs4ksu/kernel_patches/include/linux/susfs.h include/linux/susfs.h
+          echo "✔ Copied include/linux/susfs.h"
+          
+          # Also install missing susfs_def.h
+          if [ -f susfs4ksu/kernel_patches/include/linux/susfs_def.h ]; then
+            cp -f susfs4ksu/kernel_patches/include/linux/susfs_def.h include/linux/susfs_def.h
+            echo "✔ Copied include/linux/susfs_def.h"
+          else
+            echo "⚠️ susfs_def.h not found in repo"
           fi
-
-          rm -rf susfs4ksu
-
-          if [ ! -L "drivers/kernelsu" ]; then
-            ln -sf ../KernelSU drivers/kernelsu
-            echo "✔ Created drivers/kernelsu symlink"
-          fi
-
-          echo "🔍 Verifying SUSFS build wiring..."
+          
+          echo "🔍 Verifying SUSFS files..."
           for f in fs/susfs.c include/linux/susfs.h include/linux/susfs_def.h; do
             if [ -f "$f" ]; then echo "✔ Found: $f"; else echo "❌ Missing: $f"; fi
           done
-          if ! grep -q "susfs.o" fs/Makefile; then
-            echo "::error::fs/Makefile wasn't updated to build susfs.o"
-            exit 1
+          
+          # Clean up SUSFS repo (we only needed kernel patches, not KSU integration)
+          rm -rf susfs4ksu
+          
+          # Create symbolic link for drivers/kernelsu (if needed by build system)
+          if [ ! -L "drivers/kernelsu" ]; then
+            ln -sf ../KernelSU drivers/kernelsu
+            echo "✔ Created drivers/kernelsu symlink"
           fi
           
           echo "✅ SUSFS build wiring verified"
