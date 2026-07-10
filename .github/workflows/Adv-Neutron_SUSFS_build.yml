@@ -499,14 +499,10 @@ jobs:
 
           # Copy SUSFS source files before patching
           mkdir -p fs include/linux
-          cp -f susfs4ksu/kernel_patches/fs/susfs.c fs/susfs.c
-          echo "✔ Copied fs/susfs.c"
-          cp -f susfs4ksu/kernel_patches/include/linux/susfs.h include/linux/susfs.h
-          echo "✔ Copied include/linux/susfs.h"
-          if [ -f susfs4ksu/kernel_patches/include/linux/susfs_def.h ]; then
-            cp -f susfs4ksu/kernel_patches/include/linux/susfs_def.h include/linux/susfs_def.h
-            echo "✔ Copied include/linux/susfs_def.h"
-          fi
+          cp -f susfs4ksu/kernel_patches/fs/* fs/
+          echo "✔ Copied kernel_patches/fs/*"
+          cp -f susfs4ksu/kernel_patches/include/linux/* include/linux/
+          echo "✔ Copied kernel_patches/include/linux/*"
           if [ -f susfs4ksu/kernel_patches/fs/susfs.Kconfig ]; then
             cp -f susfs4ksu/kernel_patches/fs/susfs.Kconfig fs/susfs.Kconfig
             echo "✔ Copied fs/susfs.Kconfig"
@@ -533,10 +529,15 @@ jobs:
           fi
 
           # Manual fix 2: fs/Kconfig source line
-          if ! grep -q "fs/susfs.Kconfig" fs/Kconfig; then
-            sed -i '/source "fs\/incfs\/Kconfig"/a\
+          if [ -f fs/susfs.Kconfig ]; then
+            if ! grep -q "fs/susfs.Kconfig" fs/Kconfig; then
+              sed -i '/source "fs\/incfs\/Kconfig"/a\
           source "fs/susfs.Kconfig"' fs/Kconfig
-            echo "✔ Manually inserted susfs.Kconfig source line"
+              echo "✔ Manually inserted susfs.Kconfig source line"
+            fi
+          else
+            echo "::error::fs/susfs.Kconfig missing after copy — check kernel_patches/fs contents on this susfs4ksu branch"
+            exit 1
           fi
 
           rm -rf susfs4ksu
