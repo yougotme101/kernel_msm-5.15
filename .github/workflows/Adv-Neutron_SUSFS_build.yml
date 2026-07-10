@@ -491,7 +491,7 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
 
           echo "📦 Installing KSU..."
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s dev
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s dev-susfs
           echo "✔ KSU installed successfully"
 
           echo "📦 Cloning SUSFS4KSU for kernel patches..."
