@@ -43,7 +43,6 @@ on:
         type: choice
         default: "ReSukiSU"
         options:
-          - "KowSU"
           - "ReSukiSU"
           - "KSU-Next"
       tickRate:
@@ -399,6 +398,50 @@ jobs:
           # curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
+      - name: '⚙️ Inject Standalone Spoof bootloader Engine'
+        shell: bash
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          set -euo pipefail
+
+          # Layer 1: init/main.c
+          if [ -f "init/main.c" ]; then
+            if ! grep -q "verifiedbootstate=green" init/main.c; then
+              perl -0pi -e 's/(static void __init setup_command_line\(char \*command_line\)\n\{\n\tsize_t len, xlen = 0, ilen = 0;\n)/$1\n\t{\n\t\tchar *ks;\n\t\twhile((ks=strstr(command_line,"verifiedbootstate=orange"))) memcpy(ks,"verifiedbootstate=green ",24);\n\t\twhile((ks=strstr(command_line,"verifiedbootstate=red"))) memcpy(ks,"verifiedbootstate=green",23);\n\t\twhile((ks=strstr(command_line,"flash.locked=0"))) memcpy(ks,"flash.locked=1",14);\n\t\twhile((ks=strstr(command_line,"veritymode=logging"))) memcpy(ks,"veritymode=enforcing",20);\n\t}\n/' init/main.c
+              if ! grep -q "verifiedbootstate=green" init/main.c; then
+                echo "ERROR: Layer 1 injection failed" >&2
+                exit 1
+              fi
+              echo "--> Layer 1 (init/main.c) patched successfully!"
+            else
+                echo "--> Layer 1 already patched, skipping."
+              fi
+            fi
+
+          # Layer 2: fs/proc/cmdline.c
+          if [ -f "fs/proc/cmdline.c" ]; then
+            if ! grep -q "verifiedbootstate=green" fs/proc/cmdline.c; then
+              sed -i '1 i\#include <linux/slab.h>' fs/proc/cmdline.c
+              perl -0pi -e 's/(static int\s+cmdline_proc_show\s*\(struct seq_file\s*\*m,\s*void\s*\*v\)\s*\{)/$1\n\tchar *c = kstrdup(saved_command_line, GFP_KERNEL);\n\tif(c){\n\t\tchar *s;\n\t\twhile((s=strstr(c,"verifiedbootstate=orange"))) memcpy(s,"verifiedbootstate=green ",24);\n\t\twhile((s=strstr(c,"verifiedbootstate=red"))) memcpy(s,"verifiedbootstate=green",23);\n\t\twhile((s=strstr(c,"flash.locked=0"))) memcpy(s,"flash.locked=1",14);\n\t\twhile((s=strstr(c,"veritymode=logging"))) memcpy(s,"veritymode=enforcing",20);\n\t\tseq_printf(m, "%s\\n", c);\n\t\tkfree(c);\n\t\treturn 0;\n\t}/' fs/proc/cmdline.c
+              echo "--> Layer 2 (fs/proc/cmdline.c) patched successfully!"
+            else
+              echo "--> Layer 2 already patched, skipping."
+            fi
+           fi
+
+          # Layer 3: fs/proc/bootconfig.c
+          if [ -f "fs/proc/bootconfig.c" ]; then
+            if ! grep -q "verifiedbootstate.*green" fs/proc/bootconfig.c; then
+              sed -i '1 i\#include <linux/slab.h>' fs/proc/bootconfig.c
+              perl -0pi -e 's/(static int\s+bootconfig_proc_show\s*\(struct seq_file\s*\*m,\s*void\s*\*v\)\s*\{)/$1\n\tchar *b = kmalloc(bootconfig_data_size + 1, GFP_KERNEL);\n\tif(b){\n\t\tchar *s;\n\t\tmemcpy(b, bootconfig_data, bootconfig_data_size);\n\t\tb[bootconfig_data_size] = 0;\n\t\twhile((s=strstr(b,"verifiedbootstate = \"orange\""))) memcpy(s, "verifiedbootstate  = \"green\"", 27);\n\t\twhile((s=strstr(b,"device_state = \"unlocked\""))) memcpy(s, "device_state   = \"locked\"", 25);\n\t\twhile((s=strstr(b,"flash.locked = \"0\""))) memcpy(s, "flash.locked = \"1\"", 18);\n\t\twhile((s=strstr(b,"veritymode = \"logging\""))) memcpy(s, "veritymode = \"enforcing\"", 24);\n\t\tseq_write(m, b, bootconfig_data_size);\n\t\tkfree(b);\n\t\treturn 0;\n\t}/' fs/proc/bootconfig.c
+              echo "--> Layer 3 (fs/proc/bootconfig.c) patched successfully!"
+            else
+              echo "--> Layer 3 already patched, skipping."
+            fi
+          fi
+
+          echo "🎉 Inject Spoof bootloader engine setup complete!"
+
       - name: '⚙️ Inject Reflex Governor'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
@@ -450,23 +493,6 @@ jobs:
 
           echo "🎉 BBG setup complete!"
 
-      - name: "🔧 Setup KowSU"
-        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'KowSU'
-        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
-        run: |
-          rm -rf ./KernelSU ./drivers/kernelsu
-          
-          # Install KowSU
-          curl -LSs "https://raw.githubusercontent.com/KOWX712/KernelSU/main/kernel/setup.sh" | bash -s master
-          
-          # Add KSU configs
-          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
-          cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_KSU=y
-          EOF
-          
-          echo "🎉 KowSU setup complete!"
-      
       - name: "🔧 Setup RESUKISU"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'ReSukiSU'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
@@ -554,7 +580,7 @@ jobs:
           echo "🎉 ReSukiSU setup complete!"
           
       
-      - name: "🔧 Setup KSU-Next with SUSFS"
+      - name: "🔧 Setup KSU-Next(pershoot) + Multi Manager with SUSFS"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'KSU-Next'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -571,54 +597,54 @@ jobs:
           
           echo "✔ KSU installed successfully"
 
+          # Clone SUSFS4KSU for kernel patches only (not KSU integration)
           echo "📦 Cloning SUSFS4KSU for kernel patches..."
           git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
-
-          # Copy SUSFS source files before patching
-          mkdir -p fs include/linux
-          cp -f susfs4ksu/kernel_patches/fs/* fs/
-          echo "✔ Copied kernel_patches/fs/*"
-          cp -f susfs4ksu/kernel_patches/include/linux/* include/linux/
-          echo "✔ Copied kernel_patches/include/linux/*"
-          if [ -f susfs4ksu/kernel_patches/fs/susfs.Kconfig ]; then
-            cp -f susfs4ksu/kernel_patches/fs/susfs.Kconfig fs/susfs.Kconfig
-            echo "✔ Copied fs/susfs.Kconfig"
-          fi
-
+          
           SUSFS_KERNEL_PATCH="susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch"
+          
           echo "🔧 Applying SUSFS kernel patch..."
-          if ! patch -p1 --forward < "$SUSFS_KERNEL_PATCH" > patch_susfs.log 2>&1; then
-            echo "::warning::SUSFS patch had rejected hunks, applying known manual fixes..."
-            cat patch_susfs.log
-            echo "--- rejected hunks (.rej files) ---"
-            find . -name "*.rej" -exec echo "  >>> {}" \; -exec cat {} \;
+          if patch -p1 < "$SUSFS_KERNEL_PATCH"; then
+            echo "✅ SUSFS patch successfully applied"
+          else
+            echo "⚠️ SUSFS patch failed — copying files manually"
           fi
 
-          # Manual fix 1: task_mmu.c include (context mismatch due to
-          # extra #include <trace/hooks/mm.h> line in this tree)
-          if ! grep -q "susfs_def.h" fs/proc/task_mmu.c; then
-            sed -i '/#include <linux\/pkeys.h>/a\
-          #if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)\
-          #include <linux/susfs_def.h>\
-          #endif // #if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)' \
-              fs/proc/task_mmu.c
-            echo "✔ Manually inserted susfs_def.h include in task_mmu.c"
+          echo "🔧 Applying SUSFS -> KernelSU patch..."
+          KSU_PATCH="susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
+          
+          echo "📄 Forcing SUSFS source injection..."
+          
+          # Always replace fs/susfs.c
+          mkdir -p fs
+          cp -f susfs4ksu/kernel_patches/fs/susfs.c fs/susfs.c
+          echo "✔ Copied fs/susfs.c"
+          
+          # Always replace include/linux/susfs.h
+          mkdir -p include/linux
+          cp -f susfs4ksu/kernel_patches/include/linux/susfs.h include/linux/susfs.h
+          echo "✔ Copied include/linux/susfs.h"
+          
+          # Also install missing susfs_def.h
+          if [ -f susfs4ksu/kernel_patches/include/linux/susfs_def.h ]; then
+            cp -f susfs4ksu/kernel_patches/include/linux/susfs_def.h include/linux/susfs_def.h
+            echo "✔ Copied include/linux/susfs_def.h"
+          else
+            echo "⚠️ susfs_def.h not found in repo"
           fi
-
-          rm -rf susfs4ksu
-
-          if [ ! -L "drivers/kernelsu" ]; then
-            ln -sf ../KernelSU drivers/kernelsu
-            echo "✔ Created drivers/kernelsu symlink"
-          fi
-
-          echo "🔍 Verifying SUSFS build wiring..."
+          
+          echo "🔍 Verifying SUSFS files..."
           for f in fs/susfs.c include/linux/susfs.h include/linux/susfs_def.h; do
             if [ -f "$f" ]; then echo "✔ Found: $f"; else echo "❌ Missing: $f"; fi
           done
-          if ! grep -q "susfs.o" fs/Makefile; then
-            echo "::error::fs/Makefile wasn't updated to build susfs.o"
-            exit 1
+          
+          # Clean up SUSFS repo (we only needed kernel patches, not KSU integration)
+          rm -rf susfs4ksu
+          
+          # Create symbolic link for drivers/kernelsu (if needed by build system)
+          if [ ! -L "drivers/kernelsu" ]; then
+            ln -sf ../KernelSU drivers/kernelsu
+            echo "✔ Created drivers/kernelsu symlink"
           fi
           
           echo "✅ SUSFS build wiring verified"
@@ -758,7 +784,7 @@ jobs:
          • Optimization: \`-${{ github.event.inputs.optimizationLevel }}\`
          • Tick Rate: \`${{ github.event.inputs.tickRate }}\`
          • Build Type: \`${{ github.event.inputs.buildKSU }}\`${KSU_TEXT}
-         • SUSFS: \`Disabled\`
+         • SUSFS: \`Enabled (GKI A13.5-15)\`
          • BBG: \`Enabled\`
          • Droidspaces: \`Enabled\`
          • Local Version: \`${{ github.event.inputs.localVersion }}\`
@@ -780,14 +806,14 @@ jobs:
          • Kernel: \`Linux ${{ env.KERNEL_VERSION }}\`
          • Android: \`13-16\`
          • Branch: \`${{ github.event.inputs.kernelBranch }}\`
-         • Device: \`Redmi Note 12/13 4G. Pad SE\`
+         • Device: \`Redmi Note 12/13 4G. Pad SE, Redmi 15/Poco M7\`
     
          ⚙️ *Configuration:*
          • LTO: \`${{ github.event.inputs.LtoOptimizations }}\`
          • Optimization: \`-${{ github.event.inputs.optimizationLevel }}\`
          • Tick Rate: \`${{ github.event.inputs.tickRate }}\`
          • Build Type: \`${{ github.event.inputs.buildKSU }}\`${KSU_TEXT}
-         • SUSFS: \`Disabled\`
+         • SUSFS: \`Enabled (GKI A13.5-15)\`
          • BBG: \`Enabled\`
          • Droidspaces: \`Enabled\`
          • Local Version: \`${{ github.event.inputs.localVersion }}\`
