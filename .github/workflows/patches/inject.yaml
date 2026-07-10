@@ -6,6 +6,7 @@ runs:
   steps:
       - name: '⚙️ Inject Standalone Spoof bootloader Engine'
         shell: bash
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           set -euo pipefail
 
