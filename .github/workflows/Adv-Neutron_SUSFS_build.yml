@@ -400,7 +400,7 @@ jobs:
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
       - name: Inject patch
-        uses: ./.github/workflows/patches/inject
+        uses: ./.github/workflows/patches/
 
       - name: '⚙️ Inject Reflex Governor'
         shell: bash
