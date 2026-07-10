@@ -41,7 +41,7 @@ on:
         description: "KSU implementation (if KSU enabled)"
         required: true
         type: choice
-        default: "KSU-Next"
+        default: "ReSukiSU"
         options:
           - "KowSU"
           - "ReSukiSU"
@@ -477,9 +477,79 @@ jobs:
           curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
           echo "✔ ReSukiSU installed"
 
+          echo "📦 Cloning SUSFS4KSU for kernel patches..."
+          git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
+
+          # Copy SUSFS source files before patching
+          mkdir -p fs include/linux
+          cp -f susfs4ksu/kernel_patches/fs/* fs/
+          echo "✔ Copied kernel_patches/fs/*"
+          cp -f susfs4ksu/kernel_patches/include/linux/* include/linux/
+          echo "✔ Copied kernel_patches/include/linux/*"
+          if [ -f susfs4ksu/kernel_patches/fs/susfs.Kconfig ]; then
+            cp -f susfs4ksu/kernel_patches/fs/susfs.Kconfig fs/susfs.Kconfig
+            echo "✔ Copied fs/susfs.Kconfig"
+          fi
+
+          SUSFS_KERNEL_PATCH="susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch"
+          echo "🔧 Applying SUSFS kernel patch..."
+          if ! patch -p1 --forward < "$SUSFS_KERNEL_PATCH" > patch_susfs.log 2>&1; then
+            echo "::warning::SUSFS patch had rejected hunks, applying known manual fixes..."
+            cat patch_susfs.log
+            echo "--- rejected hunks (.rej files) ---"
+            find . -name "*.rej" -exec echo "  >>> {}" \; -exec cat {} \;
+          fi
+
+          # Manual fix 1: task_mmu.c include (context mismatch due to
+          # extra #include <trace/hooks/mm.h> line in this tree)
+          if ! grep -q "susfs_def.h" fs/proc/task_mmu.c; then
+            sed -i '/#include <linux\/pkeys.h>/a\
+          #if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)\
+          #include <linux/susfs_def.h>\
+          #endif // #if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)' \
+              fs/proc/task_mmu.c
+            echo "✔ Manually inserted susfs_def.h include in task_mmu.c"
+          fi
+
+          rm -rf susfs4ksu
+
+          if [ ! -L "drivers/kernelsu" ]; then
+            ln -sf ../KernelSU drivers/kernelsu
+            echo "✔ Created drivers/kernelsu symlink"
+          fi
+
+          echo "🔍 Verifying SUSFS build wiring..."
+          for f in fs/susfs.c include/linux/susfs.h include/linux/susfs_def.h; do
+            if [ -f "$f" ]; then echo "✔ Found: $f"; else echo "❌ Missing: $f"; fi
+          done
+          if ! grep -q "susfs.o" fs/Makefile; then
+            echo "::error::fs/Makefile wasn't updated to build susfs.o"
+            exit 1
+          fi
+          
+          echo "✅ SUSFS build wiring verified"
+
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_KSU=y
+          CONFIG_KPROBES=y
+          CONFIG_HAVE_KPROBES=y
+          CONFIG_KPROBE_EVENTS=y
+          CONFIG_KSU_SUSFS=y
+          CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y
+          CONFIG_KSU_SUSFS_SUS_PATH=y
+          CONFIG_KSU_SUSFS_SUS_MOUNT=y
+          CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y
+          CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y
+          CONFIG_KSU_SUSFS_SUS_KSTAT=y
+          CONFIG_KSU_SUSFS_TRY_UMOUNT=y
+          CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y
+          CONFIG_KSU_SUSFS_SPOOF_UNAME=y
+          CONFIG_KSU_SUSFS_ENABLE_LOG=y
+          CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
+          CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
+          CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
+          CONFIG_KSU_SUSFS_SUS_SU=y
           EOF
           echo "🎉 ReSukiSU setup complete!"
           
@@ -491,7 +561,14 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
 
           echo "📦 Installing KSU..."
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s dev-susfs
+          echo "Applying KernelSU-Next (dev-susfs)..."
+          curl -LSs "https://raw.githubusercontent.com/pershoot/KernelSU-Next/dev-susfs/kernel/setup.sh" | bash -s dev-susfs
+          echo "Applying All Managers Patch..."
+          curl -LSs "https://raw.githubusercontent.com/RapliVx/kernel_builder/refs/heads/main/patch/ksun-add-more-managers-support.patch" | patch -p1 -d KernelSU-Next
+          if [ ! -L "drivers/kernelsu" ]; then
+             ln -sf ../KernelSU-Next drivers/kernelsu
+          fi
+          
           echo "✔ KSU installed successfully"
 
           echo "📦 Cloning SUSFS4KSU for kernel patches..."
