@@ -55,6 +55,9 @@ on:
           - "100Hz"
           - "250Hz"
           - "300Hz"
+          - "500Hz"
+          - "600Hz"
+          - "750Hz"
           - "1000Hz"
       optimizationLevel:
         description: "Compiler optimization level"
@@ -266,6 +269,16 @@ jobs:
          sed -i '/CONFIG_CC_OPTIMIZE_FOR_SIZE/d' "$CONFIG_FILE"
           
           # Apply selected optimization level
+          apply_patch() {
+            local url="$1";
+            local file=$(basename "$url")
+            curl -L -o "$file" "$url"
+            patch -p1 < "$file" || echo "::warning::Hunks failed in $file"
+            rm -f "$file"
+          }
+          
+          apply_patch "https://raw.githubusercontent.com/yougotme101/extra_stuff/main/custom-tickrate-options.patch"
+          
           case "${{ github.event.inputs.optimizationLevel }}" in
             default)
               # nothing to add here (keep it default)
@@ -318,6 +331,42 @@ jobs:
               echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
               echo "CONFIG_HZ=300" >> "$CONFIG_FILE"
               echo "CONFIG_HZ_300=y" >> "$CONFIG_FILE"
+              ;;
+            500)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_500=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_600=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_750=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
+              echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ=500" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ_500=y" >> "$CONFIG_FILE"
+              ;;
+            600)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_500=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_600=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_750=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
+              echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ=600" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ_600=y" >> "$CONFIG_FILE"
+              ;;
+            750)
+              sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_500=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_600=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_750=/d' "$CONFIG_FILE"
+              sed -i '/^CONFIG_HZ_1000=/d' "$CONFIG_FILE"
+              echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ=750" >> "$CONFIG_FILE"
+              echo "CONFIG_HZ_750=y" >> "$CONFIG_FILE"
               ;;
             1000Hz)
               sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
