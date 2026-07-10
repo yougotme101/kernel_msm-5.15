@@ -332,7 +332,7 @@ jobs:
               echo "CONFIG_HZ=300" >> "$CONFIG_FILE"
               echo "CONFIG_HZ_300=y" >> "$CONFIG_FILE"
               ;;
-            500)
+            500Hz)
               sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
               sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
               sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
@@ -344,7 +344,7 @@ jobs:
               echo "CONFIG_HZ=500" >> "$CONFIG_FILE"
               echo "CONFIG_HZ_500=y" >> "$CONFIG_FILE"
               ;;
-            600)
+            600Hz)
               sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
               sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
               sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
@@ -356,7 +356,7 @@ jobs:
               echo "CONFIG_HZ=600" >> "$CONFIG_FILE"
               echo "CONFIG_HZ_600=y" >> "$CONFIG_FILE"
               ;;
-            750)
+            750Hz)
               sed -i '/^CONFIG_HZ_100=/d' "$CONFIG_FILE"
               sed -i '/^CONFIG_HZ_250=/d' "$CONFIG_FILE"
               sed -i '/^CONFIG_HZ_300=/d' "$CONFIG_FILE"
