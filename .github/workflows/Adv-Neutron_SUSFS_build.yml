@@ -399,9 +399,6 @@ jobs:
           # curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
-      - name: Inject patch
-        uses: ./.github/workflows/patches/
-
       - name: '⚙️ Inject Reflex Governor'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
