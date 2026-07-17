@@ -348,6 +348,7 @@ jobs:
           CONFIG_TCP_CONG_BBR=y
           CONFIG_DEFAULT_BBR=y
           CONFIG_TCP_FASTOPEN=y
+          EOF
 
           # Add metamodule support and OverlayFS support for Vanilla variant
           cat >> "$CONFIG_FILE" << 'EOF
@@ -398,6 +399,7 @@ jobs:
           CONFIG_TCP_CONG_BBR=y
           CONFIG_DEFAULT_BBR=y
           CONFIG_TCP_FASTOPEN=y
+          EOF
 
           # Add metamodule support and OverlayFS support for Vanilla variant
           cat >> "$CONFIG_FILE" << 'EOF
@@ -491,6 +493,14 @@ jobs:
           # Create banner
           cat > AnyKernel3/banner << 'EOF'
           ╔═════════════════════════════════════════════════════╗
+          ║ '##::::'##::'######::'########::'#######:::'######::'##:::'##:║
+          ║ . ##::'##::'##... ##:... ##..::'##.... ##:'##... ##: ##::'##::║
+          ║:. ##'##::: ##:::..::::: ##:::: ##:::: ##: ##:::..:: ##:'##:::║
+          ║::. ###::::. ######::::: ##:::: ##:::: ##: ##::::::: #####::::║
+          ║:: ## ##::::..... ##:::: ##:::: ##:::: ##: ##::::::: ##. ##:::║
+          ║: ##:. ##::'##::: ##:::: ##:::: ##:::: ##: ##::: ##: ##:. ##::║
+          ║##:::. ##:. ######::::: ##::::. #######::. ######:: ##::. ##:║
+          ║..:::::..:::......::::::..::::::.......::::......:::..::::..::║
           ║                                                     ║
           ║                     XStock Kernel                   ║
           ║                   by @yougotme101                   ║
