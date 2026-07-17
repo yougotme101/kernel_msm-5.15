@@ -376,12 +376,33 @@ jobs:
           CONFIG_TCP_CONG_HTCP=n
           CONFIG_TCP_CONG_BBR=y
           CONFIG_DEFAULT_BBR=y
+          CONFIG_TCP_FASTOPEN=y
 
           # Add metamodule support and OverlayFS support for Vanilla variant
           cat >> "$CONFIG_FILE" << 'EOF
           CONFIG_OVERLAY_FS=y
           CONFIG_TMPFS_XATTR=y
           CONFIG_TMPFS_POSIX_ACL=y
+          EOF
+
+          # Custom configs
+          cat >> "$CONFIG_FILE" << 'EOF
+          CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y
+          CONFIG_PM_WAKELOCKS=y
+          CONFIG_PM_WAKELOCKS_LIMIT=100
+          CONFIG_PM_WAKELOCKS_GC=y
+          CONFIG_IOSCHED_BFQ=y
+          CONFIG_MQ_IOSCHED_KYBER=y
+          CONFIG_MQ_IOSCHED_DEADLINE=y
+          CONFIG_BFQ_GROUP_IOSCHED=y
+          CONFIG_NO_HZ_IDLE=y
+          CONFIG_NO_HZ_FULL=n
+          CONFIG_ZRAM=y
+          CONFIG_ZRAM_DEF_COMP_ZSTD=y
+          CONFIG_ZSMALLOC=y
+          CONFIG_ZSMALLOC_STAT=y
+          CONFIG_SUSPEND=y
+          CONFIG_SUSPEND_FREEZER=y
           EOF
           
           echo "✅ Basic configs added"
@@ -507,13 +528,14 @@ jobs:
           • Redmi Note 12 4G/NFC
           • Redmi Note 13 4G/NFC
           • Redmi Pad SE
+          • Redmi 15/Poco M7 (untested)
 
           📱 *Supported Manager:*
           • KSU by tiann
           • MKSU
           • Rissu-KSU
           • KowSU
-          • ReSukiSU
+          • ReSukiSU (Main Root Manager)
           • SukiSU-Ultra
 
           🕐 *Build Date:* $(date '+%Y-%m-%d %H:%M:%S UTC')
