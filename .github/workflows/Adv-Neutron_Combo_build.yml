@@ -47,7 +47,7 @@ on:
           - "ReSukiSU"
           - "KSU-Next"
       susfsSupport:
-        description: "Add SUSFS Implementation (if KSU Enabled)
+        description: "Add SUSFS Implementation (if KSU Enabled)"
         required: true
         type: choice
         default: "Enabled"
