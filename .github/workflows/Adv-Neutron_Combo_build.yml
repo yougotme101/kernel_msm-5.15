@@ -44,6 +44,7 @@ on:
         default: "ReSukiSU"
         options:
           - "KowSU"
+          - "SukiSU"
           - "ReSukiSU"
           - "KSU-Next"
       susfsSupport:
@@ -475,7 +476,23 @@ jobs:
           
           echo "🎉 KowSU setup complete!"
 
-      - name: "🔧 Setup RESUKISU"
+      - name: "🔧 Setup SukiSU-Ultra"
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'SukiSU'
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          rm -rf ./KernelSU ./drivers/kernelsu
+
+          echo "📦 Installing SukiSU..."
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -susfs_new
+          
+          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          cat >> "$CONFIG_FILE" << 'EOF'
+          CONFIG_KSU=y
+          CONFIG_KPM=y
+          
+          echo "🎉 SukiSU setup complete!"
+
+      - name: "🔧 Setup ReSukiSU"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'ReSukiSU'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -604,6 +621,15 @@ jobs:
           EOF
           
           echo "🎉 SUSFS Integration setup complete!"
+
+      - name: "🩹 Apply KPM patch (SukiSU-Ultra only)"
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'SukiSU'
+        working-directory: ${{ env.WORK_DIR }}/out/dist
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch
+          chmod +x patch
+          ./patch
+          mv oImage Image
           
       - name: "🔨 Build kernel"
         if: github.event.inputs.buildToolchains == 'android-tools'
