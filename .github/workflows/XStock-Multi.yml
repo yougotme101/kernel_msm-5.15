@@ -267,17 +267,21 @@ jobs:
           echo "CONFIG_BBG=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' security/Kconfig
 
-      - name: "🔧 Setup RESUKISU with SUSFS"
+      - name: "🔧 Setup KSU-Next(pershoot) with SUSFS"
         if: matrix.kernel.enable_ksu == true
         working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         run: |
           rm -rf ./KernelSU ./drivers/kernelsu
-          
+
           echo "📦 Installing KSU..."
-
-          # Install ReSukiSU with SUSFS
-
-          curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
+          echo "Applying KernelSU-Next (dev-susfs)..."
+          curl -LSs "https://raw.githubusercontent.com/pershoot/KernelSU-Next/dev-susfs/kernel/setup.sh" | bash -s dev-susfs
+          echo "Applying All Managers Patch..."
+          curl -LSs "https://raw.githubusercontent.com/RapliVx/kernel_builder/refs/heads/main/patch/ksun-add-more-managers-support.patch" | patch -p1 -d KernelSU-Next
+          if [ ! -L "drivers/kernelsu" ]; then
+             ln -sf ../KernelSU-Next drivers/kernelsu
+          fi
+          
           echo "✔ KSU installed successfully"
           
           # Clone SUSFS4KSU for kernel patches only (not KSU integration)
