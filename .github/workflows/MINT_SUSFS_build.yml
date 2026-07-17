@@ -1,4 +1,4 @@
-name: "Advanced NeutronClang SUSFS Build"
+name: "MINT SUSFS Build"
 
 env:
   OUT_DIR: "out"
@@ -398,50 +398,6 @@ jobs:
           # curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
-      - name: '⚙️ Inject Standalone Spoof bootloader Engine'
-        shell: bash
-        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
-        run: |
-          set -euo pipefail
-
-          # Layer 1: init/main.c
-          if [ -f "init/main.c" ]; then
-            if ! grep -q "verifiedbootstate=green" init/main.c; then
-              perl -0pi -e 's/(static void __init setup_command_line\(char \*command_line\)\n\{\n\tsize_t len, xlen = 0, ilen = 0;\n)/$1\n\t{\n\t\tchar *ks;\n\t\twhile((ks=strstr(command_line,"verifiedbootstate=orange"))) memcpy(ks,"verifiedbootstate=green ",24);\n\t\twhile((ks=strstr(command_line,"verifiedbootstate=red"))) memcpy(ks,"verifiedbootstate=green",23);\n\t\twhile((ks=strstr(command_line,"flash.locked=0"))) memcpy(ks,"flash.locked=1",14);\n\t\twhile((ks=strstr(command_line,"veritymode=logging"))) memcpy(ks,"veritymode=enforcing",20);\n\t}\n/' init/main.c
-              if ! grep -q "verifiedbootstate=green" init/main.c; then
-                echo "ERROR: Layer 1 injection failed" >&2
-                exit 1
-              fi
-              echo "--> Layer 1 (init/main.c) patched successfully!"
-            else
-                echo "--> Layer 1 already patched, skipping."
-              fi
-            fi
-
-          # Layer 2: fs/proc/cmdline.c
-          if [ -f "fs/proc/cmdline.c" ]; then
-            if ! grep -q "verifiedbootstate=green" fs/proc/cmdline.c; then
-              sed -i '1 i\#include <linux/slab.h>' fs/proc/cmdline.c
-              perl -0pi -e 's/(static int\s+cmdline_proc_show\s*\(struct seq_file\s*\*m,\s*void\s*\*v\)\s*\{)/$1\n\tchar *c = kstrdup(saved_command_line, GFP_KERNEL);\n\tif(c){\n\t\tchar *s;\n\t\twhile((s=strstr(c,"verifiedbootstate=orange"))) memcpy(s,"verifiedbootstate=green ",24);\n\t\twhile((s=strstr(c,"verifiedbootstate=red"))) memcpy(s,"verifiedbootstate=green",23);\n\t\twhile((s=strstr(c,"flash.locked=0"))) memcpy(s,"flash.locked=1",14);\n\t\twhile((s=strstr(c,"veritymode=logging"))) memcpy(s,"veritymode=enforcing",20);\n\t\tseq_printf(m, "%s\\n", c);\n\t\tkfree(c);\n\t\treturn 0;\n\t}/' fs/proc/cmdline.c
-              echo "--> Layer 2 (fs/proc/cmdline.c) patched successfully!"
-            else
-              echo "--> Layer 2 already patched, skipping."
-            fi
-           fi
-
-          # Layer 3: fs/proc/bootconfig.c
-          if [ -f "fs/proc/bootconfig.c" ]; then
-            if ! grep -q "verifiedbootstate.*green" fs/proc/bootconfig.c; then
-              sed -i '1 i\#include <linux/slab.h>' fs/proc/bootconfig.c
-              perl -0pi -e 's/(static int\s+bootconfig_proc_show\s*\(struct seq_file\s*\*m,\s*void\s*\*v\)\s*\{)/$1\n\tchar *b = kmalloc(bootconfig_data_size + 1, GFP_KERNEL);\n\tif(b){\n\t\tchar *s;\n\t\tmemcpy(b, bootconfig_data, bootconfig_data_size);\n\t\tb[bootconfig_data_size] = 0;\n\t\twhile((s=strstr(b,"verifiedbootstate = \"orange\""))) memcpy(s, "verifiedbootstate  = \"green\"", 27);\n\t\twhile((s=strstr(b,"device_state = \"unlocked\""))) memcpy(s, "device_state   = \"locked\"", 25);\n\t\twhile((s=strstr(b,"flash.locked = \"0\""))) memcpy(s, "flash.locked = \"1\"", 18);\n\t\twhile((s=strstr(b,"veritymode = \"logging\""))) memcpy(s, "veritymode = \"enforcing\"", 24);\n\t\tseq_write(m, b, bootconfig_data_size);\n\t\tkfree(b);\n\t\treturn 0;\n\t}/' fs/proc/bootconfig.c
-              echo "--> Layer 3 (fs/proc/bootconfig.c) patched successfully!"
-            else
-              echo "--> Layer 3 already patched, skipping."
-            fi
-          fi
-
-          echo "🎉 Inject Spoof bootloader engine setup complete!"
-
       - name: '⚙️ Inject Reflex Governor'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
@@ -507,6 +463,9 @@ jobs:
           echo "📦 Cloning SUSFS4KSU for kernel patches..."
           git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
           
+          echo "Applying task_mmu.c Android 13 5.15 Fake Patch"
+          sed -i '/^#include <trace\/hooks\/mm.h>$/d' fs/proc/task_mmu.c
+          
           SUSFS_KERNEL_PATCH="susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch"
           
           echo "🔧 Applying SUSFS kernel patch..."
@@ -552,6 +511,12 @@ jobs:
             ln -sf ../KernelSU drivers/kernelsu
             echo "✔ Created drivers/kernelsu symlink"
           fi
+
+          echo "Reverting task_mmu.c Android 13 5.15 Fake Patch"
+          sed -i '/^#include <linux\/pkeys.h>$/a #include <trace/hooks/mm.h>' fs/proc/task_mmu.c
+          
+          SHOW_PAD Fix
+          sed -i -e 's/goto show_pad;/return 0;/' ./fs/proc/task_mmu.c
           
           echo "✅ SUSFS build wiring verified"
 
