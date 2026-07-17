@@ -514,7 +514,7 @@ jobs:
           echo "🎉 KSU-Next(pershoot) setup complete!"
           
       - name: "🚀 Inject SUSFS Integration"
-        if: matrix.variant == 'ksu' && github.event.inputs.susfsSupport == 'Enabled"
+        if: matrix.variant == 'ksu' && github.event.inputs.susfsSupport == 'Enabled'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           # Clone SUSFS4KSU for kernel patches only (not KSU integration)
