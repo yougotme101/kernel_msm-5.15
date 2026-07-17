@@ -1,4 +1,4 @@
-name: "Build YASK"
+name: "Build YASK test"
 
 env:
   OUT_DIR: "out"
@@ -6,8 +6,6 @@ env:
   ANDROID_VERSION: "13"
 
 on:
-  schedule:
-    - cron: '0 0 * * 0'
   workflow_dispatch:
         
 jobs:
@@ -170,25 +168,75 @@ jobs:
           echo "CONFIG_BBG=y" >> arch/arm64/configs/${{ env.DEFCONFIG_NAME }}
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' security/Kconfig
 
-      - name: "🔧 Setup ReSukiSU"
+      - name: "🔧 Setup ReSukiSU with SUSFS"
         if: matrix.kernel.enable_ksu == true
         working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         run: |
           set -e
-          
+
           # Clean existing installations
           rm -rf ./KernelSU ./drivers/kernelsu
-          
-          echo "📦 Installing Wild-KSU..."
+
+          echo "📦 Installing ReSukiSU..."
           curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
-          
-          # Add Wild-KSU and SUSFS configs
+
+          echo "📦 Cloning SUSFS4KSU for kernel patches..."
+          git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
+
+          SUSFS_KERNEL_PATCH="susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch"
+
+          echo "🔧 Applying SUSFS kernel patch..."
+          if patch -p1 < "$SUSFS_KERNEL_PATCH"; then
+            echo "✅ SUSFS patch successfully applied"
+          else
+            echo "⚠️ SUSFS patch failed — copying SUSFS files manually"
+          fi
+
+          echo "📄 Forcing SUSFS source injection..."
+          mkdir -p fs include/linux
+          cp -f susfs4ksu/kernel_patches/fs/susfs.c fs/susfs.c
+          cp -f susfs4ksu/kernel_patches/include/linux/susfs.h include/linux/susfs.h
+
+          if [ -f susfs4ksu/kernel_patches/include/linux/susfs_def.h ]; then
+            cp -f susfs4ksu/kernel_patches/include/linux/susfs_def.h include/linux/susfs_def.h
+          fi
+
+          echo "🔍 Verifying SUSFS files..."
+          for f in fs/susfs.c include/linux/susfs.h include/linux/susfs_def.h; do
+            if [ -f "$f" ]; then echo "✔ Found: $f"; else echo "❌ Missing: $f"; fi
+          done
+
+          rm -rf susfs4ksu
+
+          if [ ! -L "drivers/kernelsu" ]; then
+            ln -sf ../KernelSU drivers/kernelsu
+            echo "✔ Created drivers/kernelsu symlink"
+          fi
+
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_KSU=y
+          CONFIG_KPROBES=y
+          CONFIG_HAVE_KPROBES=y
+          CONFIG_KPROBE_EVENTS=y
+          CONFIG_KSU_SUSFS=y
+          CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y
+          CONFIG_KSU_SUSFS_SUS_PATH=y
+          CONFIG_KSU_SUSFS_SUS_MOUNT=y
+          CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y
+          CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y
+          CONFIG_KSU_SUSFS_SUS_KSTAT=y
+          CONFIG_KSU_SUSFS_TRY_UMOUNT=y
+          CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y
+          CONFIG_KSU_SUSFS_SPOOF_UNAME=y
+          CONFIG_KSU_SUSFS_ENABLE_LOG=y
+          CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
+          CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
+          CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
+          CONFIG_KSU_SUSFS_SUS_SU=y
           EOF
-          
-          echo "🎉 ReSukiSU fully integrated and verified!"
+
+          echo "🎉 ReSukiSU with SUSFS fully integrated and verified!"
 
       - name: "⚙️ Setup basic configs"
         working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
@@ -282,6 +330,7 @@ jobs:
           ║     • Extra TCP Congestion (BBR, Westwood)          ║
           ║     • AOSP clang-r547379                            ║
           ║     • Non-KSU & ReSukiSU support                    ║
+          ║     • SUSFS support                                 ║
           ║     • Baseband-Guard Support                        ║
           ║     • Metamodule Support                            ║
           ║                                                     ║
@@ -316,64 +365,3 @@ jobs:
         with:
           files: ${{ env.ZIP_NAME }}
           tag_name: "YASK-NEXT"
-
-      - name: "📱 Send Telegram Notification"
-        run: |
-          RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/YASK-NEXT"
-          BANNER_URL="https://raw.githubusercontent.com/topnotchfreaks/kernel_msm-5.15/builder/assets/yask.png"
-
-          if [[ "${{ job.status }}" == "success" ]]; then
-            MESSAGE="✅ *YASK Kernel Released*
-
-          📦 *Build Information:*
-          • Kernel: \`Linux 5.15\`
-          • Android: \`13-16\`
-          • Base: \`GKI & CLO\`
-          • KSU: \`ReSukiSU\`
-          • SUSFS: \`Enabled (GKI A13-5.15)\`
-          • LTO: \`Full\`
-          • Optimization: \`-O2\`
-          • BBG: \`Enabled\`
-
-          📱 *Supported Devices:*
-          • Redmi Note 12 4G/NFC
-          • Redmi Note 13 4G/NFC
-          • Redmi Pad SE
-
-          🕐 *Build Date:* $(date '+%Y-%m-%d %H:%M:%S UTC')
-          📦 *Package:* \`${{ env.ZIP_NAME }}\`
-
-          ⬇️ [Download Here]($RELEASE_URL)"
-
-            curl -s -X POST \
-              -d chat_id=${{ secrets.TELEGRAM_CHANNEL_ID }} \
-              -d photo="${BANNER_URL}" \
-              --data-urlencode "caption=${MESSAGE}" \
-              -d parse_mode="Markdown" \
-              -d disable_web_page_preview="false" \
-              "https://api.telegram.org/bot${{ secrets.TELEGRAM_YASK_BOT_TOKEN }}/sendPhoto"
-
-          else
-            FAILURE_MSG="❌ *YASK Kernel Build Failed*
-            
-          📦 *Build Information:*
-          • Kernel: \`Linux 5.15\`
-          • Android: \`13-16\`
-          • Base: \`GKI & CLO\`
-          • KSU: \`ReSukiSU\`
-          • SUSFS: \`Enabled (GKI A13-5.15)\`
-          • LTO: \`Full\`
-          • Optimization: \`-O2\`
-          • BBG: \`Enabled\`
-          
-          🕐 *Failed at:* $(date '+%Y-%m-%d %H:%M:%S UTC')
-
-          🔍 Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
-           
-            curl -s -X POST \
-              -d chat_id=${{ secrets.TELEGRAM_CHANNEL_ID }} \
-              -d photo="${BANNER_URL}" \
-              --data-urlencode "caption=${FAILURE_MSG}" \
-              -d parse_mode="Markdown" \
-              "https://api.telegram.org/bot${{ secrets.TELEGRAM_YASK_BOT_TOKEN }}/sendPhoto"
-          fi
