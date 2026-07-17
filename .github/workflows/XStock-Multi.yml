@@ -347,12 +347,33 @@ jobs:
           CONFIG_TCP_CONG_HTCP=n
           CONFIG_TCP_CONG_BBR=y
           CONFIG_DEFAULT_BBR=y
+          CONFIG_TCP_FASTOPEN=y
 
           # Add metamodule support and OverlayFS support for Vanilla variant
           cat >> "$CONFIG_FILE" << 'EOF
           CONFIG_OVERLAY_FS=y
           CONFIG_TMPFS_XATTR=y
           CONFIG_TMPFS_POSIX_ACL=y
+          EOF
+
+          # Custom configs
+          cat >> "$CONFIG_FILE" << 'EOF
+          CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y
+          CONFIG_PM_WAKELOCKS=y
+          CONFIG_PM_WAKELOCKS_LIMIT=100
+          CONFIG_PM_WAKELOCKS_GC=y
+          CONFIG_IOSCHED_BFQ=y
+          CONFIG_MQ_IOSCHED_KYBER=y
+          CONFIG_MQ_IOSCHED_DEADLINE=y
+          CONFIG_BFQ_GROUP_IOSCHED=y
+          CONFIG_NO_HZ_IDLE=y
+          CONFIG_NO_HZ_FULL=n
+          CONFIG_ZRAM=y
+          CONFIG_ZRAM_DEF_COMP_ZSTD=y
+          CONFIG_ZSMALLOC=y
+          CONFIG_ZSMALLOC_STAT=y
+          CONFIG_SUSPEND=y
+          CONFIG_SUSPEND_FREEZER=y
           EOF
 
           echo "✅ KSU configs added"
@@ -406,6 +427,14 @@ jobs:
           EOF
           
           echo "✅ Basic configs added"
+
+      - name: "📝 Append custom Makefile line"
+        working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
+        run: |
+         # echo 'KBUILD_CFLAGS += -Wno-default-const-init-unsafe' >> Makefile
+         # echo 'KBUILD_CFLAGS += -Wno-uninitialized-const-pointer' >> Makefile
+         echo 'KBUILD_CFLAGS += -Wno-implicit-function-declaration' >> Makefile
+         echo "Custom Makefile line added successfully"
 
       - name: "🔨 Build kernel"
         working-directory: ${{ env.WORK_DIR }}
