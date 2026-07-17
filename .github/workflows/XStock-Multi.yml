@@ -339,43 +339,33 @@ jobs:
           echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
 
           # Extra TCP and Performance configs
-          cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y
-          CONFIG_TCP_CONG_ADVANCED=y
-          CONFIG_TCP_CONG_BIC=n
-          CONFIG_TCP_CONG_WESTWOOD=y
-          CONFIG_TCP_CONG_HTCP=n
-          CONFIG_TCP_CONG_BBR=y
-          CONFIG_DEFAULT_BBR=y
-          CONFIG_TCP_FASTOPEN=y
-          EOF
-
-          # Add metamodule support and OverlayFS support for Vanilla variant
-          cat >> "$CONFIG_FILE" << 'EOF
-          CONFIG_OVERLAY_FS=y
-          CONFIG_TMPFS_XATTR=y
-          CONFIG_TMPFS_POSIX_ACL=y
-          EOF
-
-          # Custom configs
-          cat >> "$CONFIG_FILE" << 'EOF
-          CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y
-          CONFIG_PM_WAKELOCKS=y
-          CONFIG_PM_WAKELOCKS_LIMIT=100
-          CONFIG_PM_WAKELOCKS_GC=y
-          CONFIG_IOSCHED_BFQ=y
-          CONFIG_MQ_IOSCHED_KYBER=y
-          CONFIG_MQ_IOSCHED_DEADLINE=y
-          CONFIG_BFQ_GROUP_IOSCHED=y
-          CONFIG_NO_HZ_IDLE=y
-          CONFIG_NO_HZ_FULL=n
-          CONFIG_ZRAM=y
-          CONFIG_ZRAM_DEF_COMP_ZSTD=y
-          CONFIG_ZSMALLOC=y
-          CONFIG_ZSMALLOC_STAT=y
-          CONFIG_SUSPEND=y
-          CONFIG_SUSPEND_FREEZER=y
-          EOF
+          echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_ADVANCED=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_BIC=n" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_WESTWOOD=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_HTCP=n" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_BBR=y" >> "$CONFIG_FILE"
+          echo "CONFIG_DEFAULT_BBR=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_FASTOPEN=y" >> "$CONFIG_FILE"
+          echo "CONFIG_OVERLAY_FS=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TMPFS_XATTR=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TMPFS_POSIX_ACL=y" >> "$CONFIG_FILE"
+          echo "CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y" >> "$CONFIG_FILE"
+          echo "CONFIG_PM_WAKELOCKS=y" >> "$CONFIG_FILE"
+          echo "CONFIG_PM_WAKELOCKS_LIMIT=100" >> "$CONFIG_FILE"
+          echo "CONFIG_PM_WAKELOCKS_GC=y" >> "$CONFIG_FILE"
+          echo "CONFIG_IOSCHED_BFQ=y" >> "$CONFIG_FILE"
+          echo "CONFIG_MQ_IOSCHED_KYBER=y" >> "$CONFIG_FILE"
+          echo "CONFIG_MQ_IOSCHED_DEADLINE=y" >> "$CONFIG_FILE"
+          echo "CONFIG_BFQ_GROUP_IOSCHED=y" >> "$CONFIG_FILE"
+          echo "CONFIG_NO_HZ_IDLE=y
+          echo "CONFIG_NO_HZ_FULL=n" >> "$CONFIG_FILE"
+          echo "CONFIG_ZRAM=y" >> "$CONFIG_FILE"
+          echo "CONFIG_ZRAM_DEF_COMP_ZSTD=y" >> "$CONFIG_FILE"
+          echo "CONFIG_ZSMALLOC=y" >> "$CONFIG_FILE"
+          echo "CONFIG_ZSMALLOC_STAT=y" >> "$CONFIG_FILE"
+          echo "CONFIG_SUSPEND=y" >> "$CONFIG_FILE"
+          echo "CONFIG_SUSPEND_FREEZER=y" >> "$CONFIG_FILE"
 
           echo "✅ KSU configs added"
 
@@ -389,44 +379,33 @@ jobs:
           # Basic optimizations
           echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
 
-          # Extra TCP and Performance configs
-          cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y
-          CONFIG_TCP_CONG_ADVANCED=y
-          CONFIG_TCP_CONG_BIC=n
-          CONFIG_TCP_CONG_WESTWOOD=y
-          CONFIG_TCP_CONG_HTCP=n
-          CONFIG_TCP_CONG_BBR=y
-          CONFIG_DEFAULT_BBR=y
-          CONFIG_TCP_FASTOPEN=y
-          EOF
-
-          # Add metamodule support and OverlayFS support for Vanilla variant
-          cat >> "$CONFIG_FILE" << 'EOF
-          CONFIG_OVERLAY_FS=y
-          CONFIG_TMPFS_XATTR=y
-          CONFIG_TMPFS_POSIX_ACL=y
-          EOF
-
-          # Custom configs
-          cat >> "$CONFIG_FILE" << 'EOF
-          CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y
-          CONFIG_PM_WAKELOCKS=y
-          CONFIG_PM_WAKELOCKS_LIMIT=100
-          CONFIG_PM_WAKELOCKS_GC=y
-          CONFIG_IOSCHED_BFQ=y
-          CONFIG_MQ_IOSCHED_KYBER=y
-          CONFIG_MQ_IOSCHED_DEADLINE=y
-          CONFIG_BFQ_GROUP_IOSCHED=y
-          CONFIG_NO_HZ_IDLE=y
-          CONFIG_NO_HZ_FULL=n
-          CONFIG_ZRAM=y
-          CONFIG_ZRAM_DEF_COMP_ZSTD=y
-          CONFIG_ZSMALLOC=y
-          CONFIG_ZSMALLOC_STAT=y
-          CONFIG_SUSPEND=y
-          CONFIG_SUSPEND_FREEZER=y
-          EOF
+          echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_ADVANCED=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_BIC=n" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_WESTWOOD=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_HTCP=n" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_BBR=y" >> "$CONFIG_FILE"
+          echo "CONFIG_DEFAULT_BBR=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_FASTOPEN=y" >> "$CONFIG_FILE"
+          echo "CONFIG_OVERLAY_FS=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TMPFS_XATTR=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TMPFS_POSIX_ACL=y" >> "$CONFIG_FILE"
+          echo "CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y" >> "$CONFIG_FILE"
+          echo "CONFIG_PM_WAKELOCKS=y" >> "$CONFIG_FILE"
+          echo "CONFIG_PM_WAKELOCKS_LIMIT=100" >> "$CONFIG_FILE"
+          echo "CONFIG_PM_WAKELOCKS_GC=y" >> "$CONFIG_FILE"
+          echo "CONFIG_IOSCHED_BFQ=y" >> "$CONFIG_FILE"
+          echo "CONFIG_MQ_IOSCHED_KYBER=y" >> "$CONFIG_FILE"
+          echo "CONFIG_MQ_IOSCHED_DEADLINE=y" >> "$CONFIG_FILE"
+          echo "CONFIG_BFQ_GROUP_IOSCHED=y" >> "$CONFIG_FILE"
+          echo "CONFIG_NO_HZ_IDLE=y
+          echo "CONFIG_NO_HZ_FULL=n" >> "$CONFIG_FILE"
+          echo "CONFIG_ZRAM=y" >> "$CONFIG_FILE"
+          echo "CONFIG_ZRAM_DEF_COMP_ZSTD=y" >> "$CONFIG_FILE"
+          echo "CONFIG_ZSMALLOC=y" >> "$CONFIG_FILE"
+          echo "CONFIG_ZSMALLOC_STAT=y" >> "$CONFIG_FILE"
+          echo "CONFIG_SUSPEND=y" >> "$CONFIG_FILE"
+          echo "CONFIG_SUSPEND_FREEZER=y" >> "$CONFIG_FILE"
           
           echo "✅ Basic configs added"
 
