@@ -708,7 +708,7 @@ jobs:
          • Kernel: \`Linux ${{ env.KERNEL_VERSION }}\`
          • Android: \`13-16\`
          • Branch: \`${{ github.event.inputs.kernelBranch }}\`
-         • Device: \`${{ github.event.inputs.kernelDevice }}\`
+         • Device: \`Redmi Note 12/13 4G/NFC, Redmi Pad SE, Redmi 15/Poco M7\`
     
          ⚙️ *Configuration:*
          • LTO: \`${{ github.event.inputs.LtoOptimizations }}\`
@@ -737,7 +737,7 @@ jobs:
          • Kernel: \`Linux ${{ env.KERNEL_VERSION }}\`
          • Android: \`13-16\`
          • Branch: \`${{ github.event.inputs.kernelBranch }}\`
-         • Device: \`Redmi Note 12/13 4G. Pad SE, Redmi 15/Poco M7\`
+         • Device: \`Redmi Note 12/13 4G/NFC, Redmi Pad SE, Redmi 15/Poco M7\`
     
          ⚙️ *Configuration:*
          • LTO: \`${{ github.event.inputs.LtoOptimizations }}\`
