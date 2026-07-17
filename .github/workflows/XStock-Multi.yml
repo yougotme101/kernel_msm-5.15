@@ -168,7 +168,7 @@ jobs:
 
       - name: "😎 Set args for GKI kernels"
         id: generate-args
-        working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
+        working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         run: |
             args="-j$(nproc --all)"
             if [ -n "${{ env.OUT_DIR }}" ]; then
@@ -399,14 +399,14 @@ jobs:
           echo "✅ Basic configs added"
 
       - name: "👍 Make defconfig"
-        working-directory: ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
+        working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         env:
           args: ${{ steps.generate-args.outputs.args }}
         run: |
           make ${{ env.args }} ${{ env.DEFCONFIG_NAME }}
           
       - name: "🔨 Build kernel"
-        working-directory: ${{ env.WORK_DIR }}
+        working-directory: ./${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}
         env:
           args: ${{ steps.generate-args.outputs.args }}
         run: |
