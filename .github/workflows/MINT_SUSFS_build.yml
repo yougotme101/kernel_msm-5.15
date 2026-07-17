@@ -268,14 +268,14 @@ jobs:
          sed -i '/CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3/d' "$CONFIG_FILE"
          sed -i '/CONFIG_CC_OPTIMIZE_FOR_SIZE/d' "$CONFIG_FILE"
           
-          # Apply selected optimization level
-          #apply_patch() {
-            #local url="$1";
-            #local file=$(basename "$url")
-            #curl -L -o "$file" "$url"
-            #patch -p1 < "$file" || echo "::warning::Hunks failed in $file"
-            #rm -f "$file"
-          #}
+          # Helper patch
+          apply_patch() {
+            local url="$1";
+            local file=$(basename "$url")
+            curl -L -o "$file" "$url"
+            patch -p1 < "$file" || echo "::warning::Hunks failed in $file"
+            rm -f "$file"
+          }
           
           #apply_patch "https://raw.githubusercontent.com/yougotme101/extra_stuff/main/custom-tickrate-options.patch"
           
@@ -390,13 +390,18 @@ jobs:
           CONFIG_DEFAULT_TCP_CONG="bbr"
           EOF
 
+          # GKI Fixup Patch
+          apply_patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-gki-fixup.patch"
+          
           # Script sign patch
           curl -L -o sign.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-mint-scripts-sign-builds.patch"
           patch -p1 < sign.patch || echo "Warning: Strings patch failed"
+
+          apply_patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-Don-t-append-and-dirty-to-localversion.patch"
           
           # localversion
-          # curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
-          # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
+          curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
+          patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
       - name: '⚙️ Inject Reflex Governor'
         shell: bash
