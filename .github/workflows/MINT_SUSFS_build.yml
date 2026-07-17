@@ -391,7 +391,7 @@ jobs:
           EOF
 
           # Script sign patch
-          curl -L -o sign.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch"
+          curl -L -o sign.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-mint-scripts-sign-builds.patch"
           patch -p1 < sign.patch || echo "Warning: Strings patch failed"
           
           # localversion
