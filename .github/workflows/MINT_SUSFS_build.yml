@@ -515,7 +515,7 @@ jobs:
           echo "Reverting task_mmu.c Android 13 5.15 Fake Patch"
           sed -i '/^#include <linux\/pkeys.h>$/a #include <trace/hooks/mm.h>' fs/proc/task_mmu.c
           
-          SHOW_PAD Fix
+          SHOW_PAD_FIX=1
           sed -i -e 's/goto show_pad;/return 0;/' ./fs/proc/task_mmu.c
           
           echo "✅ SUSFS build wiring verified"
