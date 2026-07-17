@@ -158,7 +158,7 @@ jobs:
           # Update build config constants
           sed -i \
            -e 's/^BRANCH=.*/BRANCH=android13-5.15/' \
-           -e 's/^CLANG_VERSION=.*/CLANG_VERSION=584948b/' \
+           -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r584948b/' \
            ${{ env.KERNEL_LOC_DIR }}/${{ env.KERNEL_NAME }}/build.config.constants
           
           # Remove defconfig check (if exists)
