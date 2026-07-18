@@ -770,8 +770,9 @@ jobs:
       
          📦 *Build Information:*
          • Kernel: \`Linux ${{ env.KERNEL_VERSION }}\`
-         • Android: \`13-16\`
+         • Android: \`13-17\`
          • Branch: \`${{ github.event.inputs.kernelBranch }}\`
+         • Defconfig: \`${{ github.event.inputs.kernelDevice }}\`
          • Device: \`Redmi Note 12/13 4G/NFC, Redmi Pad SE, Redmi 15/Poco M7\`
     
          ⚙️ *Configuration:*
@@ -799,8 +800,9 @@ jobs:
       
          📦 *Build Information:*
          • Kernel: \`Linux ${{ env.KERNEL_VERSION }}\`
-         • Android: \`13-16\`
+         • Android: \`13-17\`
          • Branch: \`${{ github.event.inputs.kernelBranch }}\`
+         • Defconfig: \`${{ github.event.inputs.kernelDevice }}\`
          • Device: \`Redmi Note 12/13 4G/NFC, Redmi Pad SE, Redmi 15/Poco M7\`
     
          ⚙️ *Configuration:*
