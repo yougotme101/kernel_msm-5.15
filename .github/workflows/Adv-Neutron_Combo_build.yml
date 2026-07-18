@@ -417,7 +417,9 @@ jobs:
           echo "# CONFIG_KERNEL_ZSTD is not set" >> "$CONFIG_FILE"
           echo "# CONFIG_KERNEL_BZIP2 is not set" >> "$CONFIG_FILE"
           echo "# CONFIG_KERNEL_UNCOMPRESSED is not set" >> "$CONFIG_FILE"
+          echo "CONFIG_CRYPTO_LZ4=y" >> "$CONFIG_FILE"
           echo "CONFIG_KERNEL_LZ4=y" >> "$CONFIG_FILE"
+          echo "ZRAM_DEF_COMP_LZ4=y" >> "$CONFIG_FILE"
 
           # Script sign patch
           curl -L -o sign.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch"
