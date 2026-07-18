@@ -668,6 +668,19 @@ jobs:
           echo "✅ KSU configs added"
           
           echo "🎉 SUSFS Integration setup complete!"
+
+      - name: "🔧 Fix compilation errors in FUSE"
+        if: github.event.inputs.kernelBranch == 'codelinaro'
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          echo "🛠 Fixing fs/fuse/dev.c..."
+        
+          # 1. Replace problematic 'dprintk' calls with 'pr_debug' or comment out the log line
+          sed -i 's/dprintk("Request finished/pr_debug("Request finished/g' fs/fuse/dev.c
+          sed -i 's/dprintk("Interrupt already queued/pr_debug("Interrupt already queued/g' fs/fuse/dev.c
+        
+          # 2. Fix usage of the nonexistent flag FR_INTR_QUEUED, replacing it with the suggested FR_INTERRUPTED
+          sed -i 's/FR_INTR_QUEUED/FR_INTERRUPTED/g' fs/fuse/dev.c
           
       - name: "🔨 Build kernel"
         if: github.event.inputs.buildToolchains == 'android-tools'
