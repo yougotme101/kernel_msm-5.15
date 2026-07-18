@@ -191,7 +191,7 @@ jobs:
           # Basic optimizations
           echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
 
-          # Extra TCP and Performance configs
+          # Extra Addon and Performance configs
           echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y" >> "$CONFIG_FILE"
           echo "CONFIG_TCP_CONG_ADVANCED=y" >> "$CONFIG_FILE"
           echo "CONFIG_TCP_CONG_BIC=n" >> "$CONFIG_FILE"
@@ -207,6 +207,14 @@ jobs:
           echo "CONFIG_PM_WAKELOCKS=y" >> "$CONFIG_FILE"
           echo "CONFIG_PM_WAKELOCKS_LIMIT=100" >> "$CONFIG_FILE"
           echo "CONFIG_PM_WAKELOCKS_GC=y" >> "$CONFIG_FILE"
+          echo "CONFIG_SUSPEND=y" >> "$CONFIG_FILE"
+          echo "CONFIG_SUSPEND_FREEZER=y" >> "$CONFIG_FILE"
+          echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
+          echo "CONFIG_NO_HZ_FULL=n" >> "$CONFIG_FILE"
+          echo "# CONFIG_KERNEL_GZIP is not set" >> "$CONFIG_FILE"
+          echo "CONFIG_ZRAM=y" >> "$CONFIG_FILE"
+          echo "CONFIG_KERNEL_LZ4=y" >> "$CONFIG_FILE"
+          echo "CONFIG_ZRAM_DEF_COMP_LZ4=y" >> "$CONFIG_FILE"
 
       - name: '⚙️ Inject Reflex Governor'
         shell: bash
