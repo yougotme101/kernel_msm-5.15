@@ -476,7 +476,7 @@ jobs:
           EOF
 
           # Create ZIP
-          ZIP_NAME="Anykernel3_XStock-AIO-FULL_MULTI_$(date +'%Y-%m-%d').zip"
+          ZIP_NAME="AK3_XStock-AIO-FULL_MULTI_$(date +'%Y-%m-%d').zip"
           cd AnyKernel3
           zip -r9 "../$ZIP_NAME" * -x .git/*
           cd ..
