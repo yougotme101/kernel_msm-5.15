@@ -209,12 +209,18 @@ jobs:
           echo "CONFIG_PM_WAKELOCKS_GC=y" >> "$CONFIG_FILE"
           echo "CONFIG_SUSPEND=y" >> "$CONFIG_FILE"
           echo "CONFIG_SUSPEND_FREEZER=y" >> "$CONFIG_FILE"
+          echo "CONFIG_ENERGY_MODEL=y" >> "$CONFIG_FILE"
           echo "CONFIG_NO_HZ_IDLE=y" >> "$CONFIG_FILE"
           echo "CONFIG_NO_HZ_FULL=n" >> "$CONFIG_FILE"
           echo "# CONFIG_KERNEL_GZIP is not set" >> "$CONFIG_FILE"
-          echo "CONFIG_ZRAM=y" >> "$CONFIG_FILE"
+          echo "# CONFIG_KERNEL_LZO is not set" >> "$CONFIG_FILE"
+          echo "# CONFIG_KERNEL_XZ is not set" >> "$CONFIG_FILE"
+          echo "# CONFIG_KERNEL_ZSTD is not set" >> "$CONFIG_FILE"
+          echo "# CONFIG_KERNEL_BZIP2 is not set" >> "$CONFIG_FILE"
+          echo "# CONFIG_KERNEL_UNCOMPRESSED is not set" >> "$CONFIG_FILE"
+          echo "CONFIG_CRYPTO_LZ4=y" >> "$CONFIG_FILE"
           echo "CONFIG_KERNEL_LZ4=y" >> "$CONFIG_FILE"
-          echo "CONFIG_ZRAM_DEF_COMP_LZ4=y" >> "$CONFIG_FILE"
+          echo "ZRAM_DEF_COMP_LZ4=y" >> "$CONFIG_FILE"
 
       - name: '⚙️ Inject Reflex Governor'
         shell: bash
