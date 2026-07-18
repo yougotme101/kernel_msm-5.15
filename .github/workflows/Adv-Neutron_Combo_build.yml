@@ -83,7 +83,7 @@ on:
         description: "build tools"
         required: true
         type: choice
-        default: "custom-tools"
+        default: "android-tools"
         options:
           - "android-tools"
           - "custom-tools"
@@ -403,10 +403,21 @@ jobs:
           echo "CONFIG_PM_WAKELOCKS_GC=y" >> "$CONFIG_FILE"
           echo "CONFIG_SUSPEND=y" >> "$CONFIG_FILE"
           echo "CONFIG_SUSPEND_FREEZER=y" >> "$CONFIG_FILE"
+
+          # LZ4 Compression
+          #sed -i '/CONFIG_KERNEL_GZIP/d' "$CONFIG_FILE"
+          #sed -i '/CONFIG_KERNEL_LZO/d' "$CONFIG_FILE"
+          #sed -i '/CONFIG_KERNEL_XZ/d' "$CONFIG_FILE"
+          #sed -i '/CONFIG_KERNEL_ZSTD/d' "$CONFIG_FILE"
+          #sed -i '/CONFIG_KERNEL_BZIP2/d' "$CONFIG_FILE"
+          #sed -i '/CONFIG_KERNEL_UNCOMPRESSED/d' "$CONFIG_FILE"
           echo "# CONFIG_KERNEL_GZIP is not set" >> "$CONFIG_FILE"
-          echo "CONFIG_ZRAM=y" >> "$CONFIG_FILE"
+          echo "# CONFIG_KERNEL_LZO is not set" >> "$CONFIG_FILE"
+          echo "# CONFIG_KERNEL_XZ is not set" >> "$CONFIG_FILE"
+          echo "# CONFIG_KERNEL_ZSTD is not set" >> "$CONFIG_FILE"
+          echo "# CONFIG_KERNEL_BZIP2 is not set" >> "$CONFIG_FILE"
+          echo "# CONFIG_KERNEL_UNCOMPRESSED is not set" >> "$CONFIG_FILE"
           echo "CONFIG_KERNEL_LZ4=y" >> "$CONFIG_FILE"
-          echo "CONFIG_ZRAM_DEF_COMP_LZ4=y" >> "$CONFIG_FILE"
 
           # Script sign patch
           curl -L -o sign.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch"
