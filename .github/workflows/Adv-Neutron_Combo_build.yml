@@ -91,7 +91,7 @@ on:
         description: "Choose LTO"
         required: true
         type: choice
-        default: "thin"
+        default: "full"
         options:
           - "thin"
           - "full"
