@@ -1,4 +1,4 @@
-name: "MINT SUSFS Build"
+name: "MINT Kernel Build"
 
 env:
   OUT_DIR: "out"
@@ -12,27 +12,27 @@ on:
         description: "Kernel source URL"
         required: true
         type: string
-        default: "https://github.com/yougotme101/kernel_msm-5.15"
+        default: "https://github.com/topnotchfreaks/kernel_msm-5.15"
       kernelBranch:
         description: "Kernel branch"
         required: true
         type: string
-        default: "kaze"
+        default: "zepharo"
       kernelDevice:
         description: "Device (used for defconfig)"
         required: true
         type: string
-        default: "kaze"
+        default: "unified"
       localVersion:
         description: "Custom localversion name (e.g., -mybuild)"
         required: false
         type: string
-        default: ""
+        default: "-MINT"
       buildKSU:
         description: "Build KSU variant?"
         required: true
         type: choice
-        default: "both"
+        default: "ksu"
         options:
           - "noksu"
           - "ksu"
@@ -45,6 +45,14 @@ on:
         options:
           - "ReSukiSU"
           - "KSU-Next"
+      susfsSupport:
+        description: "Add SUSFS Implementation (if KSU Enabled)"
+        required: true
+        type: choice
+        default: "Enabled"
+        options:
+          - "Enabled"
+          - "Disabled"
       tickRate:
         description: "Kernel tick rate (Hz)"
         required: true
@@ -73,7 +81,7 @@ on:
         description: "build tools"
         required: true
         type: choice
-        default: "custom-tools"
+        default: "android-tools"
         options:
           - "android-tools"
           - "custom-tools"
@@ -81,7 +89,7 @@ on:
         description: "Choose LTO"
         required: true
         type: choice
-        default: "thin"
+        default: "full"
         options:
           - "thin"
           - "full"
@@ -380,28 +388,25 @@ jobs:
           esac
 
           # Extra TCP configs
-          cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_TCP_CONG_ADVANCED=y
-          CONFIG_TCP_CONG_BIC=n
-          CONFIG_TCP_CONG_WESTWOOD=y
-          CONFIG_TCP_CONG_HTCP=n
-          CONFIG_TCP_CONG_BBR=y
-          CONFIG_DEFAULT_BBR=y
-          CONFIG_DEFAULT_TCP_CONG="bbr"
-          EOF
+          echo "CONFIG_TCP_CONG_ADVANCED=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_BIC=n" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_WESTWOOD=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_HTCP=n" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_CONG_BBR=y" >> "$CONFIG_FILE"
+          echo "CONFIG_DEFAULT_BBR=y" >> "$CONFIG_FILE"
 
           # GKI Fixup Patch
-          apply_patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-gki-fixup.patch"
+          #apply_patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-gki-fixup.patch"
           
           # Script sign patch
           curl -L -o sign.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-mint-scripts-sign-builds.patch"
           patch -p1 < sign.patch || echo "Warning: Strings patch failed"
 
-          apply_patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-Don-t-append-and-dirty-to-localversion.patch"
+          #apply_patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-Don-t-append-and-dirty-to-localversion.patch"
           
           # localversion
-          curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
-          patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
+          #curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
+          #patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
       - name: '⚙️ Inject Reflex Governor'
         shell: bash
@@ -454,7 +459,7 @@ jobs:
 
           echo "🎉 BBG setup complete!"
 
-      - name: "🔧 Setup RESUKISU"
+      - name: "🔧 Setup ReSukiSU"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'ReSukiSU'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -464,88 +469,11 @@ jobs:
           curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
           echo "✔ ReSukiSU installed"
 
-          # Clone SUSFS4KSU for kernel patches only (not KSU integration)
-          echo "📦 Cloning SUSFS4KSU for kernel patches..."
-          git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
-          
-          echo "Applying task_mmu.c Android 13 5.15 Fake Patch"
-          sed -i '/^#include <trace\/hooks\/mm.h>$/d' fs/proc/task_mmu.c
-          
-          SUSFS_KERNEL_PATCH="susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch"
-          
-          echo "🔧 Applying SUSFS kernel patch..."
-          if patch -p1 < "$SUSFS_KERNEL_PATCH"; then
-            echo "✅ SUSFS patch successfully applied"
-          else
-            echo "⚠️ SUSFS patch failed — copying files manually"
-          fi
-
-          echo "🔧 Applying SUSFS -> KernelSU patch..."
-          KSU_PATCH="susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch"
-          
-          echo "📄 Forcing SUSFS source injection..."
-          
-          # Always replace fs/susfs.c
-          mkdir -p fs
-          cp -f susfs4ksu/kernel_patches/fs/susfs.c fs/susfs.c
-          echo "✔ Copied fs/susfs.c"
-          
-          # Always replace include/linux/susfs.h
-          mkdir -p include/linux
-          cp -f susfs4ksu/kernel_patches/include/linux/susfs.h include/linux/susfs.h
-          echo "✔ Copied include/linux/susfs.h"
-          
-          # Also install missing susfs_def.h
-          if [ -f susfs4ksu/kernel_patches/include/linux/susfs_def.h ]; then
-            cp -f susfs4ksu/kernel_patches/include/linux/susfs_def.h include/linux/susfs_def.h
-            echo "✔ Copied include/linux/susfs_def.h"
-          else
-            echo "⚠️ susfs_def.h not found in repo"
-          fi
-          
-          echo "🔍 Verifying SUSFS files..."
-          for f in fs/susfs.c include/linux/susfs.h include/linux/susfs_def.h; do
-            if [ -f "$f" ]; then echo "✔ Found: $f"; else echo "❌ Missing: $f"; fi
-          done
-          
-          # Clean up SUSFS repo (we only needed kernel patches, not KSU integration)
-          rm -rf susfs4ksu
-          
-          # Create symbolic link for drivers/kernelsu (if needed by build system)
-          if [ ! -L "drivers/kernelsu" ]; then
-            ln -sf ../KernelSU drivers/kernelsu
-            echo "✔ Created drivers/kernelsu symlink"
-          fi
-
-          echo "Reverting task_mmu.c Android 13 5.15 Fake Patch"
-          sed -i '/^#include <linux\/pkeys.h>$/a #include <trace/hooks/mm.h>' fs/proc/task_mmu.c
-          
-          echo "✅ SUSFS build wiring verified"
-
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_KSU=y
-          CONFIG_KPROBES=y
-          CONFIG_HAVE_KPROBES=y
-          CONFIG_KPROBE_EVENTS=y
-          CONFIG_KSU_SUSFS=y
-          CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y
-          CONFIG_KSU_SUSFS_SUS_PATH=y
-          CONFIG_KSU_SUSFS_SUS_MOUNT=y
-          CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y
-          CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y
-          CONFIG_KSU_SUSFS_SUS_KSTAT=y
-          CONFIG_KSU_SUSFS_TRY_UMOUNT=y
-          CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y
-          CONFIG_KSU_SUSFS_SPOOF_UNAME=y
-          CONFIG_KSU_SUSFS_ENABLE_LOG=y
-          CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
-          CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
-          CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
-          CONFIG_KSU_SUSFS_SUS_SU=y
           EOF
           echo "🎉 ReSukiSU setup complete!"
-          
       
       - name: "🔧 Setup KSU-Next(pershoot) + Multi Manager with SUSFS"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'KSU-Next'
@@ -564,9 +492,38 @@ jobs:
           
           echo "✔ KSU installed successfully"
 
+          CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
+          cat >> "$CONFIG_FILE" << 'EOF'
+          CONFIG_KSU=y
+          EOF
+
+          echo "🎉 KSU-Next(pershoot) fully integrated!"
+
+      - name: "🚀 Inject SUSFS Integration"
+        if: matrix.variant == 'ksu' && github.event.inputs.susfsSupport == 'Enabled'
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
           # Clone SUSFS4KSU for kernel patches only (not KSU integration)
           echo "📦 Cloning SUSFS4KSU for kernel patches..."
           git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
+
+          echo "☣️ Applying namespace.c Fake Patch (if applicable)"
+          if grep -q '^#include <trace/hooks/blk.h>$' fs/namespace.c; then
+            sed -i '/^#include <trace\/hooks\/blk.h>$/d' fs/namespace.c
+            NS_FAKE_PATCHED=1
+          else
+            echo "ℹ️ blk.h include not present in fs/namespace.c — skipping fake patch"
+            NS_FAKE_PATCHED=0
+          fi
+
+          echo "☣️ Applying task_mmu.c Fake Patch (if applicable)"
+          if grep -q '^#include <trace/hooks/mm.h>$' fs/proc/task_mmu.c; then
+            sed -i '/^#include <trace\/hooks\/mm.h>$/d' fs/proc/task_mmu.c
+            MM_FAKE_PATCHED=1
+          else
+            echo "ℹ️ mm.h include not present in fs/proc/task_mmu.c — skipping fake patch"
+            MM_FAKE_PATCHED=0
+          fi
           
           SUSFS_KERNEL_PATCH="susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch"
           
@@ -613,33 +570,50 @@ jobs:
             ln -sf ../KernelSU drivers/kernelsu
             echo "✔ Created drivers/kernelsu symlink"
           fi
-          
+
           echo "✅ SUSFS build wiring verified"
 
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_KSU=y
-          CONFIG_KPROBES=y
-          CONFIG_HAVE_KPROBES=y
-          CONFIG_KPROBE_EVENTS=y
           CONFIG_KSU_SUSFS=y
-          CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y
           CONFIG_KSU_SUSFS_SUS_PATH=y
           CONFIG_KSU_SUSFS_SUS_MOUNT=y
-          CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y
-          CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y
           CONFIG_KSU_SUSFS_SUS_KSTAT=y
-          CONFIG_KSU_SUSFS_TRY_UMOUNT=y
-          CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y
           CONFIG_KSU_SUSFS_SPOOF_UNAME=y
           CONFIG_KSU_SUSFS_ENABLE_LOG=y
           CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
           CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
           CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
-          CONFIG_KSU_SUSFS_SUS_SU=y
+          CONFIG_KSU_SUSFS_SUS_MAP=y
           EOF
 
-          echo "🎉 KSU-Next with SUSFS kernel patches fully integrated!"
+          echo "↩️ Reverting namespace.c Fake Patch (if applicable)"
+          if [ "$NS_FAKE_PATCHED" = "1" ] && ! grep -q 'trace/hooks/blk.h' fs/namespace.c; then
+            if grep -q '^#include "internal.h"$' fs/namespace.c; then
+              sed -i '/^#include "internal.h"$/a #include <trace/hooks/blk.h>' fs/namespace.c
+              echo "✔ Restored blk.h include"
+            else
+              echo "⚠️ Anchor #include \"internal.h\" not found — could not restore blk.h include, check fs/namespace.c manually"
+            fi
+          else
+            echo "ℹ️ Skipping blk.h restore (not fake-patched or already present)"
+          fi
+
+          echo "↩️ Reverting task_mmu.c Fake Patch (if applicable)"
+          if [ "$MM_FAKE_PATCHED" = "1" ] && ! grep -q 'trace/hooks/mm.h' fs/proc/task_mmu.c; then
+            if grep -q '^#include <linux/pkeys.h>$' fs/proc/task_mmu.c; then
+              sed -i '/^#include <linux\/pkeys.h>$/a #include <trace/hooks/mm.h>' fs/proc/task_mmu.c
+              echo "✔ Restored mm.h include"
+            else
+              echo "⚠️ Anchor #include <linux/pkeys.h> not found — could not restore mm.h include, check fs/proc/task_mmu.c manually"
+            fi
+          else
+            echo "ℹ️ Skipping mm.h restore (not fake-patched or already present)"
+          fi
+          
+          echo "✅ KSU configs added"
+          
+          echo "🎉 SUSFS Integration setup complete!"
           
       - name: "🔨 Build kernel"
         if: github.event.inputs.buildToolchains == 'android-tools'
@@ -742,7 +716,7 @@ jobs:
       
          📦 *Build Information:*
          • Kernel: \`Linux ${{ env.KERNEL_VERSION }}\`
-         • Android: \`13-16\`
+         • Android: \`13-17\`
          • Branch: \`${{ github.event.inputs.kernelBranch }}\`
          • Device: \`${{ github.event.inputs.kernelDevice }}\`
     
@@ -771,7 +745,7 @@ jobs:
       
          📦 *Build Information:*
          • Kernel: \`Linux ${{ env.KERNEL_VERSION }}\`
-         • Android: \`13-16\`
+         • Android: \`13-17\`
          • Branch: \`${{ github.event.inputs.kernelBranch }}\`
          • Device: \`Redmi Note 12/13 4G. Pad SE, Redmi 15/Poco M7\`
     
