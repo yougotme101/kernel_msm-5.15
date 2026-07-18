@@ -502,7 +502,7 @@ jobs:
 
           📦 *Build Information:*
           • Kernel: \`Linux 5.15\`
-          • Android: \`13-16\`
+          • Android: \`13-17\`
           • Base: \`GKI & CLO\`
           • KSU: \`ReSukiSU\`
           • SUSFS: \`Enabled (GKI A13-5.15)\`
@@ -543,7 +543,7 @@ jobs:
             
           📦 *Build Information:*
           • Kernel: \`Linux 5.15\`
-          • Android: \`13-16\`
+          • Android: \`13-17\`
           • Base: \`GKI & CLO\`
           • KSU: \`ReSukiSU\`
           • SUSFS: \`Enabled (GKI A13-5.15)\`
