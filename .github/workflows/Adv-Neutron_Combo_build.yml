@@ -389,13 +389,24 @@ jobs:
               ;;
           esac
 
-          # Extra TCP configs
+          # Extra Addon configs
           echo "CONFIG_TCP_CONG_ADVANCED=y" >> "$CONFIG_FILE"
           echo "CONFIG_TCP_CONG_BIC=n" >> "$CONFIG_FILE"
           echo "CONFIG_TCP_CONG_WESTWOOD=y" >> "$CONFIG_FILE"
           echo "CONFIG_TCP_CONG_HTCP=n" >> "$CONFIG_FILE"
           echo "CONFIG_TCP_CONG_BBR=y" >> "$CONFIG_FILE"
           echo "CONFIG_DEFAULT_BBR=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_FASTOPEN=y" >> "$CONFIG_FILE"
+          echo "CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y" >> "$CONFIG_FILE"
+          echo "CONFIG_PM_WAKELOCKS=y" >> "$CONFIG_FILE"
+          echo "CONFIG_PM_WAKELOCKS_LIMIT=100" >> "$CONFIG_FILE"
+          echo "CONFIG_PM_WAKELOCKS_GC=y" >> "$CONFIG_FILE"
+          echo "CONFIG_SUSPEND=y" >> "$CONFIG_FILE"
+          echo "CONFIG_SUSPEND_FREEZER=y" >> "$CONFIG_FILE"
+          echo "# CONFIG_KERNEL_GZIP is not set" >> "$CONFIG_FILE"
+          echo "CONFIG_ZRAM=y" >> "$CONFIG_FILE"
+          echo "CONFIG_KERNEL_LZ4=y" >> "$CONFIG_FILE"
+          echo "CONFIG_ZRAM_DEF_COMP_LZ4=y" >> "$CONFIG_FILE"
 
           # Script sign patch
           curl -L -o sign.patch "https://raw.githubusercontent.com/yougotme101/kernel_patches/main/0001-scripts-sign-builds.patch"
