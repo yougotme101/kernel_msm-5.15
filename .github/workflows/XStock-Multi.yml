@@ -262,7 +262,7 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
 
           echo "📦 Installing KSU..."
-          curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash -s auto-hook
+          curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash -s 
           
           echo "✔ KSU installed successfully"
           
@@ -322,12 +322,6 @@ jobs:
             echo "✔ Created drivers/kernelsu symlink"
           fi
 
-          echo "↩️ Reverting namespace.c Android 13 5.15 Fake Patch"
-          # sed -i '/^#include "internal.h"$/a #include <trace/hooks/blk.h>' fs/namespace.c
-
-          echo "↩️ Reverting task_mmu.c Android 13 5.15 Fake Patch"
-          sed -i '/^#include <linux\/pkeys.h>$/a #include <trace/hooks/mm.h>' fs/proc/task_mmu.c
-          
           echo "✅ SUSFS build wiring verified"
 
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
@@ -343,6 +337,12 @@ jobs:
           CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
           CONFIG_KSU_SUSFS_SUS_MAP=y
           EOF
+
+          echo "↩️ Reverting namespace.c Android 13 5.15 Fake Patch"
+          sed -i '/^#include "internal.h"$/a #include <trace/hooks/blk.h>' fs/namespace.c
+
+          echo "↩️ Reverting task_mmu.c Android 13 5.15 Fake Patch"
+          sed -i '/^#include <linux\/pkeys.h>$/a #include <trace/hooks/mm.h>' fs/proc/task_mmu.c
 
           echo "✅ KSU configs added"
 
