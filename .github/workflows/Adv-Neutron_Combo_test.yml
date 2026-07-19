@@ -462,6 +462,7 @@ jobs:
 
             # Strip any existing default-governor selections so Reflex wins
             sed -i '/^CONFIG_CPU_FREQ_DEFAULT_GOV_/d' "$CONFIG_FILE"
+            echo "# CONFIG_CPU_FREQ_DEFAULT_GOV_ is not set" >> "$CONFIG_FILE"
 
             # Force Reflex as the default governor
             echo "CONFIG_CPU_FREQ_DEFAULT_GOV_REFLEX=y" >> "$CONFIG_FILE"
