@@ -130,69 +130,29 @@ jobs:
         if: github.event.inputs.buildToolchains == 'android-tools'
         working-directory: ${{ env.WORK_DIR}}
         run: |
-         # Fetch Clang straight from AOSP (android.googlesource.com), no
-         # third-party mirror. r596125 is AOSP's current "clang-stable"
-         # release (see the repo's own listing at .../platform/prebuilts/clang/host/linux-x86/).
-         # Note: this is newer than the r584948b pinned by the Android
-         # Mainline kernel's build.config.constants — using it here is an
-         # intentional experiment with a newer-than-default toolchain.
-         # Bump AOSP_CLANG_VERSION below whenever you want to try another one.
-         AOSP_CLANG_VERSION="r596125"
-         AOSP_CLANG_DIR="clang-${AOSP_CLANG_VERSION}"
-         AOSP_CLANG_REPO="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86"
-        
-         echo "⚙️ Fetching ${AOSP_CLANG_DIR} directly from AOSP"
-         mkdir -p "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}"
-        
-         # Resolve the exact commit SHA for main via gitiles' JSON log API first —
-         # +archive is picky about ref syntax (branch names alone can 400 on some
-         # gitiles configs), but a full commit SHA always works.
-         RESOLVED_SHA=$(curl -sL -A "Mozilla/5.0 (compatible; curl)" \
-           "${AOSP_CLANG_REPO}/+log/refs/heads/main?format=JSON&n=1" \
-           | sed "1s/^)]}'//" | grep -m1 -oP '"commit":\s*"\K[0-9a-f]{40}')
-         echo "Resolved SHA: ${RESOLVED_SHA:-<none>}"
-        
-         DOWNLOAD_OK=0
-         for REF in "$RESOLVED_SHA" "refs/heads/main" "main" "refs/heads/master" "master"; do
-           [ -z "$REF" ] && continue
-           URL="${AOSP_CLANG_REPO}/+archive/${REF}/${AOSP_CLANG_DIR}.tar.gz"
-           echo "Trying: $URL"
-           HTTP_CODE=$(curl -sL -A "Mozilla/5.0 (compatible; curl)" \
-             -o "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}.tar.gz" \
-             -w '%{http_code}' \
-             "$URL")
-           echo "  -> HTTP $HTTP_CODE"
-           if [ "$HTTP_CODE" = "200" ] && [ -s "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}.tar.gz" ]; then
-             DOWNLOAD_OK=1
-             break
-           fi
-         done
-        
-         if [ "$DOWNLOAD_OK" -ne 1 ]; then
-           echo "❌ Failed to fetch ${AOSP_CLANG_DIR} from AOSP googlesource (all ref forms failed)"
-           echo "Last response body (if any):"
-           cat "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}.tar.gz" 2>/dev/null | head -c 500 || true
-           exit 1
-         fi
-        
-         tar -xzf "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}.tar.gz" -C "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}"
-         rm -rf "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}.tar.gz"
-        
-         if [ ! -x "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}/bin/clang" ]; then
-           echo "❌ AOSP clang download/extract failed — bin/clang not found"
-           exit 1
-         fi
-        
+         repo init -u https://android.googlesource.com/kernel/manifest -b common-android13-5.15-lts --depth=1
+         repo sync --optimized-fetch --prune --no-clone-bundle --no-tags -j$(nproc --all)
+    
+         rm -rf .repo
+         rm -rf common
+
+         # Download updated Clang r584948 from Android Git repository
+         aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r596125.tar.gz "https://github.com/yougotme101/clang/releases/download/v1.0.0/clang-r596125.tar.gz"
+    
+         mkdir -p prebuilts/clang/host/linux-x86/clang-r596125
+         tar -xzf prebuilts/clang/host/linux-x86/clang-r596125.tar.gz -C prebuilts/clang/host/linux-x86/clang-r596125
+         rm -rf prebuilts/clang/host/linux-x86/clang-r596125.tar.gz
+
          # Clean up old Clang versions
          rm -rf prebuilts/clang/host/linux-x86/clang-3289846
          rm -rf prebuilts/clang/host/linux-x86/clang-r450784e
          rm -rf prebuilts/clang/host/linux-x86/clang-r547379
          rm -rf prebuilts/clang/host/linux-x86/clang-r584948b
          rm -rf prebuilts/clang/host/linux-x86/clang-stable
-        
+         
          sed -i \
           -e 's/^BRANCH=.*/BRANCH=android13-5.15/' \
-          -e "s/^CLANG_VERSION=.*/CLANG_VERSION=${AOSP_CLANG_VERSION}/" \
+          -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r596125/' \
          ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.constants
     
          sed -i '/^DEFCONFIG=gki_defconfig/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
