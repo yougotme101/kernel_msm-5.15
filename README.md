@@ -18,10 +18,10 @@ This workflow is configured for specific devices. **You must modify the settings
 ## 🔧 Quick Start
 
 1. **Fork this repository**
-2. Go to **Actions** tab → **"Build kernels test-a"** workflow
+2. Go to **Actions** tab → **"Build kernels"** workflow
 3. Click **"Run workflow"** and configure:
 
-### Workflow Settings (Use test-a to get more options)
+### Workflow Settings
 
 | Setting | Description | Default |
 |---------|-------------|---------|
@@ -37,18 +37,6 @@ This workflow is configured for specific devices. **You must modify the settings
 | **Tickrate** | Custom Tickrate Options | `250` |
 | **BBG** | Add BBG Support | `on` |
 | **LTO mode** | Optimization level | `full` |
-4. **Wait for build** (20-40 minutes)
-5. **Download** the flashable ZIP from artifacts
-
-## 📱 Telegram Notifications (Optional)
-
-Get build results sent to Telegram:
-
-1. Create a bot with [@BotFather](https://t.me/BotFather)
-2. Get your chat ID from [@GetIDsBot](https://t.me/GetIDsBot)
-3. Add these secrets in repository **Settings** → **Secrets**:
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_USER_ID`
 4. **Wait for build** (20-40 minutes)
 5. **Download** the flashable ZIP from artifacts
 
