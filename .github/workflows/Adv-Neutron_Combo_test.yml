@@ -140,31 +140,38 @@ jobs:
          AOSP_CLANG_VERSION="r596125"
          AOSP_CLANG_DIR="clang-${AOSP_CLANG_VERSION}"
          AOSP_CLANG_REPO="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86"
-        
+
          echo "⚙️ Fetching ${AOSP_CLANG_DIR} directly from AOSP"
          mkdir -p "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}"
-        
+
+         # Resolve the exact commit SHA for main via gitiles' JSON log API first —
+         # +archive is picky about ref syntax (branch names alone can 400 on some
+         # gitiles configs), but a full commit SHA always works.
+         RESOLVED_SHA=$(curl -sL "${AOSP_CLANG_REPO}/+log/refs/heads/main?format=JSON&n=1" \
+           | sed "1s/^)]}'//" | grep -m1 -oP '"commit":\s*"\K[0-9a-f]{40}')
+
          DOWNLOAD_OK=0
-         for REF in "refs/heads/main" "refs/heads/master"; do
-           URL="${AOSP_CLANG_REPO}/+archive/${REF}/${AOSP_CLANG_DIR}.tar.gz"
-           echo "Trying: $URL"
+         for REF in "$RESOLVED_SHA" "refs/heads/main" "main" "refs/heads/master" "master"; do
+          [ -z "$REF" ] && continue
+          URL="${AOSP_CLANG_REPO}/+archive/${REF}/${AOSP_CLANG_DIR}.tar.gz"
+          echo "Trying: $URL"
            if aria2c -x 16 -s 16 -o "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}.tar.gz" "$URL"; then
-             DOWNLOAD_OK=1
-             break
+            DOWNLOAD_OK=1
+            break
            fi
          done
-        
+
          if [ "$DOWNLOAD_OK" -ne 1 ]; then
-           echo "❌ Failed to fetch ${AOSP_CLANG_DIR} from AOSP googlesource (both main and master refs failed)"
-           exit 1
+           echo "❌ Failed to fetch ${AOSP_CLANG_DIR} from AOSP googlesource (all ref forms failed)"
+          exit 1
          fi
-        
+
          tar -xzf "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}.tar.gz" -C "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}"
          rm -rf "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}.tar.gz"
-        
+
          if [ ! -x "prebuilts/clang/host/linux-x86/${AOSP_CLANG_DIR}/bin/clang" ]; then
-           echo "❌ AOSP clang download/extract failed — bin/clang not found"
-           exit 1
+          echo "❌ AOSP clang download/extract failed — bin/clang not found"
+          exit 1
          fi
         
          # Clean up old Clang versions
