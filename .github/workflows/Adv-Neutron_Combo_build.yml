@@ -537,7 +537,7 @@ jobs:
           FAIR_C="kernel/sched/fair.c"
 
           if ! grep -q "extern int sched_gaming_active;" "$FAIR_C"; then
-           bperl -0pi -e 's{(static unsigned int normalized_sysctl_sched_latency\s*=\s*6000000ULL;)}{$1\n\nextern int sched_gaming_active;\n\n#define GAMING_VRUNTIME_STRETCH\t\t4\n}' "$FAIR_C"
+            perl -0pi -e 's{(static unsigned int normalized_sysctl_sched_latency\s*=\s*6000000ULL;)}{$1\n\nextern int sched_gaming_active;\n\n#define GAMING_VRUNTIME_STRETCH\t\t4\n}' "$FAIR_C"
           fi
 
           if ! grep -q "GAMING_VRUNTIME_STRETCH - 1" "$FAIR_C"; then
