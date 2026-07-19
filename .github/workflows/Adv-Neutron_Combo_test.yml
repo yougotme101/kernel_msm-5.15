@@ -459,10 +459,16 @@ jobs:
             if ! grep -q "CONFIG_CPU_FREQ_GOV_REFLEX" "$CONFIG_FILE"; then
               echo "CONFIG_CPU_FREQ_GOV_REFLEX=y" >> "$CONFIG_FILE"
             fi
-          fi
-          
-          echo "🎉 Inject Reflex Governor setup complete!"
 
+            # Strip any existing default-governor selections so Reflex wins
+            sed -i '/^CONFIG_CPU_FREQ_DEFAULT_GOV_/d' "$CONFIG_FILE"
+
+            # Force Reflex as the default governor
+            echo "CONFIG_CPU_FREQ_DEFAULT_GOV_REFLEX=y" >> "$CONFIG_FILE"
+          fi
+
+          echo "🎉 Inject Reflex Governor setup complete!"
+          
       - name: 'Inject Vorpal Governor + GKI510 Compat'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
