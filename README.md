@@ -10,10 +10,9 @@ This workflow is configured for specific devices. **You must modify the settings
 - Added options to build with BBG
 - Added Droidspaces Support
 - Added Reflex Governor Script
-- Added Spoof Bootloader state kernel-level(experimental)
+- Added Vorpal Governor Script
 - FullLTO build
-- Add Swapfile options and Cleanup Disk tools to free up space for runners
-- Added XStock, update weekly (basically YASK, but i changed the the default manager to WildKSU, bring back BBG Support, and remove KPM Feature for SukiSU)
+- Added XStock, update weekly (basically YASK, but improved)
 
 ## 🔧 Quick Start
 
