@@ -10,7 +10,7 @@ This workflow is configured for specific devices. **You must modify the settings
 - Added options to build with BBG
 - Added Droidspaces Support
 - Added Reflex Governor Script
-- Added Spoof Bootloader state kernel-level
+- Added Spoof Bootloader state kernel-level(experimental)
 - FullLTO build
 - Add Swapfile options and Cleanup Disk tools to free up space for runners
 - Added XStock, update weekly (basically YASK, but i changed the the default manager to WildKSU, bring back BBG Support, and remove KPM Feature for SukiSU)
@@ -31,11 +31,24 @@ This workflow is configured for specific devices. **You must modify the settings
 | **Custom localversion** | Add custom version suffix | (empty) |
 | **Build KSU variant** | Include KernelSU version | `true` |
 | **KSU variant** | KernelSU Manager | `KowSU` |
+| **SUSFS Support** | Include SUSFS Integration| `true` |
 | **Kernel Optmization** | Optimization Level | `02` |
 | **LTO mode** | Optimization level | `full` |
 | **Tickrate** | Custom Tickrate Options | `250` |
 | **BBG** | Add BBG Support | `on` |
-| **Swap for runners** | To prevent workflows from failed cause running out of space | `8GB` |
+| **LTO mode** | Optimization level | `full` |
+4. **Wait for build** (20-40 minutes)
+5. **Download** the flashable ZIP from artifacts
+
+## 📱 Telegram Notifications (Optional)
+
+Get build results sent to Telegram:
+
+1. Create a bot with [@BotFather](https://t.me/BotFather)
+2. Get your chat ID from [@GetIDsBot](https://t.me/GetIDsBot)
+3. Add these secrets in repository **Settings** → **Secrets**:
+   - `TELEGRAM_BOT_TOKEN`
+   - `TELEGRAM_USER_ID`
 4. **Wait for build** (20-40 minutes)
 5. **Download** the flashable ZIP from artifacts
 
@@ -62,17 +75,3 @@ Get build results sent to Telegram:
 ---
 
 **Ready to build? Hit that "Run workflow" button! 🎉**
-| **LTO mode** | Optimization level | `full` |
-
-4. **Wait for build** (20-40 minutes)
-5. **Download** the flashable ZIP from artifacts
-
-## 📱 Telegram Notifications (Optional)
-
-Get build results sent to Telegram:
-
-1. Create a bot with [@BotFather](https://t.me/BotFather)
-2. Get your chat ID from [@GetIDsBot](https://t.me/GetIDsBot)
-3. Add these secrets in repository **Settings** → **Secrets**:
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_USER_ID`
