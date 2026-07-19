@@ -137,7 +137,7 @@ jobs:
          rm -rf common
 
          # Download updated Clang r596125 from Android Git repository
-         aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r596125.tar.gz "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/mirror-goog-main-llvm-toolchain-source/clang-r596125.tar.gz"
+         aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r596125.tar.gz "https://github.com/yougotme101/clang/releases/download/v1.0.1/clang-r596125.tar.gz"
     
          mkdir -p prebuilts/clang/host/linux-x86/clang-r596125
          tar -xzf prebuilts/clang/host/linux-x86/clang-r596125.tar.gz -C prebuilts/clang/host/linux-x86/clang-r596125
