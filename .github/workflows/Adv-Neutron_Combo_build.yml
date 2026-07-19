@@ -469,11 +469,11 @@ jobs:
           set -euo pipefail
 
           mkdir -p kernel/sched
-          curl -sL -o kernel/sched/cpufreq_vorpal.c \ 
+          curl -sL -o kernel/sched/cpufreq_vorpal.c \
             "https://raw.githubusercontent.com/yougotme101/KonekoKernel-GKI/refs/heads/main/.github/actions/build-kernel/patches/vorpal/cpufreq_vorpal.c"
-          curl -sL -o kernel/sched/rfx_gki510_compat.c \ 
+          curl -sL -o kernel/sched/rfx_gki510_compat.c \
             "https://raw.githubusercontent.com/yougotme101/KonekoKernel-GKI/refs/heads/main/.github/actions/build-kernel/patches/vorpal/rfx_gki510_compat.c"
-
+            
           if ! grep -q "cpufreq_vorpal.o" "kernel/sched/Makefile"; then
             echo 'obj-$(CONFIG_CPU_FREQ_GOV_VORPAL) += cpufreq_vorpal.o' >> "kernel/sched/Makefile"
           fi
