@@ -428,7 +428,7 @@ jobs:
           # localversion
           # curl -L -o localversion.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/0001-scripts-do-not-ship-full-auto_localversion.patch" 
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
-
+          
       - name: '⚙️ Inject Reflex Governor'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
@@ -458,10 +458,18 @@ jobs:
             if ! grep -q "CONFIG_CPU_FREQ_GOV_REFLEX" "$CONFIG_FILE"; then
               echo "CONFIG_CPU_FREQ_GOV_REFLEX=y" >> "$CONFIG_FILE"
             fi
-          fi
-          
-          echo "🎉 Inject Reflex Governor setup complete!"
 
+            # Strip any existing default-governor selections so Reflex wins
+            sed -i '/^CONFIG_CPU_FREQ_DEFAULT_GOV_/d' "$CONFIG_FILE"
+            sed -i '/^CONFIG_CPU_FREQ_DEFAULT_GOV_WALT/d' "$CONFIG_FILE"
+            sed -i '/^CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL/d' "$CONFIG_FILE"
+
+            # Force Reflex as the default governor
+            echo "CONFIG_CPU_FREQ_DEFAULT_GOV_REFLEX=y" >> "$CONFIG_FILE"
+          fi
+
+          echo "🎉 Inject Reflex Governor setup complete!"
+          
       - name: 'Inject Vorpal Governor + GKI510 Compat'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
