@@ -472,7 +472,7 @@ jobs:
           ║     Features:                                       ║
           ║     • Full LTO + -O2 Optimization                   ║
           ║     • Extra TCP Congestion                          ║
-          ║     • AOSP clang-r584948b                            ║
+          ║     • AOSP clang-r596125                            ║
           ║     • Droidspaces Support                           ║
           ║     • Baseband-guard v1 Support                     ║
           ║     • Vanilla & ReSukiSU (Multi Manager Support).   ║
