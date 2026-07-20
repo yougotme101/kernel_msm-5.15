@@ -402,8 +402,6 @@ jobs:
           echo "CONFIG_PM_WAKELOCKS=y" >> "$CONFIG_FILE"
           echo "CONFIG_PM_WAKELOCKS_LIMIT=100" >> "$CONFIG_FILE"
           echo "CONFIG_PM_WAKELOCKS_GC=y" >> "$CONFIG_FILE"
-          echo "CONFIG_SUSPEND=y" >> "$CONFIG_FILE"
-          echo "CONFIG_SUSPEND_FREEZER=y" >> "$CONFIG_FILE"
 
           # LZ4 Compression
           #sed -i '/CONFIG_KERNEL_GZIP/d' "$CONFIG_FILE"
