@@ -394,7 +394,6 @@ jobs:
           echo "CONFIG_TCP_CONG_HTCP=n" >> "$CONFIG_FILE"
           echo "CONFIG_TCP_CONG_BBR=y" >> "$CONFIG_FILE"
           echo "CONFIG_DEFAULT_BBR=y" >> "$CONFIG_FILE"
-          echo "CONFIG_TCP_FASTOPEN=y" >> "$CONFIG_FILE"
           echo "CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y" >> "$CONFIG_FILE"
           echo "CONFIG_PM_WAKELOCKS=y" >> "$CONFIG_FILE"
           echo "CONFIG_PM_WAKELOCKS_LIMIT=100" >> "$CONFIG_FILE"
@@ -848,7 +847,8 @@ jobs:
          • Kernel: \`Linux ${{ env.KERNEL_VERSION }}\`
          • Android: \`13-17\`
          • Branch: \`${{ github.event.inputs.kernelBranch }}\`
-         • Device: \`${{ github.event.inputs.kernelDevice }}\`
+         • Defconfig: \`${{ github.event.inputs.kernelDevice }}\`
+         • Device: \`Redmi Note 12/13 4G/NFC, Redmi Pad SE, Redmi 15/Poco M7\`
     
          ⚙️ *Configuration:*
          • LTO: \`${{ github.event.inputs.LtoOptimizations }}\`
@@ -877,7 +877,8 @@ jobs:
          • Kernel: \`Linux ${{ env.KERNEL_VERSION }}\`
          • Android: \`13-17\`
          • Branch: \`${{ github.event.inputs.kernelBranch }}\`
-         • Device: \`Redmi Note 12/13 4G. Pad SE, Redmi 15/Poco M7\`
+         • Defconfig: \`${{ github.event.inputs.kernelDevice }}\`
+         • Device: \`Redmi Note 12/13 4G/NFC, Redmi Pad SE, Redmi 15/Poco M7\`
     
          ⚙️ *Configuration:*
          • LTO: \`${{ github.event.inputs.LtoOptimizations }}\`
