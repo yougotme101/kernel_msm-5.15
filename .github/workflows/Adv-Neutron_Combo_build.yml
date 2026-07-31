@@ -441,7 +441,6 @@ jobs:
           echo "CONFIG_TCP_CONG_HTCP=n" >> "$CONFIG_FILE"
           echo "CONFIG_TCP_CONG_BBR=y" >> "$CONFIG_FILE"
           echo "CONFIG_DEFAULT_BBR=y" >> "$CONFIG_FILE"
-          echo "CONFIG_TCP_FASTOPEN=y" >> "$CONFIG_FILE"
           echo "CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y" >> "$CONFIG_FILE"
           echo "CONFIG_PM_WAKELOCKS=y" >> "$CONFIG_FILE"
           echo "CONFIG_PM_WAKELOCKS_LIMIT=100" >> "$CONFIG_FILE"
