@@ -86,6 +86,7 @@ on:
         default: "android-tools"
         options:
           - "android-tools"
+          - "android-tools2"
           - "custom-tools"
       LtoOptimizations:
         description: "Choose LTO"
@@ -126,7 +127,7 @@ jobs:
           git clone --recursive --branch ${{ github.event.inputs.kernelBranch }} \
             ${{ github.event.inputs.kernelSourceURL }} ${{ env.kernelName }} --depth=1
 
-      - name: "📥 Initialize repo"
+      - name: "📥 Initialize repo & AOSP clang-r584948b"
         if: github.event.inputs.buildToolchains == 'android-tools'
         working-directory: ${{ env.WORK_DIR}}
         run: |
@@ -152,6 +153,50 @@ jobs:
          sed -i \
           -e 's/^BRANCH=.*/BRANCH=android13-5.15/' \
           -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r584948b/' \
+         ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.constants
+    
+         sed -i '/^DEFCONFIG=gki_defconfig/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
+         sed -i '$a\DEFCONFIG=${{ env.DEFCONFIG_NAME }}' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
+         sed -i '/^POST_DEFCONFIG_CMDS="check_defconfig"/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
+
+         sed -i \
+          -e '/^KMI_SYMBOL_LIST_STRICT_MODE=/d' \
+          -e '/^TRIM_NONLISTED_KMI=/d' \
+          -e '/^KMI_ENFORCED=/d' \
+          -e '$a\KMI_SYMBOL_LIST_STRICT_MODE=0' \
+          -e '$a\TRIM_NONLISTED_KMI=0' \
+          -e '$a\KMI_ENFORCED=0' \
+          -e '/^MODULES_ORDER=/d' \
+          -e '/^MODULES_LIST=/d' \
+         ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64
+
+      - name: "📥 Initialize repo & AOSP clang-r596125"
+        if: github.event.inputs.buildToolchains == 'android-tools2'
+        working-directory: ${{ env.WORK_DIR}}
+        run: |
+         repo init -u https://android.googlesource.com/kernel/manifest -b common-android13-5.15-lts --depth=1
+         repo sync --optimized-fetch --prune --no-clone-bundle --no-tags -j$(nproc --all)
+    
+         rm -rf .repo
+         rm -rf common
+
+         # Download updated Clang r596125 from Android Git repository
+         aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r596125.tar.gz "https://github.com/yougotme101/clang/releases/download/v1.0.1/clang-r596125.tar.gz"
+    
+         mkdir -p prebuilts/clang/host/linux-x86/clang-r596125
+         tar -xzf prebuilts/clang/host/linux-x86/clang-r596125.tar.gz -C prebuilts/clang/host/linux-x86/clang-r596125
+         rm -rf prebuilts/clang/host/linux-x86/clang-r596125.tar.gz
+
+         # Clean up old Clang versions
+         rm -rf prebuilts/clang/host/linux-x86/clang-3289846
+         rm -rf prebuilts/clang/host/linux-x86/clang-r450784e
+         rm -rf prebuilts/clang/host/linux-x86/clang-r547379
+         rm -rf prebuilts/clang/host/linux-x86/clang-r584948b
+         rm -rf prebuilts/clang/host/linux-x86/clang-stable
+         
+         sed -i \
+          -e 's/^BRANCH=.*/BRANCH=android13-5.15/' \
+          -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r596125/' \
          ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.constants
     
          sed -i '/^DEFCONFIG=gki_defconfig/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
@@ -792,7 +837,7 @@ jobs:
           sed -i 's/FR_INTR_QUEUED/FR_INTERRUPTED/g' fs/fuse/dev.c
           
       - name: "🔨 Build kernel"
-        if: github.event.inputs.buildToolchains == 'android-tools'
+        if: github.event.inputs.buildToolchains == 'android-tools' && github.event.inputs.buildToolchains == 'android-tools2'
         working-directory: ${{ env.WORK_DIR }}
         run: |
           if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
