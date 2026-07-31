@@ -836,7 +836,7 @@ jobs:
           sed -i 's/FR_INTR_QUEUED/FR_INTERRUPTED/g' fs/fuse/dev.c
           
       - name: "🔨 Build kernel"
-        if: github.event.inputs.buildToolchains == 'android-tools' && github.event.inputs.buildToolchains == 'android-tools2'
+        if: github.event.inputs.buildToolchains == 'android-tools'
         working-directory: ${{ env.WORK_DIR }}
         run: |
           if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
