@@ -836,7 +836,7 @@ jobs:
           sed -i 's/FR_INTR_QUEUED/FR_INTERRUPTED/g' fs/fuse/dev.c
           
       - name: "🔨 Build kernel"
-        if: github.event.inputs.buildToolchains == 'android-tools'
+        if: github.event.inputs.buildToolchains == 'android-tools' && github.event.inputs.buildToolchains == 'android-tools2'
         working-directory: ${{ env.WORK_DIR }}
         run: |
           if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
@@ -845,16 +845,6 @@ jobs:
            LTO=full BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
           fi
 
-      - name: "🔨 Build kernel"
-        if: github.event.inputs.buildToolchains == 'android-tools2'
-        working-directory: ${{ env.WORK_DIR }}
-        run: |
-          if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
-           LTO=thin BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
-          else
-           LTO=full BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
-          fi
-          
       - name: "👍 Make defconfig"
         if: github.event.inputs.buildToolchains == 'custom-tools'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
@@ -883,7 +873,7 @@ jobs:
         run: |
          mkdir -p out/dist
 
-         if [ "${{ github.event.inputs.buildToolchains }}" = "android-tools" ]; then
+         if [ "${{ github.event.inputs.buildToolchains }}" = "android-tools" && "android-tools2" ]; then
           src="out/dist/Image"
          else
           src="${{ env.kernelDir }}/${{ env.kernelName }}/out/arch/arm64/boot/Image"
