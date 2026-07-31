@@ -835,8 +835,8 @@ jobs:
           # 2. Fix usage of the nonexistent flag FR_INTR_QUEUED, replacing it with the suggested FR_INTERRUPTED
           sed -i 's/FR_INTR_QUEUED/FR_INTERRUPTED/g' fs/fuse/dev.c
           
-      - name: "🔨 Build kernel"
-        if: github.event.inputs.buildToolchains == 'android-tools' && github.event.inputs.buildToolchains == 'android-tools2'
+      - name: "🔨 Build kernel with clang-r584948b"
+        if: github.event.inputs.buildToolchains == 'android-tools'
         working-directory: ${{ env.WORK_DIR }}
         run: |
           if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
@@ -845,7 +845,17 @@ jobs:
            LTO=full BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
           fi
 
-      - name: "👍 Make defconfig"
+      - name: "🔨 Build kernel with clang-r596125"
+        if: github.event.inputs.buildToolchains == 'android-tools2'
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
+           LTO=thin BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
+          else
+           LTO=full BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
+          fi
+
+      - name: "👍 Make defconfig for custom clang"
         if: github.event.inputs.buildToolchains == 'custom-tools'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         env:
@@ -853,7 +863,7 @@ jobs:
         run: |
           make ${{ env.args }} ${{ env.DEFCONFIG_NAME }}
 
-      - name: "🎶 Build kernel"
+      - name: "🎶 Build kernel with custom clang"
         if: github.event.inputs.buildToolchains == 'custom-tools'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         env:
@@ -868,7 +878,7 @@ jobs:
             STRIP=llvm-strip \
             -j$(nproc --all)
 
-      - name: 📦 Prepare artifact
+      - name: "📦 Prepare artifact"
         working-directory: ${{ env.WORK_DIR }}
         run: |
          mkdir -p out/dist
