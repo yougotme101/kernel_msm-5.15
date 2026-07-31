@@ -2913,9 +2913,8 @@ static void stmmac_dma_interrupt(struct stmmac_priv *priv)
 	u32 tx_channel_count = priv->plat->tx_queues_to_use;
 	u32 rx_channel_count = priv->plat->rx_queues_to_use;
 	u32 channels_to_check = tx_channel_count > rx_channel_count ?
-					tx_channel_count :
-					rx_channel_count;
-	u32 chan;
+				tx_channel_count : rx_channel_count;
+	int chan;
 	int status[MAX_T(u32, MTL_MAX_TX_QUEUES, MTL_MAX_RX_QUEUES)];
 
 	/* Make sure we never check beyond our status buffer. */
@@ -7894,7 +7893,13 @@ int stmmac_resume(struct device *dev)
 		return ret;
 	}
 
-	stmmac_init_coalesce(priv);
+	if (!priv->tx_coal_timer_disable) {
+		stmmac_init_coalesce(priv);
+	} else {
+		for (chan = 0; chan < rx_channel_count; chan++)
+			priv->rx_coal_frames[chan] = STMMAC_RX_FRAMES;
+	}
+
 	stmmac_set_rx_mode(ndev);
 
 	stmmac_restore_hw_vlan_rx_fltr(priv, ndev, priv->hw);
