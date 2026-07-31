@@ -873,7 +873,13 @@ jobs:
         run: |
          mkdir -p out/dist
 
-         if [ "${{ github.event.inputs.buildToolchains }}" = "android-tools" && "android-tools2" ]; then
+         if [ "${{ github.event.inputs.buildToolchains }}" = "android-tools" ]; then
+          src="out/dist/Image"
+         else
+          src="${{ env.kernelDir }}/${{ env.kernelName }}/out/arch/arm64/boot/Image"
+         fi
+
+         if [ "${{ github.event.inputs.buildToolchains }}" = "android-tools2" ]; then
           src="out/dist/Image"
          else
           src="${{ env.kernelDir }}/${{ env.kernelName }}/out/arch/arm64/boot/Image"
