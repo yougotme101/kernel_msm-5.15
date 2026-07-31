@@ -844,6 +844,16 @@ jobs:
           else
            LTO=full BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
           fi
+
+      - name: "🔨 Build kernel"
+        if: github.event.inputs.buildToolchains == 'android-tools2'
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
+           LTO=thin BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
+          else
+           LTO=full BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
+          fi
           
       - name: "👍 Make defconfig"
         if: github.event.inputs.buildToolchains == 'custom-tools'
