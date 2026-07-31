@@ -176,8 +176,8 @@ int mhi_init_irq_setup(struct mhi_controller *mhi_cntrl)
 				   irq_flags,
 				   "bhi", mhi_cntrl);
 	if (ret) {
-		MHI_ERR(dev, "error requesting to irq:%d, ret=%d\n",
-			mhi_cntrl->irq[0], ret);
+		dev_err(mhi_cntrl->cntrl_dev, "error requesting to irq:%d, ret=%d\n",
+		        mhi_cntrl->irq[0], ret);
 		return ret;
 	}
 
