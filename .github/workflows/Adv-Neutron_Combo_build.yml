@@ -938,13 +938,19 @@ jobs:
         run: |
          mkdir -p out/dist
 
-         if [ "${{ github.event.inputs.buildToolchains }}" = "android-tools" ]; then
+         if [ "${{ github.event.inputs.buildToolchains }}" = "clang-584948b" ]; then
           src="out/dist/Image"
          else
           src="${{ env.kernelDir }}/${{ env.kernelName }}/out/arch/arm64/boot/Image"
          fi
 
-         if [ "${{ github.event.inputs.buildToolchains }}" = "android-tools2" ]; then
+         if [ "${{ github.event.inputs.buildToolchains }}" = "clang-596125" ]; then
+          src="out/dist/Image"
+         else
+          src="${{ env.kernelDir }}/${{ env.kernelName }}/out/arch/arm64/boot/Image"
+         fi
+
+         if [ "${{ github.event.inputs.buildToolchains }}" = "clang-614650" ]; then
           src="out/dist/Image"
          else
           src="${{ env.kernelDir }}/${{ env.kernelName }}/out/arch/arm64/boot/Image"
