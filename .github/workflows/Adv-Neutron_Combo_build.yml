@@ -880,7 +880,7 @@ jobs:
           sed -i 's/FR_INTR_QUEUED/FR_INTERRUPTED/g' fs/fuse/dev.c
           
       - name: "🔨 Build kernel with clang-r584948b"
-        if: github.event.inputs.buildToolchains == 'clang-584948b'
+        if: github.event.inputs.buildToolchains == 'clang-r584948b'
         working-directory: ${{ env.WORK_DIR }}
         run: |
           if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
@@ -949,7 +949,7 @@ jobs:
           src="${{ env.kernelDir }}/${{ env.kernelName }}/out/arch/arm64/boot/Image"
          fi
 
-         if [ "${{ github.event.inputs.buildToolchains }}" = "clang-r614650" ]; then
+         if [ "${{ github.event.inputs.buildToolchains }}" = "clang-r614150" ]; then
           src="out/dist/Image"
          else
           src="${{ env.kernelDir }}/${{ env.kernelName }}/out/arch/arm64/boot/Image"
