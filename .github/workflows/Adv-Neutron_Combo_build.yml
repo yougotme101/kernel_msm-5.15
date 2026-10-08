@@ -225,11 +225,12 @@ jobs:
          rm -rf .repo
          rm -rf common
 
-         # Replace the synced Clang prebuilts
-         rm -rf prebuilts/clang/host/linux-x86
-         git clone --depth=1 --branch main-kernel \
-           https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 \
-           prebuilts/clang/host/linux-x86
+         # Download updated Clang r614150 from Android Git repository
+         aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r614150.tar.gz "https://github.com/yougotme101/clang/releases/download/v1.0.2/clang-r614150.tar.gz"
+    
+         mkdir -p prebuilts/clang/host/linux-x86/clang-r614150
+         tar -xzf prebuilts/clang/host/linux-x86/clang-r614150.tar.gz -C prebuilts/clang/host/linux-x86/clang-r614150
+         rm -rf prebuilts/clang/host/linux-x86/clang-r614250.tar.gz
 
          # Remove any other Clang versions that might have been synced
          rm -rf prebuilts/clang/host/linux-x86/clang-3289846 \
