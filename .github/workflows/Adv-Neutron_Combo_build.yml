@@ -87,7 +87,7 @@ on:
         options:
           - "clang-r584948b"
           - "clang-r596125"
-          - "clang-r614650"
+          - "clang-r614150"
           - "custom-tools"
       LtoOptimizations:
         description: "Choose LTO"
@@ -215,8 +215,8 @@ jobs:
           -e '/^MODULES_LIST=/d' \
          ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64
 
-      - name: "📥 Initialize repo & AOSP clang-r614650"
-        if: github.event.inputs.buildToolchains == 'clang-r614650'
+      - name: "📥 Initialize repo & AOSP clang-r614150"
+        if: github.event.inputs.buildToolchains == 'clang-r614150'
         working-directory: ${{ env.WORK_DIR}}
         run: |
          repo init -u https://android.googlesource.com/kernel/manifest -b common-android13-5.15-lts --depth=1
@@ -240,7 +240,7 @@ jobs:
 
          sed -i \
           -e 's/^BRANCH=.*/BRANCH=android13-5.15/' \
-          -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r614650/' \
+          -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r614150/' \
          ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.constants
     
          sed -i '/^DEFCONFIG=gki_defconfig/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
@@ -899,8 +899,8 @@ jobs:
            LTO=full BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
           fi
 
-      - name: "🔨 Build kernel with clang-r614650"
-        if: github.event.inputs.buildToolchains == 'clang-r614650'
+      - name: "🔨 Build kernel with clang-r614150"
+        if: github.event.inputs.buildToolchains == 'clang-r614150'
         working-directory: ${{ env.WORK_DIR }}
         run: |
           if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
