@@ -236,7 +236,6 @@ jobs:
            prebuilts/clang/host/linux-x86/clang-r547379 \
            prebuilts/clang/host/linux-x86/clang-r584948 \
            prebuilts/clang/host/linux-x86/clang-r596125 \
-           prebuilts/clang/host/linux-x86/claang-r596125 \
            prebuilts/clang/host/linux-x86/clang-stable
 
          sed -i \
@@ -258,7 +257,7 @@ jobs:
           -e '/^MODULES_ORDER=/d' \
           -e '/^MODULES_LIST=/d' \
          ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64
-     
+         
       - name: "💫 Get Toolchains"
         if: github.event.inputs.buildToolchains == 'custom-tools'
         run: |
