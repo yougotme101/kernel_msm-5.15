@@ -85,8 +85,9 @@ on:
         type: choice
         default: "android-tools"
         options:
-          - "android-tools"
-          - "android-tools2"
+          - "clang-r584948b"
+          - "clang-r596125"
+          - "clang-614650"
           - "custom-tools"
       LtoOptimizations:
         description: "Choose LTO"
@@ -128,7 +129,7 @@ jobs:
             ${{ github.event.inputs.kernelSourceURL }} ${{ env.kernelName }} --depth=1
 
       - name: "📥 Initialize repo & AOSP clang-r584948b"
-        if: github.event.inputs.buildToolchains == 'android-tools'
+        if: github.event.inputs.buildToolchains == 'clang-r5894948b'
         working-directory: ${{ env.WORK_DIR}}
         run: |
          repo init -u https://android.googlesource.com/kernel/manifest -b common-android13-5.15-lts --depth=1
@@ -171,7 +172,7 @@ jobs:
          ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64
 
       - name: "📥 Initialize repo & AOSP clang-r596125"
-        if: github.event.inputs.buildToolchains == 'android-tools2'
+        if: github.event.inputs.buildToolchains == 'clang-r596125'
         working-directory: ${{ env.WORK_DIR}}
         run: |
          repo init -u https://android.googlesource.com/kernel/manifest -b common-android13-5.15-lts --depth=1
@@ -197,6 +198,50 @@ jobs:
          sed -i \
           -e 's/^BRANCH=.*/BRANCH=android13-5.15/' \
           -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r596125/' \
+         ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.constants
+    
+         sed -i '/^DEFCONFIG=gki_defconfig/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
+         sed -i '$a\DEFCONFIG=${{ env.DEFCONFIG_NAME }}' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
+         sed -i '/^POST_DEFCONFIG_CMDS="check_defconfig"/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
+
+         sed -i \
+          -e '/^KMI_SYMBOL_LIST_STRICT_MODE=/d' \
+          -e '/^TRIM_NONLISTED_KMI=/d' \
+          -e '/^KMI_ENFORCED=/d' \
+          -e '$a\KMI_SYMBOL_LIST_STRICT_MODE=0' \
+          -e '$a\TRIM_NONLISTED_KMI=0' \
+          -e '$a\KMI_ENFORCED=0' \
+          -e '/^MODULES_ORDER=/d' \
+          -e '/^MODULES_LIST=/d' \
+         ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64
+
+      - name: "📥 Initialize repo & AOSP clang-r614650"
+        if: github.event.inputs.buildToolchains == 'clang-r614650'
+        working-directory: ${{ env.WORK_DIR}}
+        run: |
+         repo init -u https://android.googlesource.com/kernel/manifest -b common-android13-5.15-lts --depth=1
+         repo sync --optimized-fetch --prune --no-clone-bundle --no-tags -j$(nproc --all)
+    
+         rm -rf .repo
+         rm -rf common
+
+         # Replace the synced Clang prebuilts
+         rm -rf prebuilts/clang/host/linux-x86
+         git clone --depth=1 --branch main-kernel \
+           https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 \
+           prebuilts/clang/host/linux-x86
+
+         # Remove any other Clang versions that might have been synced
+         rm -rf prebuilts/clang/host/linux-x86/clang-3289846 \
+           prebuilts/clang/host/linux-x86/clang-r547379 \
+           prebuilts/clang/host/linux-x86/clang-r584948 \
+           prebuilts/clang/host/linux-x86/clang-r596125 \
+           prebuilts/clang/host/linux-x86/claang-r596125 \
+           prebuilts/clang/host/linux-x86/clang-stable
+
+         sed -i \
+          -e 's/^BRANCH=.*/BRANCH=android13-5.15/' \
+          -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r614650/' \
          ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.constants
     
          sed -i '/^DEFCONFIG=gki_defconfig/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
@@ -836,7 +881,7 @@ jobs:
           sed -i 's/FR_INTR_QUEUED/FR_INTERRUPTED/g' fs/fuse/dev.c
           
       - name: "🔨 Build kernel with clang-r584948b"
-        if: github.event.inputs.buildToolchains == 'android-tools'
+        if: github.event.inputs.buildToolchains == 'clang-584948b'
         working-directory: ${{ env.WORK_DIR }}
         run: |
           if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
@@ -846,7 +891,17 @@ jobs:
           fi
 
       - name: "🔨 Build kernel with clang-r596125"
-        if: github.event.inputs.buildToolchains == 'android-tools2'
+        if: github.event.inputs.buildToolchains == 'clang-r596125'
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
+           LTO=thin BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
+          else
+           LTO=full BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
+          fi
+
+      - name: "🔨 Build kernel with clang-r614650"
+        if: github.event.inputs.buildToolchains == 'clang-r614650'
         working-directory: ${{ env.WORK_DIR }}
         run: |
           if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
