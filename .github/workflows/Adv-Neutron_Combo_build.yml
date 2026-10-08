@@ -87,7 +87,7 @@ on:
         options:
           - "clang-r584948b"
           - "clang-r596125"
-          - "clang-614650"
+          - "clang-r614650"
           - "custom-tools"
       LtoOptimizations:
         description: "Choose LTO"
@@ -938,19 +938,19 @@ jobs:
         run: |
          mkdir -p out/dist
 
-         if [ "${{ github.event.inputs.buildToolchains }}" = "clang-584948b" ]; then
+         if [ "${{ github.event.inputs.buildToolchains }}" = "clang-r584948b" ]; then
           src="out/dist/Image"
          else
           src="${{ env.kernelDir }}/${{ env.kernelName }}/out/arch/arm64/boot/Image"
          fi
 
-         if [ "${{ github.event.inputs.buildToolchains }}" = "clang-596125" ]; then
+         if [ "${{ github.event.inputs.buildToolchains }}" = "clang-r596125" ]; then
           src="out/dist/Image"
          else
           src="${{ env.kernelDir }}/${{ env.kernelName }}/out/arch/arm64/boot/Image"
          fi
 
-         if [ "${{ github.event.inputs.buildToolchains }}" = "clang-614650" ]; then
+         if [ "${{ github.event.inputs.buildToolchains }}" = "clang-r614650" ]; then
           src="out/dist/Image"
          else
           src="${{ env.kernelDir }}/${{ env.kernelName }}/out/arch/arm64/boot/Image"
