@@ -376,7 +376,7 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
 
           echo "📦 Installing KSU..."
-          curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash -s main
+          curl -LSs "https://raw.githubusercontent.com/Baka-SU/BakaSU/main/kernel/setup.sh" | bash -s main
           
           echo "✔ KSU installed successfully"
           
@@ -574,10 +574,10 @@ jobs:
           ║     Features:                                       ║
           ║     • Full LTO + -O2 Optimization                   ║
           ║     • Extra TCP Congestion                          ║
-          ║     • AOSP clang-r596125                            ║
+          ║     • AOSP clang-r614150                            ║
           ║     • Droidspaces Support                           ║
           ║     • Baseband-guard v1 Support                     ║
-          ║     • Vanilla & ReSukiSU (Multi Manager Support).   ║
+          ║     • Vanilla & BakaSU (Multi Manager Support).     ║
           ║     • Integrated with SUSFS (GKI A13-5.15)          ║
           ║     • Metamodule (Magic-Mount or Mountify) Support  ║
           ║                                                     ║
@@ -618,7 +618,7 @@ jobs:
           • Kernel: \`Linux 5.15\`
           • Android: \`13-17\`
           • Base: \`GKI & CLO\`
-          • KSU: \`ReSukiSU\`
+          • KSU: \`BakaSU\`
           • SUSFS: \`Enabled (GKI A13-5.15)\`
           • LTO: \`Full\`
           • Optimization: \`-O2\`
@@ -636,7 +636,7 @@ jobs:
           • MKSU
           • Rissu-KSU
           • KowSU
-          • ReSukiSU (Main Root Manager)
+          • BakaSU (Main Root Manager)
           • SukiSU-Ultra
 
           🕐 *Build Date:* $(date '+%Y-%m-%d %H:%M:%S UTC')
@@ -659,7 +659,7 @@ jobs:
           • Kernel: \`Linux 5.15\`
           • Android: \`13-17\`
           • Base: \`GKI & CLO\`
-          • KSU: \`ReSukiSU\`
+          • KSU: \`BakaSU\`
           • SUSFS: \`Enabled (GKI A13-5.15)\`
           • LTO: \`Full\`
           • Optimization: \`-O2\`
