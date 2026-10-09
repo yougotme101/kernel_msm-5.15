@@ -711,8 +711,8 @@ jobs:
           
           echo "🎉 SukiSU setup complete!"
 
-      - name: "🔧 Setup ReSukiSU"
-        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'ReSukiSU'
+      - name: "🔧 Setup BakaSU"
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'BakaSU'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           rm -rf ./KernelSU ./drivers/kernelsu
