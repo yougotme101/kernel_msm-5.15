@@ -39,6 +39,7 @@
 #include <linux/compat.h>
 #include <linux/rculist.h>
 #include <net/busy_poll.h>
+#include <linux/refcount.h>
 
 /*
  * LOCKING:
@@ -222,6 +223,8 @@ struct eventpoll {
 
 	/* used to defer freeing past ep_get_upwards_depth_proc() RCU walk */
 	struct rcu_head rcu;
+
+    refcount_t refcount;
 
 #ifdef CONFIG_NET_RX_BUSY_POLL
 	/* used to track busy poll napi_id */
