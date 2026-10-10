@@ -69,6 +69,15 @@ on:
           - "600Hz"
           - "750Hz"
           - "1000Hz"
+      extraGovernor:
+        description: "Add Extra Governor Options"
+        required: false
+        type: choice
+        default: "none"
+        options:
+          - "reflex"
+          - "reflex + vorpal"
+          - "none"
       optimizationLevel:
         description: "Compiler optimization level"
         required: true
@@ -519,6 +528,7 @@ jobs:
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
           
       - name: '⚙️ Inject Reflex Governor'
+        if: github.event.inputs.extraGovernor == 'reflex'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -559,7 +569,8 @@ jobs:
 
           echo "🎉 Inject Reflex Governor setup complete!"
           
-      - name: 'Inject Vorpal Governor + GKI510 Compat'
+      - name: '⚙️ Inject Vorpal Governor + GKI510 Compat'
+        if: github.event.inputs.extraGovernor == 'reflex + vorpal'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -594,7 +605,7 @@ jobs:
             echo "CONFIG_CPU_FREQ_GOV_VORPAL=y" >> "$CONFIG_FILE"
           fi
 
-      - name: 'Fix Vorpal Input-Handler Init Bug'
+      - name: '⚙️ Fix Vorpal Input-Handler Init Bug'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -626,7 +637,8 @@ jobs:
             exit 1
           fi
 
-      - name: 'Inject Vorpal Gaming-Mode Bias into fair.c'
+      - name: '⚙️ Inject Vorpal Gaming-Mode Bias into fair.c'
+        if: github.event.inputs.extraGovernor == 'reflex + vorpal'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
