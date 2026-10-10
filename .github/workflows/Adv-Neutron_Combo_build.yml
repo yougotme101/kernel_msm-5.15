@@ -56,7 +56,7 @@ on:
           - "Enabled"
           - "Disabled"
       NoMountSupport:
-        description: "Implement NoMount integration via kernel-side"
+        description: "Implement NoMount integration via kernel-side(if KSU Enabled)"
         required: false
         type: choice
         default: "no"
@@ -752,7 +752,7 @@ jobs:
           CONFIG_KSU=y
           EOF
           
-          echo "🎉 ReSukiSU setup complete!"
+          echo "🎉 BakaSU setup complete!"
 
       - name: "🔧 Setup KSU-Next(pershoot) + Multi Manager with SUSFS"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'KSU-Next'
@@ -778,7 +778,7 @@ jobs:
           
           echo "🎉 KSU-Next(pershoot) setup complete!"
           
-      - name: "🚀 Inject SUSFS Integration"
+      - name: "🚀 Inject SUSFS Integration("
         if: matrix.variant == 'ksu' && github.event.inputs.susfsSupport == 'Enabled'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
