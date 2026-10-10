@@ -55,6 +55,14 @@ on:
         options:
           - "Enabled"
           - "Disabled"
+      NoMountSupport:
+        description: "Implement NoMount integration via kernel-side"
+        required: false
+        type: choice
+        default: "no"
+        options:
+          - "yes"
+          - "no"
       tickRate:
         description: "Kernel tick rate (Hz)"
         required: true
@@ -690,6 +698,12 @@ jobs:
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' security/Kconfig
 
           echo "🎉 BBG setup complete!"
+
+      - name: "🔧 Add NoMount Support"
+        if: github.event.inputs.NoMountSupport == 'yes'
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/maxsteeel/nomount/refs/heads/dev/kernel/setup.sh" | bash -
           
       - name: "🔧 Setup KowSU"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'KowSU'
