@@ -41,9 +41,9 @@ on:
         description: "KSU implementation (if KSU enabled)"
         required: true
         type: choice
-        default: "ReSukiSU"
+        default: "KSU-Next"
         options:
-          - "ReSukiSU"
+          - "BakaSU"
           - "KSU-Next"
       susfsSupport:
         description: "Add SUSFS Implementation (if KSU Enabled)"
@@ -53,6 +53,14 @@ on:
         options:
           - "Enabled"
           - "Disabled"
+      NoMountSupport:
+        description: "Implement NoMount integration via kernel-side"
+        required: false
+        type: choice
+        default: "no"
+        options:
+          - "yes"
+          - "no"
       tickRate:
         description: "Kernel tick rate (Hz)"
         required: true
@@ -67,6 +75,15 @@ on:
           - "600Hz"
           - "750Hz"
           - "1000Hz"
+      extraGovernor:
+        description: "Add Extra Governor Options"
+        required: false
+        type: choice
+        default: "none"
+        options:
+          - "reflex"
+          - "reflex + vorpal"
+          - "none"
       optimizationLevel:
         description: "Compiler optimization level"
         required: true
@@ -124,7 +141,7 @@ jobs:
           git clone --recursive --branch ${{ github.event.inputs.kernelBranch }} \
             ${{ github.event.inputs.kernelSourceURL }} ${{ env.kernelName }} --depth=1
 
-      - name: "📥 Initialize repo"
+      - name: "📥 Initialize repo & AOSP clang-r614150"
         if: github.event.inputs.buildToolchains == 'android-tools'
         working-directory: ${{ env.WORK_DIR}}
         run: |
@@ -134,22 +151,23 @@ jobs:
          rm -rf .repo
          rm -rf common
 
-         # Download updated Clang r584948 from Android Git repository
-         aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r584948b.tar.gz "https://github.com/topnotchfreaks/clang/releases/download/v1.0.0/clang-r584948b.tar.gz"
+         # Download updated Clang r614150 from Android Git repository
+         aria2c -x 16 -s 16 -o prebuilts/clang/host/linux-x86/clang-r614150.tar.gz "https://github.com/yougotme101/clang/releases/download/v1.0.2/clang-r614150.tar.gz"
     
-         mkdir -p prebuilts/clang/host/linux-x86/clang-r584948b
-         tar -xzf prebuilts/clang/host/linux-x86/clang-r584948b.tar.gz -C prebuilts/clang/host/linux-x86/clang-r584948b
-         rm -rf prebuilts/clang/host/linux-x86/clang-r584948b.tar.gz
+         mkdir -p prebuilts/clang/host/linux-x86/clang-r614150
+         tar -xzf prebuilts/clang/host/linux-x86/clang-r614150.tar.gz -C prebuilts/clang/host/linux-x86/clang-r614150
+         rm -rf prebuilts/clang/host/linux-x86/clang-r614250.tar.gz
 
-         # Clean up old Clang versions
-         rm -rf prebuilts/clang/host/linux-x86/clang-3289846
-         rm -rf prebuilts/clang/host/linux-x86/clang-r450784e
-         rm -rf prebuilts/clang/host/linux-x86/clang-r547379
-         rm -rf prebuilts/clang/host/linux-x86/clang-stable
-         
+         # Remove any other Clang versions that might have been synced
+         rm -rf prebuilts/clang/host/linux-x86/clang-3289846 \
+           prebuilts/clang/host/linux-x86/clang-r547379 \
+           prebuilts/clang/host/linux-x86/clang-r584948 \
+           prebuilts/clang/host/linux-x86/clang-r596125 \
+           prebuilts/clang/host/linux-x86/clang-stable
+
          sed -i \
           -e 's/^BRANCH=.*/BRANCH=android13-5.15/' \
-          -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r584948b/' \
+          -e 's/^CLANG_VERSION=.*/CLANG_VERSION=r614150/' \
          ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.constants
     
          sed -i '/^DEFCONFIG=gki_defconfig/d' ${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki
@@ -431,6 +449,7 @@ jobs:
           #patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
 
       - name: '⚙️ Inject Reflex Governor'
+        if: github.event.inputs.extraGovernor == 'reflex'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -462,14 +481,17 @@ jobs:
 
             # Strip any existing default-governor selections so Reflex wins
             sed -i '/^CONFIG_CPU_FREQ_DEFAULT_GOV_/d' "$CONFIG_FILE"
+            sed -i '/^CONFIG_CPU_FREQ_DEFAULT_GOV_WALT/d' "$CONFIG_FILE"
+            sed -i '/^CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL/d' "$CONFIG_FILE"
 
             # Force Reflex as the default governor
             echo "CONFIG_CPU_FREQ_DEFAULT_GOV_REFLEX=y" >> "$CONFIG_FILE"
           fi
 
           echo "🎉 Inject Reflex Governor setup complete!"
-
-      - name: 'Inject Vorpal Governor + GKI510 Compat'
+          
+      - name: '⚙️ Inject Vorpal Governor + GKI510 Compat'
+        if: github.event.inputs.extraGovernor == 'reflex + vorpal'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -504,7 +526,8 @@ jobs:
             echo "CONFIG_CPU_FREQ_GOV_VORPAL=y" >> "$CONFIG_FILE"
           fi
 
-      - name: 'Fix Vorpal Input-Handler Init Bug'
+      - name: '⚙️ Fix Vorpal Input-Handler Init Bug'
+        if: github.event.inputs.extraGovernor == 'reflex + vorpal'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -536,7 +559,8 @@ jobs:
             exit 1
           fi
 
-      - name: 'Inject Vorpal Gaming-Mode Bias into fair.c'
+      - name: '⚙️ Inject Vorpal Gaming-Mode Bias into fair.c'
+        if: github.event.inputs.extraGovernor == 'reflex + vorpal'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
@@ -588,21 +612,27 @@ jobs:
 
           echo "🎉 BBG setup complete!"
 
-      - name: "🔧 Setup ReSukiSU"
-        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'ReSukiSU'
+      - name: "🔧 Add NoMount Support"
+        if: github.event.inputs.NoMountSupport == 'yes'
+        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/maxsteeel/nomount/refs/heads/dev/kernel/setup.sh" | bash -
+
+      - name: "🔧 Setup BakaSU"
+        if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'BakaSU'
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
           rm -rf ./KernelSU ./drivers/kernelsu
 
-          echo "📦 Installing ReSukiSU..."
-          curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
-          echo "✔ ReSukiSU installed"
-
+          echo "📦 Installing BakaSU..."
+          curl -LSs "https://raw.githubusercontent.com/Baka-SU/BakaSU/main/kernel/setup.sh" | bash
+          
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_KSU=y
           EOF
-          echo "🎉 ReSukiSU setup complete!"
+          
+          echo "🎉 BakaSU setup complete!"
       
       - name: "🔧 Setup KSU-Next(pershoot) + Multi Manager with SUSFS"
         if: matrix.variant == 'ksu' && github.event.inputs.ksuVariant == 'KSU-Next'
