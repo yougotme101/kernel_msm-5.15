@@ -292,10 +292,10 @@ jobs:
           echo "⚙️ Using Clang version:"
           "$CLANG_PATH/clang" --version
           
-      - name: 📐 Setup SWAP 20GB
+      - name: 📐 Setup SWAP 24GB
         uses: pierotofy/set-swap-space@master
         with:
-            swap-size-gb: 20
+            swap-size-gb: 24
             
       - name: 📐 Tune Swap
         run: |
