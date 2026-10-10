@@ -146,7 +146,7 @@ jobs:
             ${{ github.event.inputs.kernelSourceURL }} ${{ env.kernelName }} --depth=1
 
       - name: "📥 Initialize repo & AOSP clang-r584948b"
-        if: github.event.inputs.buildToolchains == 'clang-r5894948b'
+        if: github.event.inputs.buildToolchains == 'clang-r584948b'
         working-directory: ${{ env.WORK_DIR}}
         run: |
          repo init -u https://android.googlesource.com/kernel/manifest -b common-android13-5.15-lts --depth=1
