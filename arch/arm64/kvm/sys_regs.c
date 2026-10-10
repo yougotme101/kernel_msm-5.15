@@ -2791,7 +2791,6 @@ void kvm_sys_reg_table_init(void)
 {
 	unsigned int i;
 	struct sys_reg_desc clidr;
-	u64 clidr_val = 0;  // Initialize the variable
 
 	/* Make sure tables are unique and in order. */
 	BUG_ON(check_sysreg_table(sys_reg_descs, ARRAY_SIZE(sys_reg_descs), false));
@@ -2815,7 +2814,7 @@ void kvm_sys_reg_table_init(void)
 	 *   value of 0b000, the values of Ctype4 to Ctype7 must be
 	 *   ignored.
 	 */
-    get_clidr_el1(NULL, &clidr); /* Ugly... */
+	get_clidr_el1(NULL, &clidr); /* Ugly... */
 	cache_levels = clidr.val;
 	for (i = 0; i < 7; i++)
 		if (((cache_levels >> (i*3)) & 7) == 0)
