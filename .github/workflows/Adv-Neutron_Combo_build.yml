@@ -914,7 +914,6 @@ jobs:
           if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
            LTO=thin BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
           else
-          if [ "${{ github.event.inputs.LtoOptimizations }}" = "full" ]; then
            LTO=full BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
           fi
 
@@ -925,7 +924,6 @@ jobs:
           if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
            LTO=thin BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
           else
-          if [ "${{ github.event.inputs.LtoOptimizations }}" = "full" ]; then
            LTO=full BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
           fi
 
@@ -936,7 +934,6 @@ jobs:
           if [ "${{ github.event.inputs.LtoOptimizations }}" = "thin" ]; then
            LTO=thin BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
           else
-          if [ "${{ github.event.inputs.LtoOptimizations }}" = "full" ]; then
            LTO=full BUILD_CONFIG=${{ env.kernelDir }}/${{ env.kernelName }}/build.config.gki.aarch64 build/build.sh -j$(nproc --all)
           fi
 
