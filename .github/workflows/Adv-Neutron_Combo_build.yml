@@ -83,7 +83,6 @@ on:
         type: choice
         default: "none"
         options:
-          - "reflex"
           - "reflex + vorpal"
           - "none"
       optimizationLevel:
@@ -490,7 +489,7 @@ jobs:
           # patch -p1 < localversion.patch || echo "Warning: Strings patch failed"
           
       - name: '⚙️ Inject Reflex Governor'
-        if: github.event.inputs.extraGovernor == 'reflex' && github.event.inputs.extraGovernor == 'reflex + vorpal'
+        if: github.event.inputs.extraGovernor == 'reflex + vorpal'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
