@@ -606,6 +606,7 @@ jobs:
           fi
 
       - name: '⚙️ Fix Vorpal Input-Handler Init Bug'
+        if: github.event.inputs.extraGovernor == 'reflex + vorpal'
         shell: bash
         working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
         run: |
