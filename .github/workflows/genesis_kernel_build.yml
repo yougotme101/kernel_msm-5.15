@@ -27,7 +27,7 @@ on:
         description: "Custom localversion name (e.g., -mybuild)"
         required: false
         type: string
-        default: "Genesis"
+        default: "-Genesis"
       buildKSU:
         description: "Build KSU variant?"
         required: true
@@ -54,7 +54,7 @@ on:
         description: "Add SUSFS Implementation (if KSU Enabled)"
         required: true
         type: choice
-        default: "Disables"
+        default: "Disabled"
         options:
           - "Enabled"
           - "Disabled"
@@ -94,7 +94,7 @@ on:
         description: "Add Extra Governor Options"
         required: false
         type: choice
-        default: "none"
+        default: "reflex + vorpal"
         options:
           - "reflex + vorpal"
           - "none"
