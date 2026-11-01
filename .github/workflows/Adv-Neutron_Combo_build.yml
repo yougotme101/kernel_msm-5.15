@@ -23,11 +23,6 @@ on:
         required: true
         type: string
         default: "kaze"
-      kernelSpoofVersion:
-        description: "Spoof kernel version (format: X.Y.Z)"
-        required: false
-        type: string
-        default: ""
       localVersion:
         description: "Custom localversion name (e.g., -mybuild)"
         required: false
@@ -159,38 +154,6 @@ jobs:
         run: |
           git clone --recursive --branch ${{ github.event.inputs.kernelBranch }} \
             ${{ github.event.inputs.kernelSourceURL }} ${{ env.kernelName }} --depth=1
-
-      - name: "👀 Safe Kernel Version Spoof"
-        working-directory: ./${{ env.kernelDir }}/${{ env.kernelName }}
-        run: |
-          echo "🔧 Starting dynamic kernel version spoof..."
-          
-          SPOOF_VERSION="${{ github.event.inputs.kernelSpoofVersion }}"
-          LOCAL_VERSION="${{ github.event.inputs.localVersion }}"
-          FULL_VERSION="${SPOOF_VERSION}${LOCAL_VERSION}"
-          
-          if [ -z "$SPOOF_VERSION" ]; then
-            echo "⚠️ No spoof version provided. Using default source version."
-          else
-            echo "➡️ Target Full Version: $FULL_VERSION"
-
-            # 1. Hardcode KERNELVERSION including the local suffix
-            sed -i "s/^KERNELVERSION =.*/KERNELVERSION = $FULL_VERSION/" Makefile
-            
-            # 2. Force configuration overrides in defconfig
-            CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
-            # Set localversion
-            if [ -n "${{ github.event.inputs.localVersion }}" ]; then
-               echo "CONFIG_LOCALVERSION=\"${{ github.event.inputs.localVersion }}\"" >> "$CONFIG_FILE"
-            fi
-            
-            # 3. Update build constants for GKI
-            if [ -f "build.config.constants" ]; then
-                sed -i "s/^KERNEL_VERSION=.*/KERNEL_VERSION=$FULL_VERSION/" build.config.constants
-            fi
-
-            echo "✅ Spoof applied successfully. Final name: $FULL_VERSION"
-          fi
 
       - name: "📥 Initialize repo & AOSP clang-r614150"
         if: github.event.inputs.buildToolchains == 'clang-r614150'
