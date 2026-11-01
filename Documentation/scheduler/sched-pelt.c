@@ -10,7 +10,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#define HALFLIFE 32
+#define HALFLIFE 16
 #define SHIFT 32
 
 double y;

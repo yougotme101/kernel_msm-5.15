@@ -30,7 +30,7 @@
 
 /*
  * Approximate:
- *   val * y^n,    where y^32 ~= 0.5 (~1 scheduling period)
+ *   val * y^n,    where y^16 ~= 0.5 (~1 scheduling period)
  */
 static u64 decay_load(u64 val, u64 n)
 {
