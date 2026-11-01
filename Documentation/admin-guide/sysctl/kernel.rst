@@ -1121,6 +1121,37 @@ Model available). If your platform happens to meet the
 requirements for EAS but you do not want to use it, change
 this value to 0.
 
+sched_bore
+==========
+
+Enables or disables the BORE (Burst-Oriented Response Enhancer) scheduler
+mechanism. BORE adjusts fair-task scheduling weights based on recent CPU
+burst behavior. Set to 0 to disable the BORE weighting; the default is 1
+when ``CONFIG_SCHED_BORE`` is enabled.
+
+The following tunables are available when BORE is enabled:
+
+``sched_burst_smoothness_long`` and ``sched_burst_smoothness_short``
+    Control smoothing of burst penalties when a task starts a new burst.
+    Each accepts 0 or 1. The defaults are 1 and 0, respectively.
+
+``sched_burst_fork_atavistic``
+    Controls burst-score inheritance from ancestor processes. A value of 0
+    uses direct-parent inheritance; values 1 through 3 enable bounded
+    topological inheritance. The default is 2.
+
+``sched_burst_penalty_offset``
+    Controls the burst duration before penalties begin to increase. Accepts
+    values from 0 to 64; the default is 22.
+
+``sched_burst_penalty_scale``
+    Controls how quickly the penalty increases with burst duration. Accepts
+    values from 0 to 4095; the default is 1280.
+
+``sched_burst_cache_lifetime``
+    Cache lifetime, in nanoseconds, for inherited child burst scores. Accepts
+    values from 0 to 4294967295; the default is 60000000.
+
 task_delayacct
 ===============
 

@@ -6,6 +6,16 @@
 
 struct ctl_table;
 
+#ifdef CONFIG_SCHED_BORE
+extern u8 sched_bore;
+extern bool sched_burst_smoothness_long;
+extern bool sched_burst_smoothness_short;
+extern u8 sched_burst_fork_atavistic;
+extern u8 sched_burst_penalty_offset;
+extern uint sched_burst_penalty_scale;
+extern uint sched_burst_cache_lifetime;
+#endif
+
 #ifdef CONFIG_DETECT_HUNG_TASK
 /* used for hung_task and block/ */
 extern unsigned long sysctl_hung_task_timeout_secs;
