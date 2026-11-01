@@ -1551,7 +1551,7 @@ static struct gdsc mdss_gdsc = {
 		.name = "mdss_gdsc",
 	},
 	.pwrsts = PWRSTS_OFF_ON,
-	.flags = 0,
+	.flags = HW_CTRL,
 	.supply = "mmcx",
 };
 
