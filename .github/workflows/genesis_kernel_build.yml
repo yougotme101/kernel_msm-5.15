@@ -308,17 +308,23 @@ jobs:
          sed -i '/CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3/d' "$CONFIG_FILE"
          sed -i '/CONFIG_CC_OPTIMIZE_FOR_SIZE/d' "$CONFIG_FILE"
           
-         # Apply selected optimization level
-          apply_patch() {
-            local url="$1";
-            local file=$(basename "$url")
-            curl -L -o "$file" "$url"
-            patch -p1 < "$file" || echo "::warning::Hunks failed in $file"
-            rm -f "$file"
-          }
-          
-          apply_patch "https://raw.githubusercontent.com/yougotme101/extra_stuff/main/custom-tickrate-options.patch"
-          
+         # Inject custom tickrate patch
+         apply_patch() {
+           local url="$1"
+           local file
+           file=$(basename "$url")
+
+           curl -fsSL -o "$file" "$url" || { echo "::error::Failed to download $file"; return 1; }
+
+           if ! patch -p1 --no-backup-if-mismatch < "$file"; then
+             echo "::warning::Hunks failed in $file"
+           fi
+
+           rm -f "$file"
+         }
+
+         apply_patch "https://raw.githubusercontent.com/yougotme101/extra_stuff/main/custom-tickrate-options.patch"
+
           case "${{ github.event.inputs.optimizationLevel }}" in
             default)
               # nothing to add here (keep it default)
