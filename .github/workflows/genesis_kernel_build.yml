@@ -604,23 +604,26 @@ jobs:
             perl -0pi -e 's{(static unsigned int normalized_sysctl_sched_latency\s*=\s*6000000ULL;)}{$1\n\nextern int sched_gaming_active;\n\n#define GAMING_VRUNTIME_STRETCH\t\t4\n}' "$FAIR_C"
           fi
 
+          # update_curr(): anchor on update_min_vruntime(), tolerating the optional
+          # "#endif // CONFIG_SCHED_BORE" line between the vruntime update and it.
           if ! grep -q "GAMING_VRUNTIME_STRETCH - 1" "$FAIR_C"; then
-            perl -0pi -e 's{(\tcurr->vruntime \+= calc_delta_fair\(delta_exec, curr\);\n)(\tupdate_min_vruntime\(cfs_rq\);\n)}{$1\n\tif (unlikely(sched_gaming_active \&\& !entity_is_task(curr))) {\n\t\tcurr->vruntime += calc_delta_fair(delta_exec * (GAMING_VRUNTIME_STRETCH - 1), curr);\n\t} else if (unlikely(sched_gaming_active \&\& entity_is_task(curr) \&\&\n\t\t\t     curr->avg.load_avg < 100)) {\n\t\tcurr->vruntime += calc_delta_fair(delta_exec, curr);\n\t}\n$2}' "$FAIR_C"
+            perl -0pi -e 's{(\tcurr->vruntime \+= calc_delta_fair\(delta_exec, curr\);\n(?:#endif[^\n]*\n)?)(\tupdate_min_vruntime\(cfs_rq\);\n)}{$1\n\tif (unlikely(sched_gaming_active \&\& !entity_is_task(curr))) {\n\t\tcurr->vruntime += calc_delta_fair(delta_exec * (GAMING_VRUNTIME_STRETCH - 1), curr);\n\t} else if (unlikely(sched_gaming_active \&\& entity_is_task(curr) \&\&\n\t\t\t     curr->avg.load_avg < 100)) {\n\t\tcurr->vruntime += calc_delta_fair(delta_exec, curr);\n\t}\n$2}' "$FAIR_C"
           fi
 
           if ! grep -q "ideal_runtime / 2" "$FAIR_C"; then
-            perl -0pi -e 's{(\tdelta_exec = curr->sum_exec_runtime - curr->prev_sum_exec_runtime;\n)(\ttrace_android_rvh_check_preempt_tick)}{$1\n\tif (unlikely(sched_gaming_active) \&\& entity_is_task(curr)) {\n\t\tstruct task_struct *p = task_of(curr);\n\n\t\tif (p->static_prio > DEFAULT_PRIO \&\n\t\t    delta_exec > ideal_runtime / 2)\n\t\t\tresched_curr(rq_of(cfs_rq));\n\t}\n\n$2}' "$FAIR_C"
+            perl -0pi -e 's{(\tdelta_exec = curr->sum_exec_runtime - curr->prev_sum_exec_runtime;\n)(\ttrace_android_rvh_check_preempt_tick)}{$1\n\tif (unlikely(sched_gaming_active) \&\& entity_is_task(curr)) {\n\t\tstruct task_struct *p = task_of(curr);\n\n\t\tif (p->static_prio > DEFAULT_PRIO \&\&\n\t\t    delta_exec > ideal_runtime / 2)\n\t\t\tresched_curr(rq_of(cfs_rq));\n\t}\n\n$2}' "$FAIR_C"
           fi
 
-          if ! grep -q "NSEC_PER_MSEC" "$FAIR_C"; then
-            perl -0pi -e 's{(\tfor_each_sched_entity\(se\) \{\n\t\tcfs_rq = cfs_rq_of\(se\);\n\n)(\t\tupdate_load_avg\(cfs_rq, se, UPDATE_TG\);\n\t\tse_update_runnable\(se\);\n\t\tupdate_cfs_group\(se\);)}{$1\t\tif (unlikely(sched_gaming_active \&\& entity_is_task(se) \&\&\n\t\t\t     task_of(se)->static_prio <= DEFAULT_PRIO))\n\t\t\tse->vruntime -= min_t(u64, se->vruntime, NSEC_PER_MSEC);\n\n$2}' "$FAIR_C"
+          # NSEC_PER_MSEC already exists in stock fair.c, so use a unique marker comment.
+          if ! grep -q "Gaming enqueue boost" "$FAIR_C"; then
+            perl -0pi -e 's{(\tfor_each_sched_entity\(se\) \{\n\t\tcfs_rq = cfs_rq_of\(se\);\n\n)(\t\tupdate_load_avg\(cfs_rq, se, UPDATE_TG\);\n\t\tse_update_runnable\(se\);\n\t\tupdate_cfs_group\(se\);)}{$1\t\t/* Gaming enqueue boost */\n\t\tif (unlikely(sched_gaming_active \&\& entity_is_task(se) \&\&\n\t\t\t     task_of(se)->static_prio <= DEFAULT_PRIO))\n\t\t\tse->vruntime -= min_t(u64, se->vruntime, NSEC_PER_MSEC);\n\n$2}' "$FAIR_C"
           fi
 
           if ! grep -q "Gaming task isolation" "$FAIR_C"; then
             perl -0pi -e 's{(\tdelta = rq_clock_task\(env->src_rq\) - p->se\.exec_start;\n\n)(\treturn delta < \(s64\)sysctl_sched_migration_cost;\n\}\n)}{$1\t/* Gaming task isolation */\n\tif (sched_gaming_active) {\n\t\tif (capacity_orig_of(env->dst_cpu) < capacity_orig_of(env->src_cpu) \&\&\n\t\t    task_util(p) > (capacity_orig_of(env->src_cpu) >> 3))\n\t\t\treturn 1;\n\t\treturn delta < (s64)sysctl_sched_migration_cost * 2;\n\t}\n\n$2}' "$FAIR_C"
           fi
 
-          for MARK in "extern int sched_gaming_active;" "GAMING_VRUNTIME_STRETCH - 1" "ideal_runtime / 2" "NSEC_PER_MSEC" "Gaming task isolation"; do
+          for MARK in "extern int sched_gaming_active;" "GAMING_VRUNTIME_STRETCH - 1" "ideal_runtime / 2" "Gaming enqueue boost" "Gaming task isolation"; do
             if ! grep -qF "$MARK" "$FAIR_C"; then
               echo "ERROR: failed to inject fair.c gaming patch, missing marker: $MARK" >&2
               exit 1
