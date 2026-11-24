@@ -654,6 +654,15 @@ jobs:
           
           # Install KernelSU
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+
+          # Integrate SUSFS into KernelSU (required when SUSFS is enabled:
+          # the SUSFS kernel patch calls KSU symbols that only this patch adds)
+          if [ "${{ github.event.inputs.susfsSupport }}" = "Enabled" ]; then
+            echo "Applying SUSFS -> KernelSU patch..."
+            curl -LSs "https://gitlab.com/simonpunk/susfs4ksu/-/raw/gki-android13-5.15/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" -o /tmp/10_enable_susfs_for_ksu.patch
+            patch -p1 -d KernelSU < /tmp/10_enable_susfs_for_ksu.patch || { echo "Failed to apply SUSFS->KernelSU patch"; exit 1; }
+            echo "KernelSU SUSFS integration applied"
+          fi
           
           # Add KSU configs
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
