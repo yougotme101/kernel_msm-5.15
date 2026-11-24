@@ -653,7 +653,7 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install KernelSU
-          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
 
           # Integrate SUSFS into KernelSU (required when SUSFS is enabled:
           # the SUSFS kernel patch calls KSU symbols that only this patch adds)
