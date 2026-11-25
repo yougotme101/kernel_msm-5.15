@@ -661,7 +661,16 @@ jobs:
           rm -rf ./KernelSU ./drivers/kernelsu
           
           # Install KernelSU
-          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+
+          # Integrate SUSFS into KernelSU (required when SUSFS is enabled:
+          # the SUSFS kernel patch calls KSU symbols that only this patch adds)
+          if [ "${{ github.event.inputs.susfsSupport }}" = "Enabled" ]; then
+            echo "Applying SUSFS -> KernelSU patch..."
+            curl -LSs "https://gitlab.com/simonpunk/susfs4ksu/-/raw/gki-android13-5.15/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" -o /tmp/10_enable_susfs_for_ksu.patch
+            patch -p1 -d KernelSU < /tmp/10_enable_susfs_for_ksu.patch || { echo "Failed to apply SUSFS->KernelSU patch"; exit 1; }
+            echo "KernelSU SUSFS integration applied"
+          fi
           
           # Add KSU configs
           CONFIG_FILE="arch/arm64/configs/${{ env.DEFCONFIG_NAME }}"
@@ -1115,11 +1124,16 @@ jobs:
          🕐 *Build Date:* $(date '+%Y-%m-%d %H:%M:%S UTC')
          📦 *Package:* \`${{ env.ZIP_NAME }}\`"
       
-         curl -s -F document=@"${{ env.ZIP_PATH }}" \
-           -F caption="$CAPTION" \
-           -F parse_mode="Markdown" \
-           -F chat_id=${{ secrets.TELEGRAM_USER_ID }} \
-           "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
+         IFS=',' read -ra TG_CHAT_IDS <<< "${{ secrets.TELEGRAM_USER_ID }}"
+         for TG_CHAT_ID in "${TG_CHAT_IDS[@]}"; do
+           TG_CHAT_ID="$(echo "$TG_CHAT_ID" | tr -d '[:space:]')"
+           [ -z "$TG_CHAT_ID" ] && continue
+           curl -s -F document=@"${{ env.ZIP_PATH }}" \
+             -F caption="$CAPTION" \
+             -F parse_mode="Markdown" \
+             -F chat_id="$TG_CHAT_ID" \
+             "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
+         done
          else
          FAILURE_MSG="❌ *Kernel Build Failed*
       
@@ -1146,9 +1160,13 @@ jobs:
     
          🔍 Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
       
-         curl -s -X POST \
-           -d chat_id=${{ secrets.TELEGRAM_USER_ID }} \
-           -d text="$FAILURE_MSG" \
-           -d parse_mode="Markdown" \
-           "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"
+         for TG_CHAT_ID in "${TG_CHAT_IDS[@]}"; do
+           TG_CHAT_ID="$(echo "$TG_CHAT_ID" | tr -d '[:space:]')"
+           [ -z "$TG_CHAT_ID" ] && continue
+           curl -s -X POST \
+             -d chat_id="$TG_CHAT_ID" \
+             -d text="$FAILURE_MSG" \
+             -d parse_mode="Markdown" \
+             "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"
+         done
          fi
