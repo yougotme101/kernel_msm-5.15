@@ -13,11 +13,5 @@ jobs:
           for TG_CHAT_ID in "${TG_CHAT_IDS[@]}"; do
             TG_CHAT_ID="$(echo "$TG_CHAT_ID" | tr -d '[:space:]')"
             [ -z "$TG_CHAT_ID" ] && continue
-            echo "Sending test message to chat_id: $TG_CHAT_ID"
-            curl -s -X POST \
-              -d chat_id="$TG_CHAT_ID" \
-              -d text="✅ *Telegram Test*: multi-recipient setup works for this chat." \
-              -d parse_mode="Markdown" \
-              "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"
-            echo ""
+            curl -sS -o /dev/null -w 'Telegram test request: HTTP %{http_code}\n' -X POST -d chat_id="$TG_CHAT_ID" -d text="✅ *Telegram Test*: multi-recipient setup works for this chat." -d parse_mode="Markdown" "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"
           done
